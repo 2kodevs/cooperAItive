@@ -1,4 +1,5 @@
 from .simple import BigDrop, Frequent, Random
+from .rlplayer import SingletonRLPlayer
 from .table_counter import TableCounter
 from .always_double import AlwaysDouble
 from .player_merge import MergeFactory
@@ -32,4 +33,5 @@ PLAYERS = [
     AlwaysDouble,
     DoubleEnd,
     NonDouble,
+    SingletonRLPlayer(),
 ]
