@@ -51,7 +51,7 @@ class RLPlayer(BasePlayer):
             #     cur.append(cur[x])
             # add playe movements related to num
             for i in range(4):
-                rep.extend(self.movements[(player + i) % 4][num])
+                rep.extend(self.movements[(self.me + i) % 4][num])
             # rep.extend(cur[self.me * 2:])
             data = 0
             for p in self.pieces:
