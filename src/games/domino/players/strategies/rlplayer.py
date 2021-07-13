@@ -7,10 +7,10 @@ class RLPlayer(BasePlayer):
     to measure his strategy.
     '''
     def __init__(self, name):
-         super().__init__(f"RLPlayer::{name}")
-         self.actions = []
-         self.values = {}
-         self.steps = 0
+        super().__init__(f"RLPlayer::{name}")
+        self.actions = []
+        self.values = {}
+        self.steps = 0
 
     def load_values(self, addr):
         pass
@@ -24,7 +24,6 @@ class RLPlayer(BasePlayer):
     def get_movements(self):
         heads = [-1, -1]
         first_move = True
-        amount_played = {}
 
         self.movements = [[[0, 0] for _ in range(10)] for _ in range(4)]
 
@@ -45,13 +44,15 @@ class RLPlayer(BasePlayer):
             piece.reverse()
         rep = []
         for num in piece:
-            cur = []
-            for player in range(4):
-                cur.extend(self.movements[player][num])
-            for x in range(self.me * 2):
-                cur.append(cur[x])
+            # cur = []
+            # for player in range(4):
+            #     cur.extend(self.movements[player][num])
+            # for x in range(self.me * 2):
+            #     cur.append(cur[x])
             # add playe movements related to num
-            rep.extend(cur[self.me * 2:])
+            for i in range(4):
+                rep.extend(self.movements[(self.me + i) % 4][num])
+            # rep.extend(cur[self.me * 2:])
             data = 0
             for p in self.pieces:
                 data += (num in p)
@@ -65,9 +66,8 @@ class RLPlayer(BasePlayer):
         return self.values.get(self.get_rep(piece, head), [0.5, 0])[0]
 
     def policy(self, valids):
-        valids = super().filter(valids)
-        self.get_movements()
         if random() <= 0.3: return valids
+        self.get_movements()
 
         top = 0
         greedy = []
