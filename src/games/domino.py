@@ -35,6 +35,21 @@ def play(args):
     return status
 
 
+def match(args):
+    player = get_player(args.player)
+    rule = get_rule(args.rule)
+    hand = get_hand(args.hand)
+
+    status = {-1:0, 0:0, 1:0}
+    for _ in range(args.rep):
+        for other in args.oponents:
+            oponent = get_player(other)
+            game = rule()
+            status[game.start(player, oponent, hand, *args.pieces)] += 1
+    print(status)
+    return status 
+
+
 def main():
     parser = argparse.ArgumentParser("DomAIno")
 
@@ -42,16 +57,23 @@ def main():
     info_parser = subparsers.add_parser('info', help="Show available Players and Rules")
     info_parser.set_defaults(command=info)
 
-    play_parser = subparsers.add_parser('play', help="Run a dominoe game")
+    play_parser = subparsers.add_parser('play', help="Run a domino game")
     play_parser.add_argument('-p0',  '--player0',     dest='player0', default='random')
     play_parser.add_argument('-p1',  '--player1',     dest='player1', default='random')
     play_parser.add_argument('-r',   '--rule',        dest='rule',    default='onegame')
     play_parser.add_argument('-n',   '--nine',        dest='pieces',  action='store_const', const=[9,10], default=[])
     play_parser.add_argument('-rep', '--repetitions', dest='rep',     type=int, default=1)
     play_parser.add_argument('-H',   '--hand',        dest='hand',    default='hand_out')
-
-    # play_parser.add_argument('-c', '--count', type=int, dest='count', default=1, help="Number of games to play")
     play_parser.set_defaults(command=play)
+
+    play_parser = subparsers.add_parser('match', help="Run a domino match")
+    play_parser.add_argument('-p',    '--player',     dest='player',   default='random')
+    play_parser.add_argument('-r',   '--rule',        dest='rule',     default='onegame')
+    play_parser.add_argument('-n',   '--nine',        dest='pieces',   action='store_const', const=[9,10], default=[])
+    play_parser.add_argument('-rep', '--repetitions', dest='rep',      type=int, default=1)
+    play_parser.add_argument('-H',   '--hand',        dest='hand',     default='hand_out')
+    play_parser.add_argument('-o',   '--oponents',    dest='oponents', type=str, nargs='+', required=True)
+    play_parser.set_defaults(command=match)
 
     args = parser.parse_args()
 
