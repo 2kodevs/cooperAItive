@@ -98,9 +98,10 @@ def game_data_collector(current_hand, player_id, history):
         
     
 def game_hand_builder(pieces, missing): # //TODO: Edit players and pass the maximum number & number of pieces
+    max_number, number_of_pieces = 6, 7
     all_pieces = []
-    for i in range(7): # use the maximum number + 1
-        for j in range(i, 7): # use the maximum number + 1
+    for i in range(max_number + 1):
+        for j in range(i, max_number + 1):
             all_pieces.append((i, j))
 
     random.shuffle(all_pieces)
@@ -114,14 +115,15 @@ def game_hand_builder(pieces, missing): # //TODO: Edit players and pass the maxi
                 if p in s:
                     break
             else:
-                flow.add_edge(player, i + 5)
+                flow.add_edge(player, i + 5, 1, 1)
     last_assigment_edge = len(flow.E)
     for player in range(1, 5):
-         flow.add_edge(source, player)
+        cap = number_of_pieces - len(pieces[player - 1]) 
+        flow.add_edge(source, player, cap, cap)
     for i in range(len(all_pieces)):
-         flow.add_edge(i + 5, sink)
+        flow.add_edge(i + 5, sink, 1, 1)
 
-    rep = 7 * 4 - sum([len(x) for x in pieces]) # use the number of pieces
+    rep = number_of_pieces * 4 - sum([len(x) for x in pieces])
     assert flow.solve() == rep, 'Impossible to find a pieces assigment'
 
     for i in range(0, last_assigment_edge, 2):
