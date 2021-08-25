@@ -1,3 +1,5 @@
+import random
+
 def count_min(player, piece):
     cant = [0, 0]
     for item in player.pieces:
@@ -92,5 +94,39 @@ def game_data_collector(current_hand, player_id, history):
         elif event.name == 'PASS':
             id = data[0]
             missing[id].extend(heads)
-    return pieces, missing
+    return pieces, [set(s) for s in missing]
+        
     
+def game_hand_builder(pieces, missing): # //TODO: Edit players and pass the maximum number & number of pieces
+    all_pieces = []
+    for i in range(7): # use the maximum number + 1
+        for j in range(i, 7): # use the maximum number + 1
+            all_pieces.append((i, j))
+
+    random.shuffle(all_pieces)
+    source, sink = 0, 4 + len(pieces) + 1
+    flow = EdmondsKarp(source, sink)
+
+    for player in range(1, 5):
+        s = missing[player - 1]
+        for i, piece in enumerate(all_pieces):
+            for p in piece:
+                if p in s:
+                    break
+            else:
+                flow.add_edge(player, i + 5)
+    last_assigment_edge = len(flow.E)
+    for player in range(1, 5):
+         flow.add_edge(source, player)
+    for i in range(len(all_pieces)):
+         flow.add_edge(i + 5, sink)
+
+    rep = 7 * 4 - sum([len(x) for x in pieces]) # use the number of pieces
+    assert flow.solve() == rep, 'Impossible to find a pieces assigment'
+
+    for i in range(0, last_assigment_edge, 2):
+        edge = flow.E[i]
+        if not edge.f:
+            pieces[edge.start - 1].append(all_pieces[edge.end - 5])
+    
+    return pieces
