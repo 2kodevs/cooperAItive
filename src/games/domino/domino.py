@@ -162,7 +162,7 @@ class DominoManager:
                 player.log(data)
             self.logs_transmitted += 1
 
-    def run(self, players, hand, *pieces_config):
+    def init(self, players, hand, *pieces_config):
         self.logs_transmitted = 0
         self.players = players
         self.domino = Domino()
@@ -171,15 +171,19 @@ class DominoManager:
 
         for i, player in enumerate(players):
             player.reset(i, self.domino.players[i].pieces[:])
-
-        done = False
         self.feed_logs()
 
-        while not done:
-            heads = self.domino.heads
-            action = self.cur_player().step(heads[:])
-            done = self.domino.step(action)
-            self.feed_logs()
+    def step(self):
+        heads = self.domino.heads
+        action = self.cur_player().step(heads[:])
+        done = self.domino.step(action)
+        self.feed_logs()
+        return done
+
+    def run(self, players, hand, *pieces_config):
+        self.init(players, hand, *pieces_config)
+
+        while not self.step(): pass
 
         return self.domino.winner
 
