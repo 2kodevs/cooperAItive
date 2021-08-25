@@ -56,7 +56,7 @@ class EdmondsKarp:
             if dad[self.sink] == -1:
                 return 0
             
-            cur = self.sink, flow = self.inf
+            cur, flow = self.sink, self.inf
             while cur != self.source:
                 idx = e[cur]
                 flow = min(flow, self.E[idx].f)
@@ -88,7 +88,7 @@ def game_data_collector(current_hand, player_id, history):
             move, id, head = data 
             pieces[id].append(move)
             if heads == empty:
-                heads = move
+                heads = list(move)
             else:
                 heads[head] = move[move[0] == heads[head]]
         elif event.name == 'PASS':
@@ -105,7 +105,7 @@ def game_hand_builder(pieces, missing): # //TODO: Edit players and pass the maxi
             all_pieces.append((i, j))
 
     random.shuffle(all_pieces)
-    source, sink = 0, 4 + len(pieces) + 1
+    source, sink = 0, 4 + len(all_pieces) + 1
     flow = EdmondsKarp(source, sink)
 
     for player in range(1, 5):
@@ -115,13 +115,13 @@ def game_hand_builder(pieces, missing): # //TODO: Edit players and pass the maxi
                 if p in s:
                     break
             else:
-                flow.add_edge(player, i + 5, 1, 1)
+                flow.add_edge(player, i + 5, 1)
     last_assigment_edge = len(flow.E)
     for player in range(1, 5):
         cap = number_of_pieces - len(pieces[player - 1]) 
-        flow.add_edge(source, player, cap, cap)
+        flow.add_edge(source, player, cap)
     for i in range(len(all_pieces)):
-        flow.add_edge(i + 5, sink, 1, 1)
+        flow.add_edge(i + 5, sink, 1)
 
     rep = number_of_pieces * 4 - sum([len(x) for x in pieces])
     assert flow.solve() == rep, 'Impossible to find a pieces assigment'
