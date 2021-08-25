@@ -173,9 +173,10 @@ class DominoManager:
             player.reset(i, self.domino.players[i].pieces[:])
         self.feed_logs()
 
-    def step(self):
+    def step(self, fixed_action=False, action=None):
         heads = self.domino.heads
-        action = self.cur_player().step(heads[:])
+        if not fixed_action:
+            action = self.cur_player().step(heads[:])
         done = self.domino.step(action)
         self.feed_logs()
         return done
