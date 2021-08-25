@@ -98,11 +98,17 @@ def game_data_collector(current_hand, player_id, history):
         
     
 def game_hand_builder(pieces, missing): # //TODO: Edit players and pass the maximum number & number of pieces
+    pieces = [[x for x in p] for p in pieces]
     max_number, number_of_pieces = 6, 7
     all_pieces = []
+    taken = set()
+    for player in pieces:
+        for a, b in player:
+            taken.add((min(a, b), max(a, b)))
     for i in range(max_number + 1):
         for j in range(i, max_number + 1):
-            all_pieces.append((i, j))
+            if (i,j) not in taken:
+                all_pieces.append((i, j))
 
     random.shuffle(all_pieces)
     source, sink = 0, 4 + len(all_pieces) + 1
