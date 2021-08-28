@@ -1,5 +1,7 @@
 import torch
 import torch.nn as nn
+import torch.optim as optim
+import torch.nn.functional as F
 import numpy as np
 
 #STATE= [(55bits, 4bits, 2bits) x 41]
@@ -11,7 +13,7 @@ class Net(nn.Module):
     """
     Neural Network for Alpha Zero implementation of Dominoes
     """
-    def __init__(self, input_shape, policy_shap, residual_layers, device='cpu'):
+    def __init__(self, input_shape, policy_shape, residual_layers, device='cpu'):
         """
         param input_shape: (int, int, int)
             Dimensions of the input.
@@ -53,9 +55,9 @@ class Net(nn.Module):
         conv_val_size = self._get_conv_val_size(body_out_shape)
 
         self.value = nn.Sequential(
-            nn.Linear(conv_val_size, 128),
+            nn.Linear(conv_val_size, 256),
             nn.LeakyReLU(),
-            nn.Linear(128, 1),
+            nn.Linear(256, 1),
             nn.Tanh()
         ).to(device)
 
@@ -70,6 +72,8 @@ class Net(nn.Module):
             nn.Linear(conv_policy_size, policy_shape)
         ).to(device)
 
+        #optimizer
+        self.optimizer = optim.SGD(self.parameters(), lr=1e-3, momentum=0.9)
 
 
     def _get_conv_val_size(self, shape):
@@ -111,3 +115,35 @@ class Net(nn.Module):
         for idx, state in enumerate(state_lists):
             batch[idx] = state
         return torch.tensor(batch).to(self.device)
+
+    def train(self, data):
+        """
+        Given a batch of training data, train the NN
+
+        param data:
+            list with training data
+        """
+        # data: [(state, p_target, v_target)]
+        batch, p_targets, v_targets = [], [], []
+        for (state, p, v) in data:
+            # Assume state is decoded
+            batch.append([self.state_lists_to_batch(state)])
+            p_targets.append(p)
+            v_targets.append(v)
+
+        self.optimizer.zero_grad()
+
+        p_targets = torch.FloatTensor(p_targets).to(self.device)    
+        v_targets = torch.FloatTensor(v_targets).to(self.device)
+        p_preds, v_preds = self(batch)
+        p_preds = F.log_softmax(p_preds, dim=-1)
+
+        loss_value = F.mse_loss(v_preds.squeeze(-1), v_targets)
+        loss_policy = -torch.sum(p_preds * p_targets)
+
+        loss = loss_policy + loss_value
+        loss.backward()
+        self.optimizer.step()
+
+        # Return loss values to track total loss mean for epoch
+        return (loss.item(), loss_policy.item(), loss_value.item())
