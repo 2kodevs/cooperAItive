@@ -1,5 +1,64 @@
-from ..mc import MCPlayer
+from ..mc import MCPlayer, MCSimulator
 from utils import game_data_collector, game_hand_builder, remaining_pieces
+
+
+class Simulator(MCSimulator):
+    def __init__(self, name, mc_data, NN):
+        super().__init__(f'Cooperative.v1::{name}')
+        self.mc_data = mc_data
+        self.NN = NN
+
+    def piece_bit(self, a, b):
+        return 1 << (a * self.max_number + b)
+
+    def encode_game(self):
+        pieces_mask = 0
+        for p in self.pieces:
+            pieces_mask += self.piece_bit(*p)
+        player = (pieces_mask, 1 << self.me, 0)
+
+        history = []
+        for e, *data in self.history:
+            if e.name == 'MOVE':
+                move, id, head = data
+                history.append((self.piece_bit(*move), 1 << id, head))
+            if e.name == 'PASS':
+                history.append((0, 0, 0))
+            
+        return [pieces_mask, *history]
+
+    def utility_value(self, data):
+        N, P, Q = data
+        return Q + (P / (1 + N))
+
+    def get_utility(self):
+        state = self.encode_game()
+        if state not in self.mc_data:
+            self.mc_data[state] = self.NN.get(state)
+        return state, self.mc_data[state]
+
+    def filter(self, valids):
+        state, heads = self.get_utility()
+
+        self.states.append(state)
+        valids = []
+        utility = (-float("inf"), 0)
+        for piece in self.pieces:
+            bit = self.piece_bit(*piece)
+
+            for h, (N, P, Q) in enumerate(heads):
+                if not self.valid(piece, h):
+                    continue
+                move_utility = (self.utility_value((N[bit], P[bit], Q[bit])), -N[bit])
+                if utility < move_utility:
+                    utility = move_utility
+                    valids = []
+                if utility == move_utility:
+                    valids.append((piece, h))
+
+        # //TODO: add randomness to ensure exploration
+
+        return valids
 
 
 class MonteCarlo(MCPlayer):
