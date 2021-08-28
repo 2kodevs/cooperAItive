@@ -103,11 +103,10 @@ def game_data_collector(current_hand, player_id, history):
             id = data[0]
             missing[id].extend(heads)
     return pieces, [set(s) for s in missing]
-        
-    
-def game_hand_builder(pieces, missing, max_number=6, number_of_pieces=7):
-    pieces = [[x for x in p] for p in pieces]
-    all_pieces = []
+
+
+def remaining_pieces(pieces, max_number=7):
+    remaining = []
     taken = set()
     for player in pieces:
         for a, b in player:
@@ -115,15 +114,20 @@ def game_hand_builder(pieces, missing, max_number=6, number_of_pieces=7):
     for i in range(max_number + 1):
         for j in range(i, max_number + 1):
             if (i,j) not in taken:
-                all_pieces.append((i, j))
+                remaining.append((i, j))
+    return remaining
 
-    random.shuffle(all_pieces)
-    source, sink = 0, 4 + len(all_pieces) + 1
+    
+def game_hand_builder(pieces, missing, remaining, number_of_pieces=7):
+    pieces = [[x for x in p] for p in pieces]   
+
+    random.shuffle(remaining)
+    source, sink = 0, 4 + len(remaining) + 1
     flow = EdmondsKarp(source, sink)
 
     for player in range(1, 5):
         s = missing[player - 1]
-        for i, piece in enumerate(all_pieces):
+        for i, piece in enumerate(remaining):
             for p in piece:
                 if p in s:
                     break
@@ -133,7 +137,7 @@ def game_hand_builder(pieces, missing, max_number=6, number_of_pieces=7):
     for player in range(1, 5):
         cap = number_of_pieces - len(pieces[player - 1]) 
         flow.add_edge(source, player, cap)
-    for i in range(len(all_pieces)):
+    for i in range(len(remaining)):
         flow.add_edge(i + 5, sink, 1)
 
     rep = number_of_pieces * 4 - sum([len(x) for x in pieces])
@@ -142,6 +146,6 @@ def game_hand_builder(pieces, missing, max_number=6, number_of_pieces=7):
     for i in range(0, last_assigment_edge, 2):
         edge = flow.E[i]
         if not edge.f:
-            pieces[edge.start - 1].append(all_pieces[edge.end - 5])
+            pieces[edge.start - 1].append(remaining[edge.end - 5])
     
     return pieces
