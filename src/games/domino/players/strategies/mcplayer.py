@@ -9,7 +9,7 @@ class MonteCarlo(MCPlayer):
     def filter(self, valids):
         # basic game information
         pieces, missing = game_data_collector(self.pieces, self.me, self.history)
-        remaining = remaining_pieces(pieces, 10) # //TODO: Modify BasePlayer to save the max number
+        remaining = remaining_pieces(pieces, self.max_number)
 
         # State & Neural Network
         state = {}

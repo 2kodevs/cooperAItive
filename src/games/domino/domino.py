@@ -62,7 +62,7 @@ class Domino:
         assert self.logs[-1][0] == Event.WIN
         return self.logs[-1][1]
 
-    def reset(self, hand, max_number=6, pieces_per_player=7):
+    def reset(self, hand, max_number, pieces_per_player):
         self.max_number = max_number
         self.pieces_per_player = pieces_per_player
         self.players = hand(self.max_number, self.pieces_per_player)
@@ -162,15 +162,15 @@ class DominoManager:
                 player.log(data)
             self.logs_transmitted += 1
 
-    def init(self, players, hand, *pieces_config):
+    def init(self, players, hand, max_number=6, pieces_per_player=7):
         self.logs_transmitted = 0
         self.players = players
         self.domino = Domino()
 
-        self.domino.reset(hand, *pieces_config)
+        self.domino.reset(hand, max_number, pieces_per_player)
 
         for i, player in enumerate(players):
-            player.reset(i, self.domino.players[i].pieces[:])
+            player.reset(i, self.domino.players[i].pieces[:], max_number)
         self.feed_logs()
 
     def step(self, fixed_action=False, action=None):

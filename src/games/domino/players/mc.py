@@ -16,12 +16,12 @@ class MCSimulator(BasePlayer):
         super().__init__(f'MonteCarloSimulator::{name}')
         self.states = [] # Add and state for each filter call
 
-    def reset(self, position, pieces):
+    def reset(self, position, pieces, max_number):
         for i in range(len(pieces)):
             a, b = pieces[i]
             pieces[i] = (min(a, b), max(a, b))
         pieces.sort()
-        super().reset(position, pieces)
+        super().reset(position, pieces, max_number)
 
     def encode_game(self):
         ''' Return the current game state encoding

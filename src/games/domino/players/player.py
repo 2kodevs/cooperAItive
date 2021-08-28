@@ -49,10 +49,11 @@ class BasePlayer:
                     valids.append((piece, head))
         return valids
         
-    def reset(self, position, pieces):
+    def reset(self, position, pieces, max_number):
         self.position = position
         self.pieces = pieces
         self.pieces_per_player = len(pieces)
+        self.max_number = max_number
 
         self.history.clear()
 
