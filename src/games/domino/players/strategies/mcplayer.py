@@ -1,15 +1,10 @@
-from ..player import BasePlayer
+from ..mc import MCPlayer
 from utils import game_data_collector, game_hand_builder, remaining_pieces
 
 
-class MonteCarlo(BasePlayer):
+class MonteCarlo(MCPlayer):
     def __init__(self, name, handouts=10, rollouts=10):
-        super().__init__(f'MonteCarlo::{name}')
-        self.set_simulations(handouts, rollouts)
-
-    def set_simulations(self, handouts, rollouts):
-        self.handouts = handouts
-        self.rollouts = rollouts
+        super().__init__(f'Cooperative.v1::{name}', handouts, rollouts)
 
     def filter(self, valids):
         # basic game information
