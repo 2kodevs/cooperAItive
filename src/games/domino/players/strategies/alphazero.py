@@ -4,7 +4,7 @@ from utils import game_data_collector, game_hand_builder, remaining_pieces
 
 class Simulator(MCSimulator):
     def __init__(self, name, mc_data, NN):
-        super().__init__(f'Cooperative.v1::{name}')
+        super().__init__(f'AlphaZero::{name}')
         self.mc_data = mc_data
         self.NN = NN
 
@@ -61,9 +61,9 @@ class Simulator(MCSimulator):
         return valids
 
 
-class MonteCarlo(MCPlayer):
+class AlphaZero(MCPlayer):
     def __init__(self, name, handouts=10, rollouts=10):
-        super().__init__(f'Cooperative.v1::{name}', handouts, rollouts)
+        super().__init__(f'AlphaZero::{name}', handouts, rollouts)
 
     def filter(self, valids):
         # basic game information
