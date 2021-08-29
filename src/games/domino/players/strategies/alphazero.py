@@ -97,8 +97,9 @@ class Simulator(MCSimulator):
 
 
 class AlphaZero(MCPlayer):
-    def __init__(self, name, handouts=10, rollouts=10):
+    def __init__(self, name, handouts=10, rollouts=10, NN):
         super().__init__(f'AlphaZero::{name}', handouts, rollouts)
+        self.NN = _NNWrapper(NN)
         self.states = []
 
     def filter(self, valids):
@@ -106,9 +107,8 @@ class AlphaZero(MCPlayer):
         pieces, missing = game_data_collector(self.pieces, self.me, self.history)
         remaining = remaining_pieces(pieces, self.max_number)
 
-        # State & Neural Network
+        # State
         mc_state = {}
-        NN = None
 
         # simultations
         for _ in range(self.handouts):
@@ -117,8 +117,7 @@ class AlphaZero(MCPlayer):
             for _ in range(self.rollouts):
                 # rollout game configuration
                 manager = DominoManager()
-                NN = _NNWrapper(None) # [Teno] //TODO: pass a proper NN instance to the wrapper 
-                players = [Simulator(name, mc_state, NN) for name in "0123"]
+                players = [Simulator(name, mc_state, self.NN) for name in "0123"]
                 manager.init(players, hand, self.max_number, self.pieces_per_player)
 
                 # advance the game to the current state
@@ -137,8 +136,8 @@ class AlphaZero(MCPlayer):
                         if w != -1:
                             v = [-1, 1][w == self.team]
                         break
-                    if NN.called:
-                        v = NN.v
+                    if self.NN.called:
+                        v = self.NN.v
                         break
 
                 # update state
