@@ -1,5 +1,21 @@
+from ...domino import DominoManager
 from ..mc import MCPlayer, MCSimulator
+from ..player_view import PlayerView
 from utils import game_data_collector, game_hand_builder, remaining_pieces
+from math import log2
+
+
+class _NNWrapper:
+    def __init__(self, NN):
+        self.NN = NN
+        self.called = False
+        self.v = None
+
+    def __call__(self, state):
+        a, b, v = self.NN(state)
+        self.v = v
+        self.called = True
+        return a, b, v
 
 
 class Simulator(MCSimulator):
@@ -7,6 +23,7 @@ class Simulator(MCSimulator):
         super().__init__(f'AlphaZero::{name}')
         self.mc_data = mc_data
         self.NN = NN
+        self.valids_per_state = []
 
     def piece_bit(self, a, b):
         return 1 << (a * self.max_number + b)
@@ -29,7 +46,7 @@ class Simulator(MCSimulator):
 
     def utility_value(self, data):
         N, P, Q = data
-        return Q + (P / (1 + N))
+        return  (Q + P) / (1 + N)
 
     def get_utility(self):
         state = self.encode_game()
@@ -42,11 +59,11 @@ class Simulator(MCSimulator):
             ]
         return state, self.mc_data[state]
 
-    def filter(self, valids):
+    def _filter(self):
         state, heads = self.get_utility()
 
-        self.states.append(state)
         valids = []
+        valids_mask = [0, 0]
         utility = (-float("inf"), 0)
         for i, piece in enumerate(self.pieces):
             bit = self.piece_bit(*piece)
@@ -54,21 +71,35 @@ class Simulator(MCSimulator):
             for h, (N, P, Q) in enumerate(heads):
                 if not self.valid(piece, h):
                     continue
+                valids_mask[h] += bit
                 move_utility = (self.utility_value((N[i], P[bit], Q[i])), -N[i])
                 if utility < move_utility:
                     utility = move_utility
                     valids = []
                 if utility == move_utility:
                     valids.append((piece, h))
+        self.states.append(state)
+        self.valids_per_state.append(valids_mask)
 
         # //TODO: add randomness to ensure exploration
 
+        return valids, valids_mask
+
+    def filter(self, valids):
+        valids, _ = self._filter()
         return valids
+
+    def get_state(self, move):
+        bit = int(log2(self.piece_bit(move)))
+        state = self.states.pop(0)
+        pos = bin(state)[::-1][:bit].count('1')
+        return state, pos
 
 
 class AlphaZero(MCPlayer):
     def __init__(self, name, handouts=10, rollouts=10):
         super().__init__(f'AlphaZero::{name}', handouts, rollouts)
+        self.states = []
 
     def filter(self, valids):
         # basic game information
@@ -76,11 +107,54 @@ class AlphaZero(MCPlayer):
         remaining = remaining_pieces(pieces, self.max_number)
 
         # State & Neural Network
-        state = {}
+        mc_state = {}
         NN = None
 
         # simultations
         for _ in range(self.handouts):
-            hands = game_hand_builder(pieces, missing, remaining, self.pieces_per_player)
+            fixed_hands = game_hand_builder(pieces, missing, remaining, self.pieces_per_player)
+            hand = lambda: [PlayerView(h) for h in fixed_hands]
             for _ in range(self.rollouts):
-                pass       
+                # rollout game configuration
+                manager = DominoManager()
+                NN = _NNWrapper(None) # [Teno] //TODO: pass a proper NN instance to the wrapper 
+                players = [Simulator(name, mc_state, NN) for name in "0123"]
+                manager.init(players, hand, self.max_number, self.pieces_per_player)
+
+                # advance the game to the current state
+                for e, *data in self.history:
+                    if e.name == "MOVE":
+                        move, _, head = data
+                        manager.step(True, (move, head))
+                    if e.name == "PASS":
+                        manager.step(True, None)
+
+                # run the rollout
+                v = 0
+                while True:
+                    if manager.step():
+                        w = manager.domino.winner
+                        if w != -1:
+                            v = [-1, 1][w == self.team]
+                        break
+                    if NN.called:
+                        v = NN.v
+                        break
+
+                # update state
+                for e, *data in manager.domino.logs[len(self.history):]:
+                    if e.name == "MOVE":
+                        move, id, head = data
+                        state, pos = players[id].get_state(move)
+                        N, _, Q = mc_state[state][head]
+                        Q[pos] += v
+                        N[pos] += 1
+                        
+        # store the current state & make a choice
+        temp = Simulator("temp", mc_state, None)
+        temp.reset(0, self.pieces, self.max_number)
+        current_state = temp.encode_game()
+        valids, valids_mask = temp._filter()
+        self.states.append((current_state, *valids_mask))
+
+        return valids
