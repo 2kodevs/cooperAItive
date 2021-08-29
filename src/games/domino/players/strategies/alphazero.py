@@ -97,7 +97,7 @@ class Simulator(MCSimulator):
 
 
 class AlphaZero(MCPlayer):
-    def __init__(self, name, handouts=10, rollouts=10, NN):
+    def __init__(self, name, handouts, rollouts, NN):
         super().__init__(f'AlphaZero::{name}', handouts, rollouts)
         self.NN = _NNWrapper(NN)
         self.states = []
