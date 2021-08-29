@@ -33,8 +33,13 @@ class Simulator(MCSimulator):
 
     def get_utility(self):
         state = self.encode_game()
+        sz = len(self.pieces)
         if state not in self.mc_data:
-            self.mc_data[state] = self.NN.get(state)
+            p0, p1, _ = self.NN(state)
+            self.mc_data[state] = [
+                ([0] * sz, p0, [0] * sz),
+                ([0] * sz, p1, [0] * sz),
+            ]
         return state, self.mc_data[state]
 
     def filter(self, valids):
@@ -43,13 +48,13 @@ class Simulator(MCSimulator):
         self.states.append(state)
         valids = []
         utility = (-float("inf"), 0)
-        for piece in self.pieces:
+        for i, piece in enumerate(self.pieces):
             bit = self.piece_bit(*piece)
 
             for h, (N, P, Q) in enumerate(heads):
                 if not self.valid(piece, h):
                     continue
-                move_utility = (self.utility_value((N[bit], P[bit], Q[bit])), -N[bit])
+                move_utility = (self.utility_value((N[i], P[bit], Q[i])), -N[i])
                 if utility < move_utility:
                     utility = move_utility
                     valids = []
