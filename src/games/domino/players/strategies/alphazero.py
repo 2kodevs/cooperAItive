@@ -1,7 +1,7 @@
 from ...domino import DominoManager
 from ..mc import MCPlayer, MCSimulator
 from ..player_view import PlayerView
-from utils import game_data_collector, game_hand_builder, remaining_pieces
+from .utils import game_data_collector, game_hand_builder, remaining_pieces
 from math import log2
 
 
