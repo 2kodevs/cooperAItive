@@ -5,7 +5,7 @@ def gauss(num):
     return (num * (num + 1)) // 2
 
 
-def encode_generator(
+def encoder_generator(
     max_number: int
 ):
     def piece_bit(a, b):
@@ -33,7 +33,7 @@ def encode_generator(
                 history.append(((1 << (total_pieces + 1)), 1 << id, 0))
 
         # reducing the history
-        tuple_bits = [total_pieces, 4, 2]
+        tuple_bits = [total_pieces + 1, 4, 2]
         encode_number = 0
         size = 0
         for data in history_encoded:
@@ -44,3 +44,39 @@ def encode_generator(
         return encode_number
 
     return encoder
+
+
+def decoder_generator(
+    max_number: int,
+    pieces_per_player: int,
+):
+    def decoder(
+        state: State,
+    ) -> int :
+        total_pieces = ((max_number + 1) * (max_number + 2)) // 2
+        tuples = pieces_per_player * 4 + 1
+        binary_rep = bin(state)[2:]
+
+        tuple_bits = [total_pieces + 1, 4, 2]
+        offset = [0, tuple_bits[0], tuple_bits[0] + tuple_bits[1]]
+        bits = sum(tuple_bits)
+
+        missing_bits = bits * tuples - len(binary_rep)
+        binary_rep = '0' * missing_bits + binary_rep
+
+        start = 0
+        decoded = []
+
+        def selector(idx):
+            begin = start + offset[idx]
+            end = begin + tuple_bits[idx]
+            return int(binary_rep[begin:end])
+
+        for _ in range(tuples):
+            decoded.append((selector(0), selector(1), selector(2)))
+            start += tuple_bits
+
+        return decoded
+
+    return decoder
+
