@@ -1,17 +1,9 @@
 from ...player import BasePlayer
 from ...player_view import PlayerView
 from ....domino import Domino
-from typing import Callable, Tuple, List, Any
+from .types import *
 from .game import game_hand_builder, game_data_collector, remaining_pieces
 
-State = int
-Head = int
-History = List[Any]
-Piece = Tuple[int, int]
-Action = Tuple[Piece, Head]
-Encoder = Callable[[List[Piece], History], State]
-RolloutMaker = Callable[[Domino, Encoder]]
-Selector = Callable[[State], Action]
 
 def monte_carlo(
     player: BasePlayer, 
