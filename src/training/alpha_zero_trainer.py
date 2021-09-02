@@ -1,10 +1,13 @@
-from trainer import Trainer
+from ..models import alpha_zero_net as Net
+from .trainer import Trainer
 
+import numpy as np
+import random
 class AlphaZeroTrainer(Trainer):
     """
     Trainer manager for Alpha Zero model
     """
-    def __init__(self, game, net, epochs, batch_size):
+    def __init__(self, game: Domino, net: Net, batch_size):
         """
         param game:
             Manager of the game in which the agent is a player
@@ -15,10 +18,12 @@ class AlphaZeroTrainer(Trainer):
         param batch_size: int
             Size of training data used for epoch
         """
-        super(AlphaZeroTrainer, self).__init__(game, net, epochs, batch_size)
+        self.game = game
+        self.net = net
+        self.batch_size = batch_size
         
 
-    def self_play(self):
+    def self_play(self, rollouts):
         # //TODO: Rulo
         # Only one game simulated here, and save game data.
         # This method will be called by policy_iteration,
@@ -27,5 +32,12 @@ class AlphaZeroTrainer(Trainer):
         # The NN is in self.net, you can pass it to your methods.
         pass
 
-    def policy_iteration(self):
-        raise NotImplementedError()
+    def policy_iteration(self, epoch, rollouts, verbose=False):
+        data = []
+        while len(data) < self.batch_size:
+            data.extend(self.self_play(rollouts))
+            
+        batch = random.sample(data, self.batch_size)
+        loss = self.net.train(batch)
+        Trainer.adjust_learning_rate(epoch, self.net.optimizer)
+        return loss

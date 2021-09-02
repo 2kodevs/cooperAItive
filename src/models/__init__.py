@@ -1,1 +1,1 @@
-from alpha_zero_model import *
+from alpha_zero_model import Net as alpha_zero_net
