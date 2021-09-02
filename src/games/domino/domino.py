@@ -85,6 +85,20 @@ class Domino:
                     self.players[self.current_player].have_piece(piece) and \
                     (self.heads[0] == -1 or self.heads[h] in piece)
 
+    def valid_moves(self):
+        # List all valid moves in the form (piece, head).
+        # This is put piece on head.
+        valids = []
+
+        def valid(piece, h):
+            return self.heads[h] in piece
+
+        for head in range(2):
+            for piece in self.players[self.current_player].remaining:
+                if valid(piece, head):
+                    valids.append((piece, head))
+        return valids if valids else [None]
+
     def _is_over(self):
         # It is the beginning of the game
         if self.heads[0] == -1:
