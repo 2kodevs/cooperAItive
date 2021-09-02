@@ -1,4 +1,6 @@
+from typing import Dict
 from .types import State, Action, Piece, Encoder, List, History
+from ....domino import Domino
 
 
 def gauss(num): 
@@ -45,38 +47,12 @@ def encoder_generator(
 
     return encoder
 
-
-def decoder_generator(
-    max_number: int,
-    pieces_per_player: int,
+    
+def state_to_list(
+    state: State,
+    size: int,
 ):
-    def decoder(
-        state: State,
-    ) -> int :
-        total_pieces = ((max_number + 1) * (max_number + 2)) // 2
-        tuples = pieces_per_player * 4 + 1
-        binary_rep = bin(state)[2:]
-
-        tuple_bits = [total_pieces + 1, 4, 2]
-        offset = [0, tuple_bits[0], tuple_bits[0] + tuple_bits[1]]
-        bits = sum(tuple_bits)
-
-        missing_bits = bits * tuples - len(binary_rep)
-        binary_rep = '0' * missing_bits + binary_rep
-
-        start = 0
-        decoded = []
-
-        def selector(idx):
-            begin = start + offset[idx]
-            end = begin + tuple_bits[idx]
-            return int(binary_rep[begin:end])
-
-        for _ in range(tuples):
-            decoded.append((selector(0), selector(1), selector(2)))
-            start += tuple_bits
-
-        return decoded
-
-    return decoder
+    binary_rep = bin(state)[2:]
+    binary_rep = '0' * max(0, size - len(binary_rep)) + binary_rep
+    return [int(x) for x in binary_rep[-1 : -(size + 1) : -1]]
 

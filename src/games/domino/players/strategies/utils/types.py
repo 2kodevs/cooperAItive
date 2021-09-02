@@ -1,4 +1,4 @@
-from typing import List, Any, Tuple, Callable
+from typing import List, Any, Tuple, Callable, Dict
 from ....domino import Domino
 
 State = int
