@@ -4,8 +4,8 @@ import torch.optim as optim
 import torch.nn.functional as F
 import numpy as np
 
-#STATE= [(55bits, 4bits, 2bits) x 41]
-STATE_SHAPE = (1, 41, 61)
+#STATE= [(56bits, 4bits, 2bits) x 41]
+STATE_SHAPE = (1, 41, 62)
 NUM_FILTERS = 256
 KERNEL_SIZE = 3
 
@@ -13,7 +13,7 @@ class Net(nn.Module):
     """
     Neural Network for Alpha Zero implementation of Dominoes
     """
-    def __init__(self, input_shape, policy_shape, residual_layers, device='cpu'):
+    def __init__(self, input_shape, policy_shape, residual_layers=19, device='cpu'):
         """
         param input_shape: (int, int, int)
             Dimensions of the input.
@@ -73,7 +73,7 @@ class Net(nn.Module):
         ).to(device)
 
         #optimizer
-        self.optimizer = optim.SGD(self.parameters(), lr=1e-3, momentum=0.9)
+        self.optimizer = optim.SGD(self.parameters(), lr=0.2, momentum=0.9, weight_decay=1e-4)
 
 
     def _get_conv_val_size(self, shape):
@@ -99,6 +99,30 @@ class Net(nn.Module):
 
         return pol, val
 
+    def predict(self, s, available_actions):
+        # //TODO: decode s
+        self.eval()
+        batch = torch.tensor(s).to(self.device)
+        pol, val = self(batch)
+        pol = self.get_policy_value(pol, available_actions, False)
+        return pol, val
+
+    def get_policy_value(self, logits, available_actions, log_softmax):
+        """
+        Get move probabilities distribution.
+
+        param logits:
+            list of 110 bits. Raw policy head
+        param available_actions
+            list of 110 bits. Mask of available actions
+        """
+        mask = torch.tensor(available_actions, dtype=torch.bool).to(self.device)
+        selection = torch.masked_select(logits, mask)
+        dist = F.log_softmax(selection, dim=-1)
+        if log_softmax:
+            return dist
+        return torch.exp(dist)
+
     def state_lists_to_batch(self, state_lists):
         """
         Convert list of list states to batch for network
@@ -123,20 +147,23 @@ class Net(nn.Module):
         param data:
             list with training data
         """
-        # data: [(state, p_target, v_target)]
-        batch, p_targets, v_targets = [], [], []
-        for (state, p, v) in data:
+        # data: [(state, p_target, v_target, available_actions)]
+        batch, p_targets, v_targets, available_actions = [], [], [], []
+        for (state, p, v, actions) in data:
             # Assume state is decoded
             batch.append([self.state_lists_to_batch(state)])
             p_targets.append(p)
             v_targets.append(v)
+            available_actions.append(actions)
 
         self.optimizer.zero_grad()
 
         p_targets = torch.FloatTensor(p_targets).to(self.device)    
         v_targets = torch.FloatTensor(v_targets).to(self.device)
         p_preds, v_preds = self(batch)
-        p_preds = F.log_softmax(p_preds, dim=-1)
+
+        for i, a in enumerate(available_actions):
+            p_preds[i] = self.get_policy_value(p_preds[i], a, True)
 
         loss_value = F.mse_loss(v_preds.squeeze(-1), v_targets)
         loss_policy = -torch.sum(p_preds * p_targets)
