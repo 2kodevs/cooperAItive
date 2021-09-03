@@ -12,22 +12,24 @@ class AlphaZeroTrainer(Trainer):
     """
     Trainer manager for Alpha Zero model
     """
-    def __init__(self, game: Domino, net: Net, batch_size):
+    def __init__(self, game: Domino, net: Net, batch_size: int, rollouts: int, data_path: str):
         """
         param game:
             Manager of the game in which the agent is a player
         param net: nn.Module
             Neural Network to train
-        param epochs: int
-            Number of training iterations
         param batch_size: int
             Size of training data used for epoch
         """
         self.game = game
         self.net = net
         self.batch_size = batch_size
-        
+        self.rollouts = rollouts
+        self.data_path = data_path
+        self.error_log = []
 
+        self.net.eval()
+        
     def self_play(self, rollouts):
         # //TODO: Rulo
         # Only one game simulated here, and save game data.
@@ -49,6 +51,8 @@ class AlphaZeroTrainer(Trainer):
         batch = random.sample(data, self.batch_size)
         loss = self.net.train(batch)
         Trainer.adjust_learning_rate(epoch, self.net.optimizer)
+        self.error_log.append(loss)
+        self.net.save(self.error_log, verbose=True)
         return loss
 
     def get_data(self, simulate: bool, num_process: int, verbose: bool, batch_size: int):
