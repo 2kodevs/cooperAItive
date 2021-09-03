@@ -22,7 +22,7 @@ def encoder_generator(
     def encoder(
         pieces: List[Piece],
         history: History,
-        player_id: int, # //TODO: check that playerId is in range(4)
+        player_id: int,
     ) -> int :
         pieces_mask = 0
         for p in pieces:
