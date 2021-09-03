@@ -23,7 +23,7 @@ def monte_carlo(
     # simulations
     for _ in range(handouts):
         fixed_hands = game_hand_builder(pieces, missing, remaining, player.pieces_per_player)
-        hand = lambda: [PlayerView(h) for h in fixed_hands]
+        hand = lambda x, y: [PlayerView(h) for h in fixed_hands]
         for _ in range(rollouts):
             # New Domino Game
             domino = Domino()
@@ -32,13 +32,13 @@ def monte_carlo(
             # Update the history
             for e, *data in player.history:
                 if e.name == "MOVE":
-                    move, _, head = data
+                    _, move, head = data
                     domino.step((move, head))
                 if e.name == "PASS":
                     domino.step(None)
 
             # Run the rollout
-            maker(domino, encoder)
+            maker(domino, encoder, player.team)
 
     # Select the player action
     state = encoder(player.pieces, player.history, player.me)
@@ -61,7 +61,7 @@ def rollout_maker(
 
         while v is None:
             current_player = domino.current_player
-            pieces = domino.players[current_player].pieces
+            pieces = domino.players[current_player].remaining
             history = domino.logs
 
             state = encoder(pieces, history, current_player)
@@ -81,7 +81,8 @@ def rollout_maker(
                 size = len(valids)
                 data[state] = [[0] * size, [0] * size]
 
-        for (N, _, Q), index in s_comma_a:
+        for state, index in s_comma_a:
+            N, Q = data[state]
             W = (Q[index] * N[index]) + v
             N[index] += 1
             Q[index] = W / N[index]
@@ -102,4 +103,6 @@ def selector_generator(
         _, Q = data[state]
         value = max(Q)
         filtered_data = [i for i, x in enumerate(Q) if x == value]
-        return to_order[choice(filtered_data)]
+        return (to_order[choice(filtered_data)],)
+
+    return selector

@@ -5,7 +5,7 @@ from .utils.mc import monte_carlo
 
 class AlphaZero(BasePlayer):
     def __init__(self, name, handouts, rollouts, NN):
-        super().__init__(f'AlphaZero::{name}', handouts, rollouts)
+        super().__init__(f'AlphaZero::{name}')
         self.NN = NN
         self.handouts = handouts
         self.rollouts = rollouts
