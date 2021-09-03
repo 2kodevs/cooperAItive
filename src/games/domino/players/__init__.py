@@ -2,6 +2,7 @@ from .strategies import PLAYERS, MergeFactory
 from .hands import HANDS, get_hand
 from .behaviors import BEHAVIORS
 from .player import BasePlayer
+from .strategies import state_to_list
 
 ALL = [*PLAYERS, *BEHAVIORS]
 

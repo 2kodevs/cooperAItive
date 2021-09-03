@@ -15,6 +15,8 @@ from .repeater import Repeater
 from .agachao import Agachao
 from .passer import Passer
 
+from .utils import state_to_list
+
 # Add players to this list
 PLAYERS = [
     BigDrop,

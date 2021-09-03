@@ -5,6 +5,8 @@ import torch.optim as optim
 import torch.nn.functional as F
 import numpy as np
 
+from ..games import state_to_list
+
 #STATE= [(56bits, 4bits, 2bits) x 41]
 STATE_SHAPE = (1, 41, 62)
 NUM_FILTERS = 256
@@ -101,23 +103,24 @@ class Net(nn.Module):
 
         return pol, val
 
-    def predict(self, s, available_actions):
+    def predict(self, s, valids_actions):
         self.eval()
-        batch = torch.tensor(s).to(self.device)
+        batch = self.state_lists_to_batch(s)
+        mask = self.valids_actions_to_tensor(valids_actions)
         pol, val = self(batch)
-        pol = self.get_policy_value(pol, available_actions, False)
+        pol = self.get_policy_value(pol, mask, False)
         return pol, val
 
-    def get_policy_value(self, logits, available_actions, log_softmax):
+    def get_policy_value(self, logits, valids_actions, log_softmax):
         """
         Get move probabilities distribution.
 
         param logits:
-            list of 110 bits. Raw policy head
+            list of 111 bits. Raw policy head
         param available_actions
-            list of 110 bits. Mask of available actions
+            list of 111 bits. Mask of available actions
         """
-        mask = torch.tensor(available_actions, dtype=torch.bool).to(self.device)
+        mask = torch.tensor(valids_actions, dtype=torch.bool).to(self.device)
         selection = torch.masked_select(logits, mask)
         dist = F.log_softmax(selection, dim=-1)
         if log_softmax:
@@ -129,7 +132,7 @@ class Net(nn.Module):
         Convert list of list states to batch for network
 
         param state_lists: 
-            list of 'list states'
+            list of 'list[endoded states]'
 
         return 
             States to Tensor
@@ -138,8 +141,12 @@ class Net(nn.Module):
         batch_size = len(state_lists)
         batch = np.zeros((batch_size,) + STATE_SHAPE, dtype=np.float32)
         for idx, state in enumerate(state_lists):
-            batch[idx] = state
+            batch[idx] = state_to_list(state, 2542)
         return torch.tensor(batch).to(self.device)
+
+    def valids_actions_to_tensor(self, valids_actions):
+        mask = state_to_list(valids_actions, 111)
+        return torch.tensor(mask, dtype=torch.bool).to(self.device)
 
     def train(self, data):
         """
@@ -151,7 +158,7 @@ class Net(nn.Module):
         # data: [(state, p_target, v_target, available_actions)]
         batch, p_targets, v_targets, available_actions = [], [], [], []
         for (state, p, v, actions) in data:
-            # Assume state is decoded
+            # state and available_actions are encoded
             batch.append([self.state_lists_to_batch(state)])
             p_targets.append(p)
             v_targets.append(v)
@@ -164,7 +171,8 @@ class Net(nn.Module):
         p_preds, v_preds = self(batch)
 
         for i, a in enumerate(available_actions):
-            p_preds[i] = self.get_policy_value(p_preds[i], a, True)
+            mask = self.valids_actions_to_tensor(a)
+            p_preds[i] = self.get_policy_value(p_preds[i], mask, True)
 
         loss_value = F.mse_loss(v_preds.squeeze(-1), v_targets)
         loss_policy = -torch.sum(p_preds * p_targets)
