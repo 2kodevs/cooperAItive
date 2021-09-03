@@ -20,7 +20,7 @@ def encoder_generator(
     def encoder(
         pieces: List[Piece],
         history: History,
-        player_id: int,
+        player_id: int, # //TODO: check that playerId is in range(4)
     ) -> int :
         pieces_mask = 0
         for p in pieces:
@@ -28,25 +28,25 @@ def encoder_generator(
         player = (pieces_mask, 1 << player_id, 0)
 
         # mapping the history
-        history_encoded = []
+        history_encoded = [player]
         total_pieces = ((max_number + 1) * (max_number + 2)) // 2
         for e, *data in history:
             if e.name == 'MOVE':
                 move, id, head = data
                 history_encoded.append((piece_bit(*move, max_number), 1 << id, head))
             if e.name == 'PASS':
-                history.append(((1 << (total_pieces + 1)), 1 << id, 0))
+                history_encoded.append(((1 << (total_pieces + 1)), 1 << id, 0))
 
         # reducing the history
         tuple_bits = [total_pieces + 1, 4, 2]
-        encode_number = 0
+        encoded_number = 0
         size = 0
         for data in history_encoded:
             for bits, num in zip(tuple_bits, data):
-                encode_number += (num << size)
+                encoded_number += (num << size)
                 size += bits
 
-        return encode_number
+        return encoded_number
 
     return encoder
 
@@ -83,12 +83,12 @@ def rollout_maker(
 
             state = encoder(pieces, history, current_player)
             try:
-                N, P, W = data[state]
+                N, P, Q = data[state]
                 all_N = sqrt(sum(N))
 
                 values = [
                     (Cput * p * all_N + w) / (1 + n) # utility value
-                    for n, p, w in zip(N, P, W)
+                    for n, p, w in zip(N, P, Q)
                 ]
 
                 best = max(values)
@@ -97,11 +97,9 @@ def rollout_maker(
 
                 s_comma_a.append((state, index))
 
-                step = None
                 valids = domino.valid_moves()
                 if valids[0] != None:
                     valids.sort(key=lambda x: (x[1], piece_bit(*x[0], domino.max_number)))
-                    step = valids[index]
                 done = domino.step(valids[index])
                 if done:
                     v = end_value[domino.winner]
@@ -110,8 +108,10 @@ def rollout_maker(
                 size = len(P)
                 data[state] = [[0] * size, P, [0] * size]
 
-        for (N, _, W), index in s_comma_a:
+        for (N, _, Q), index in s_comma_a:
+            W = (Q[index] * N[index]) + v
             N[index] += 1
-            W[index] += v
+            Q[index] = W / N[index]
 
     return maker
+    
