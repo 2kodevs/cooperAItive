@@ -11,7 +11,7 @@ class MonteCarlo(BasePlayer):
 
     def filter(self, valids):
         data = {}
-        selector = selector_generator(data, self.valid_moves()) # //TODO: Create a real selector
+        selector = selector_generator(data, self.valid_moves())
         encoder = encoder_generator(self.max_number)
         rollout = rollout_maker(data)
 
