@@ -62,7 +62,7 @@ class Domino:
         assert self.logs[-1][0] == Event.WIN
         return self.logs[-1][1]
 
-    def reset(self, hand, max_number=6, pieces_per_player=7):
+    def reset(self, hand, max_number, pieces_per_player):
         self.max_number = max_number
         self.pieces_per_player = pieces_per_player
         self.players = hand(self.max_number, self.pieces_per_player)
@@ -84,6 +84,20 @@ class Domino:
             return  0 <= piece[0] <= piece[1] <= self.max_number and \
                     self.players[self.current_player].have_piece(piece) and \
                     (self.heads[0] == -1 or self.heads[h] in piece)
+
+    def valid_moves(self):
+        # List all valid moves in the form (piece, head).
+        # This is put piece on head.
+        valids = []
+
+        def valid(piece, h):
+            return self.heads[h] in piece or self.heads[h] == -1
+
+        for head in range(2):
+            for piece in self.players[self.current_player].remaining:
+                if valid(piece, head):
+                    valids.append((piece, head))
+        return valids if valids else [None]
 
     def _is_over(self):
         # It is the beginning of the game
@@ -162,15 +176,15 @@ class DominoManager:
                 player.log(data)
             self.logs_transmitted += 1
 
-    def init(self, players, hand, *pieces_config):
+    def init(self, players, hand, max_number=6, pieces_per_player=7):
         self.logs_transmitted = 0
         self.players = players
         self.domino = Domino()
 
-        self.domino.reset(hand, *pieces_config)
+        self.domino.reset(hand, max_number, pieces_per_player)
 
         for i, player in enumerate(players):
-            player.reset(i, self.domino.players[i].pieces[:])
+            player.reset(i, self.domino.players[i].pieces[:], max_number)
         self.feed_logs()
 
     def step(self, fixed_action=False, action=None):
