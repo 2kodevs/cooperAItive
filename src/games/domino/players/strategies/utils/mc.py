@@ -64,7 +64,7 @@ def rollout_maker(
             pieces = domino.players[current_player].pieces
             history = domino.logs
 
-            state = encoder(pieces, history, current_player, domino.current_player)
+            state = encoder(pieces, history, current_player)
             valids, _ = get_valids_data(domino)
             try:
                 _, Q = data[state]
