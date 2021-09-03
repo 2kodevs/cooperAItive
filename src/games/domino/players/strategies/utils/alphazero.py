@@ -130,3 +130,47 @@ def get_valids_data(
 
     return valids, mask[0] + (mask[1] << mask_size)
     
+
+def selector_maker(
+    data: Dict,
+    valids: List[Action],
+    turn: int,
+    root: bool = True,
+    alpha: float = 0.03,
+    epsilon: float = 0.25,
+):
+    def selector(state):
+        nonlocal root
+        tau = get_temperature(turn)
+
+        # data = {state: [N, P, Q]}
+        N = data[state][:, 0].copy()
+        try:
+            move_values = np.power(N, 1 / tau)
+        # As temperature approaches 0, the effect becomes equivalent to argmax.
+        except (ZeroDivisionError, OverflowError):
+            move_values = np.zeros_like(N)
+            move_values[N.argmax()] = 1
+        total = move_values.sum()
+
+        # If all actions are unexplored, move_values is uniform.
+        if total == 0:
+            move_values[:] = 1
+            total = len(move_values)
+
+        pi = move_values / total
+
+        if root:
+            root = False
+            noice = np.random.dirichlet(np.array(alpha*np.ones_like(pi)))
+            pi = (1 - epsilon)*pi + epsilon*noice
+
+        action_idx = np.random.choice(len(pi), p=pi)
+        return valids[action_idx] if valids != [] else None
+        
+    return selector
+
+def get_temperature(turn):
+    if turn <= 6:
+        return 1
+    return 1 / 10 ** turn
