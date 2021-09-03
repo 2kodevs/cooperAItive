@@ -17,7 +17,7 @@ def monte_carlo(
     pieces, missing = game_data_collector(player.pieces, player.me, player.history)
     remaining = remaining_pieces(pieces, player.max_number)
 
-    # simultations
+    # simulations
     for _ in range(handouts):
         fixed_hands = game_hand_builder(pieces, missing, remaining, player.pieces_per_player)
         hand = lambda: [PlayerView(h) for h in fixed_hands]
