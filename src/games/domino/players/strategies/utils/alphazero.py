@@ -8,11 +8,13 @@ from random import choice
 def gauss(num): 
     return (num * (num + 1)) // 2
 
+
 def piece_bit(a, b, max_number):
     if a > b:
         a, b = b, a
     cant = gauss(max_number + 1) - gauss(max_number + 1 - a)
     return 1 << (cant + b - a)
+
 
 def encoder_generator(
     max_number: int
@@ -35,7 +37,7 @@ def encoder_generator(
                 move, id, head = data
                 history_encoded.append((piece_bit(*move, max_number), 1 << id, head))
             if e.name == 'PASS':
-                history_encoded.append(((1 << (total_pieces + 1)), 1 << id, 0))
+                history_encoded.append((1 << total_pieces, 1 << id, 0))
 
         # reducing the history
         tuple_bits = [total_pieces + 1, 4, 2]
@@ -82,6 +84,7 @@ def rollout_maker(
             history = domino.logs
 
             state = encoder(pieces, history, current_player)
+            valids, mask111 = get_valids_data(domino)
             try:
                 N, P, Q = data[state]
                 all_N = sqrt(sum(N))
@@ -97,14 +100,10 @@ def rollout_maker(
 
                 s_comma_a.append((state, index))
 
-                valids = domino.valid_moves()
-                if valids[0] != None:
-                    valids.sort(key=lambda x: (x[1], piece_bit(*x[0], domino.max_number)))
-                done = domino.step(valids[index])
-                if done:
+                if domino.step(valids[index]):
                     v = end_value[domino.winner]
             except KeyError:
-                P, v = NN(state)
+                P, v = NN(state, mask111)
                 size = len(P)
                 data[state] = [[0] * size, P, [0] * size]
 
@@ -114,4 +113,22 @@ def rollout_maker(
             Q[index] = W / N[index]
 
     return maker
+    
+
+def get_valids_data(
+    domino: Domino,
+):
+    mask_size = gauss(domino.max_number + 1)
+
+    valids = domino.valid_moves()
+    if valids[0] == None:
+        return valids, 1 << (mask_size * 2)
+
+    valids.sort(key=lambda x: (x[1], piece_bit(*x[0], domino.max_number)))
+
+    mask = [0, 0]
+    for piece, head in valids:
+        mask[head] += piece_bit(*piece, domino.max_number)
+
+    return valids, mask[0] + (mask[1] << mask_size)
     
