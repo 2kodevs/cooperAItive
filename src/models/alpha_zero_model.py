@@ -1,3 +1,4 @@
+import os
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -25,6 +26,7 @@ class Net(nn.Module):
             cpu or cuda
         """
         super(Net, self).__init__()
+        self.save_path = 'checkpoints/'
 
         device = torch.device('cuda' if device == 'cuda' else 'cpu')
         self.device = device
@@ -174,3 +176,31 @@ class Net(nn.Module):
 
         # Return loss values to track total loss mean for epoch
         return (loss.item(), loss_policy.item(), loss_value.item())
+
+    def save(self, error_log, tag='latest', verbose=False):
+        net_name = f'AlphaZero_Dom_{tag}_.ckpt'
+
+        if not os.path.exists(self.save_path):
+            os.makedirs(self.save_path)
+
+        if os.path.exists(self.save_path + net_name):
+            # Save backup for tag
+            latest_model = torch.load(self.save_path + net_name)
+            torch.save(latest_model, f'{self.save_path}AlphaZero_Dom_backup-{tag}_.ckpt')
+
+        torch.save({
+            'model_state_dict': self.state_dict(),
+            'optimizer_state_dict': self.optimizer.state_dict(),
+            'error_log': error_log,
+        }, self.save_path + net_name)
+        if verbose:
+            print(f'Model saved with name: {net_name[:-5]}')
+
+    def load(self, tag='latest', load_logs=False):
+        net_name = f'AlphaZero_Dom_{tag}.ckpt'
+        net_checkpoint = torch.load(self.save_path + net_name)
+        self.load_state_dict(net_checkpoint['model_state_dict'])
+        self.optimizer.load_state_dict(net_checkpoint['optimizer_state_dict'])
+        self.eval()
+        if load_logs:
+            return net_checkpoint['error_log']
