@@ -81,7 +81,7 @@ def rollout_maker(
 
         while v is None:
             current_player = domino.current_player
-            pieces = domino.players[current_player].pieces
+            pieces = domino.players[current_player].remaining
             history = domino.logs
 
             state = encoder(pieces, history, current_player)
