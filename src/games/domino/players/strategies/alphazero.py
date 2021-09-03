@@ -18,7 +18,7 @@ class AlphaZero(BasePlayer):
         encoder = encoder_generator(self.max_number)
         rollout = rollout_maker(data, self.NN)
 
-        _, action = monte_carlo(
+        _, action, _ = monte_carlo(
             self, 
             encoder, 
             rollout, 

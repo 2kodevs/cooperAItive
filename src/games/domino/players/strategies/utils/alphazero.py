@@ -166,7 +166,8 @@ def selector_maker(
             pi = (1 - epsilon)*pi + epsilon*noice
 
         action_idx = np.random.choice(len(pi), p=pi)
-        return valids[action_idx] if valids != [] else None
+        action = valids[action_idx] if valids != [] else None
+        return action, pi
         
     return selector
 
