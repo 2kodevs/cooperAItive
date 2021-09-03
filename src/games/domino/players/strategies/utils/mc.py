@@ -39,5 +39,5 @@ def monte_carlo(
 
     # Select the player action
     state = encoder(player.pieces, player.history)
-    return state, selector(state)
+    return (state, *selector(state))
             
