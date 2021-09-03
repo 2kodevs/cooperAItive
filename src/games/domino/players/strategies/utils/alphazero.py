@@ -90,8 +90,8 @@ def rollout_maker(
                 all_N = sqrt(sum(N))
 
                 values = [
-                    (Cput * p * all_N + w) / (1 + n) # utility value
-                    for n, p, w in zip(N, P, Q)
+                    q + Cput * p * all_N / (1 + n) # utility value
+                    for n, p, q in zip(N, P, Q)
                 ]
 
                 best = max(values)
