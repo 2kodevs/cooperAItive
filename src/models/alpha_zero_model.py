@@ -102,7 +102,6 @@ class Net(nn.Module):
         return pol, val
 
     def predict(self, s, available_actions):
-        # //TODO: decode s
         self.eval()
         batch = torch.tensor(s).to(self.device)
         pol, val = self(batch)
