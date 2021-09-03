@@ -91,7 +91,7 @@ class Domino:
         valids = []
 
         def valid(piece, h):
-            return self.heads[h] in piece
+            return self.heads[h] in piece or self.heads[h] == -1
 
         for head in range(2):
             for piece in self.players[self.current_player].remaining:
