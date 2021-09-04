@@ -11,7 +11,7 @@ from .types import State, Action
 def monte_carlo(
     player: BasePlayer, 
     encoder: Encoder,
-    maker: RolloutMaker,
+    rollout: RolloutMaker,
     selector: Selector,
     handouts: int,
     rollouts: int,
@@ -38,7 +38,7 @@ def monte_carlo(
                     domino.step(None)
 
             # Run the rollout
-            maker(domino, encoder, player.team)
+            rollout(domino, encoder, player.team)
 
     # Select the player action
     state = encoder(player.pieces, player.history, player.me)
@@ -67,9 +67,6 @@ def rollout_maker(
             state = encoder(pieces, history, current_player)
             valids, _ = get_valids_data(domino)
             try:
-                _, Q = data[state]
-
-                best = max(Q)
                 index = randint(0, len(valids) - 1)
 
                 s_comma_a.append((state, index))
@@ -90,7 +87,7 @@ def rollout_maker(
     return maker
     
 
-def selector_generator(
+def selector_maker(
     data: Dict,
     valids: List[Action],
 ):

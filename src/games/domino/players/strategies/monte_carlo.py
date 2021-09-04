@@ -1,6 +1,6 @@
 from ..player import BasePlayer
 from .utils.alphazero import encoder_generator
-from .utils.mc import monte_carlo, rollout_maker, selector_generator
+from .utils.mc import monte_carlo, rollout_maker, selector_maker
 
 
 class MonteCarlo(BasePlayer):
@@ -11,7 +11,7 @@ class MonteCarlo(BasePlayer):
 
     def filter(self, valids):
         data = {}
-        selector = selector_generator(data, self.valid_moves())
+        selector = selector_maker(data, self.valid_moves())
         encoder = encoder_generator(self.max_number)
         rollout = rollout_maker(data)
 
