@@ -77,7 +77,7 @@ def game_data_collector(current_hand, player_id, history):
     empty = [-1, -1]
     for event, *data in history:
         if event.name == 'MOVE':
-            move, id, head = data 
+            id, move, head = data 
             pieces[id].append(move)
             if heads == empty:
                 heads = list(move)
@@ -135,4 +135,4 @@ def game_hand_builder(pieces, missing, remaining, number_of_pieces=7):
     return pieces
 
 
-__all__ = [game_data_collector, game_hand_builder, remaining_pieces]
+__all__ = ["game_data_collector", "game_hand_builder", "remaining_pieces"]

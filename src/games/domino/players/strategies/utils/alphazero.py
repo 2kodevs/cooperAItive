@@ -1,5 +1,4 @@
-from typing import Dict
-from .types import State, Action, Piece, Encoder, List, History, Any
+from .types import State, Action, Piece, Encoder, List, History, Any, Dict
 from ....domino import Domino
 from math import sqrt
 from random import choice
@@ -24,7 +23,7 @@ def encoder_generator(
         pieces: List[Piece],
         history: History,
         player_id: int,
-    ) -> int :
+    ) -> int :       
         pieces_mask = 0
         for p in pieces:
             pieces_mask += piece_bit(*p, max_number)
@@ -35,9 +34,10 @@ def encoder_generator(
         total_pieces = ((max_number + 1) * (max_number + 2)) // 2
         for e, *data in history:
             if e.name == 'MOVE':
-                move, id, head = data
+                id, move, head = data
                 history_encoded.append((piece_bit(*move, max_number), 1 << id, head))
             if e.name == 'PASS':
+                id = data[0]
                 history_encoded.append((1 << total_pieces, 1 << id, 0))
 
         # reducing the history
@@ -71,13 +71,13 @@ def rollout_maker(
     def maker(
         domino: Domino,
         encoder: Encoder,
-        playerId: int,
+        player_id: int,
     ):
         s_comma_a = []
         v = None
         end_value = [0, 0, 0]
-        end_value[playerId] = 1
-        end_value[1 - playerId] = -1
+        end_value[player_id] = 1
+        end_value[1 - player_id] = -1
 
         while v is None:
             current_player = domino.current_player
