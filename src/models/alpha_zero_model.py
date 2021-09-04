@@ -30,7 +30,7 @@ class Net(nn.Module):
         super(Net, self).__init__()
         self.save_path = 'checkpoints/'
 
-        device = torch.device('cuda' if device == 'cuda' else 'cpu')
+        device = torch.device(device)
         self.device = device
 
         self.conv_in = nn.Sequential(
