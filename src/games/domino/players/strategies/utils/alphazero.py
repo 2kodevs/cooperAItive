@@ -144,7 +144,7 @@ def selector_maker(
         tau = get_temperature(turn)
 
         # data = {state: [N, P, Q]}
-        N = data[state][:, 0].copy()
+        N = data[state][:, 0]
         try:
             move_values = np.power(N, 1 / tau)
         # As temperature approaches 0, the effect becomes equivalent to argmax.
