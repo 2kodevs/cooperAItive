@@ -1,8 +1,8 @@
 from multiprocessing import Pool
 from ..models import alpha_zero_net as Net
 from .trainer import Trainer
+from ..games import *
 
-import numpy as np
 import random
 import time
 import os
@@ -12,50 +12,126 @@ class AlphaZeroTrainer(Trainer):
     """
     Trainer manager for Alpha Zero model
     """
-    def __init__(self, game: Domino, net: Net, batch_size: int, rollouts: int, data_path: str):
+    def __init__(self, net: Net, batch_size: int, handouts: int, rollouts: int, data_path: str = 'data'):
         """
-        param game:
-            Manager of the game in which the agent is a player
         param net: nn.Module
             Neural Network to train
         param batch_size: int
-            Size of training data used for epoch
+            Size of training data used per epoch
+        param handouts: int
+            Number of handouts per move search
+        param rollouts: int
+            Number of rollouts per handout
+        param data_path: string
+            Path to the folder where training data will be saved
         """
-        self.game = game
         self.net = net
         self.batch_size = batch_size
+        self.handouts = handouts
         self.rollouts = rollouts
         self.data_path = data_path
         self.error_log = []
 
+        if not os.path.exists(self.data_path):
+            os.makedirs(self.data_path)
+
         self.net.eval()
         
-    def self_play(self, rollouts):
-        # //TODO: Rulo
-        # Only one game simulated here, and save game data.
-        # This method will be called by policy_iteration,
-        # use all the params that you like, or properties of the class.
-        # You can change init to accept more args.
-        # The NN is in self.net, you can pass it to your methods.
-        pass
+    def self_play(self, handouts, rollouts):
+        """
+        Simulate one game via self play and save moves played
+
+        param handouts: int
+            Number of handouts per move search
+        param rollouts: int
+            Number of rollouts per handout
+
+        return
+            Data of the game. List[(state, pi, result)]
+        """
+        data = []
+        game_over = False
+        players = [BasePlayer(i) for i in range(4)]
+        manager = DominoManager()
+        manager.init(players, hand_out, max_number=9, pieces_per_player=10)
+
+        while not game_over:
+            stats = {}
+            cur_player = players[manager.domino.current_player]
+            selector = selector_maker(stats, cur_player.valid_moves(), cur_player.pieces_per_player - len(cur_player.pieces), True)
+            encoder = encoder_generator(9)
+            rollout = rollout_maker(stats, self.net)
+
+            state, action, pi = monte_carlo(
+                cur_player, 
+                encoder, 
+                rollout, 
+                selector,
+                handouts,
+                rollouts,
+            )
+            game_over = manager.step(action=action)
+            data.append((state, pi, cur_player))
+
+        training_data = []
+        for state, pi, player in data:
+            end_value = [0, 0, 0]
+            end_value[player.team] = 1
+            end_value[1 - player.team] = -1
+            result = end_value[manager.domino.winner] 
+            training_data.append((state, pi, result))
+        return data
 
     def policy_iteration(self, epoch: int, simulate: bool, num_process=1, verbose=False, save_data=False):
-        data = self.get_data(simulate, num_process, verbose, self.batch_size)
+        """
+        Do a training iteration (epoch)
+
+        param epoch: int
+            Current epoch
+        param simulate: bool
+            Set True if data must be generated via self play. Set False to load saved data if possible. 
+            If there is not enough saved data, missing data will be generated via self play.
+        param num_process: int
+            Number of parallel self_play games. Set to one to disable parallelism.
+        param verbose: bool
+            Set True to enable verbose log
+        param save_data: bool
+            Set True to save generated training data
+
+        return
+            (total_loss, loss_policy, loss_value)
+        """
+        if verbose:
+            print('Getting training data...')
+        data = self._get_data(simulate, num_process, verbose, self.batch_size)
         
         if save_data:
             num_files = len([name for name in os.listdir(self.data_path) if os.path.isfile(name)])
             path = f'{self.data_path}/training_data_{num_files}'
             with open(path, 'w') as writer:
                 json.dump(data, writer)
+            if verbose:
+                print(f'Training data saved at {path}')
 
         batch = random.sample(data, self.batch_size)
-        loss = self.net.train(batch)
+        if verbose:
+            print(f'[Epoch {epoch}] -- Training net --')
+            start = time.time()
+
         Trainer.adjust_learning_rate(epoch, self.net.optimizer)
+        loss = self.net.train(batch)
         self.error_log.append(loss)
-        self.net.save(self.error_log, verbose=True)
+        self.net.save(self.error_log, epoch, verbose=True)
+
+        if verbose:
+            print(f'-- Training took {str(int(time.time() - start))} seconds --')
+            print(f'policy head loss: {loss[1]} -- value head loss: {loss[2]} -- TOTAL LOSS: {loss[0]}')
+            print('Checkpoint saved')
+            print('')
+
         return loss
 
-    def get_data(self, simulate: bool, num_process: int, verbose: bool, batch_size: int):
+    def _get_data(self, simulate: bool, num_process: int, verbose: bool, batch_size: int):
         data = []
         num_games = 0
 
@@ -66,7 +142,7 @@ class AlphaZeroTrainer(Trainer):
 
             if num_process > 1:
                 while len(data) < batch_size:
-                    jobs = [self.rollouts] * (batch_size / num_process)
+                    jobs = [self.handouts, self.rollouts] * (batch_size / num_process)
                     num_games += batch_size / num_process
                     pool = Pool(num_process)
                     new_data = pool.map(self.self_play, jobs)
@@ -75,7 +151,7 @@ class AlphaZeroTrainer(Trainer):
                     data.extend(new_data)
             else:
                 while len(data) < batch_size:
-                    data.extend(self.self_play(self.rollouts))
+                    data.extend(self.self_play(self.handouts, self.rollouts))
                     num_games += 1
 
             if verbose:
@@ -105,3 +181,12 @@ class AlphaZeroTrainer(Trainer):
                 data.extend(self.get_data(True, num_process, verbose, batch_size - len(data)))
 
         return data
+
+    def train(self, verbose=False):
+        """
+        Training Pipeline
+        """
+        # //TODO: Setup profilers and print mean loss on verbose mode
+        # //TODO: Run epochs until training cancellation
+        # //TODO: Add support for loading a checkpoint
+        pass
