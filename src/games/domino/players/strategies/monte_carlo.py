@@ -1,19 +1,19 @@
 from ..player import BasePlayer
-from .utils.alphazero import encoder_generator, rollout_maker
-from .utils.mc import monte_carlo
+from .utils.alphazero import encoder_generator
+from .utils.mc import monte_carlo, rollout_maker, selector_maker
 
 
-class AlphaZero(BasePlayer):
-    def __init__(self, name, handouts, rollouts, NN):
-        super().__init__(f'AlphaZero::{name}')
-        self.NN = NN
+class MonteCarlo(BasePlayer):
+    def __init__(self, name, handouts=10, rollouts=50):
+        super().__init__(f'MonteCarlo::{name}')
         self.handouts = handouts
         self.rollouts = rollouts
 
     def filter(self, valids):
-        selector = None # //TODO: Create a real selector
+        data = {}
+        selector = selector_maker(data, self.valid_moves())
         encoder = encoder_generator(self.max_number)
-        rollout = rollout_maker({}, self.NN)
+        rollout = rollout_maker(data)
 
         _, action, *_ = monte_carlo(
             self, 
