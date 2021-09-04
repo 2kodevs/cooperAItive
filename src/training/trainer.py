@@ -13,7 +13,7 @@ class Trainer:
     @staticmethod
     def adjust_learning_rate(epoch, optimizer):
 
-        lr = 0.02
+        lr = 0.2
 
         if epoch > 500:
             lr = lr / 1000
