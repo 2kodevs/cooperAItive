@@ -104,6 +104,17 @@ class Net(nn.Module):
         return pol, val
 
     def predict(self, s, valids_actions):
+        """
+        Infer node data given an state
+
+        param s: 
+            encoded state of the game
+        param available_actions
+            encoded valid actions from a position of the game
+
+        return
+            (Move probabilities P, value V)
+        """
         self.eval()
         batch = self.state_lists_to_batch(s)
         mask = self.valids_actions_to_tensor(valids_actions)
@@ -119,6 +130,9 @@ class Net(nn.Module):
             list of 111 bits. Raw policy head
         param available_actions
             list of 111 bits. Mask of available actions
+
+        return
+            Move probabilities
         """
         mask = torch.tensor(valids_actions, dtype=torch.bool).to(self.device)
         selection = torch.masked_select(logits, mask)
@@ -154,15 +168,18 @@ class Net(nn.Module):
 
         param data:
             list with training data
+
+        return:
+            Training loss
         """
-        # data: [(state, p_target, v_target, available_actions)]
-        batch, p_targets, v_targets, available_actions = [], [], [], []
+        # data: [(state, p_target, v_target, valids_actions)]
+        batch, p_targets, v_targets, valids_actions = [], [], [], []
         for (state, p, v, actions) in data:
             # state and available_actions are encoded
             batch.append([self.state_lists_to_batch(state)])
             p_targets.append(p)
             v_targets.append(v)
-            available_actions.append(actions)
+            valids_actions.append(actions)
 
         self.optimizer.zero_grad()
 
@@ -170,7 +187,7 @@ class Net(nn.Module):
         v_targets = torch.FloatTensor(v_targets).to(self.device)
         p_preds, v_preds = self(batch)
 
-        for i, a in enumerate(available_actions):
+        for i, a in enumerate(valids_actions):
             mask = self.valids_actions_to_tensor(a)
             p_preds[i] = self.get_policy_value(p_preds[i], mask, True)
 
@@ -184,7 +201,7 @@ class Net(nn.Module):
         # Return loss values to track total loss mean for epoch
         return (loss.item(), loss_policy.item(), loss_value.item())
 
-    def save(self, error_log, tag='latest', verbose=False):
+    def save(self, error_log, epoch, tag='latest', verbose=False):
         net_name = f'AlphaZero_Dom_{tag}_.ckpt'
 
         if not os.path.exists(self.save_path):
@@ -199,6 +216,7 @@ class Net(nn.Module):
             'model_state_dict': self.state_dict(),
             'optimizer_state_dict': self.optimizer.state_dict(),
             'error_log': error_log,
+            'epoch': epoch,
         }, self.save_path + net_name)
         if verbose:
             print(f'Model saved with name: {net_name[:-5]}')
@@ -210,4 +228,4 @@ class Net(nn.Module):
         self.optimizer.load_state_dict(net_checkpoint['optimizer_state_dict'])
         self.eval()
         if load_logs:
-            return net_checkpoint['error_log']
+            return net_checkpoint['error_log'], net_checkpoint['epoch']
