@@ -36,7 +36,7 @@ class Net(nn.Module):
         self.conv_in = nn.Sequential(
             nn.Conv2d(input_shape[0], NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
             nn.BatchNorm2d(NUM_FILTERS),
-            nn.LeakyReLU()
+            nn.LeakyReLU(),
         ).to(device)
 
         # layers with residual
@@ -45,14 +45,14 @@ class Net(nn.Module):
             self.residual_nets.append(nn.Sequential(
                 nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
                 nn.BatchNorm2d(NUM_FILTERS),
-                nn.LeakyReLU()
+                nn.LeakyReLU(),
             ).to(device))
 
         # value head
         self.conv_val = nn.Sequential(
             nn.Conv2d(NUM_FILTERS, 1, kernel_size=1),
             nn.BatchNorm2d(1),
-            nn.LeakyReLU()
+            nn.LeakyReLU(),
         ).to(device)
 
         body_out_shape = (NUM_FILTERS, ) + input_shape[1:]
@@ -62,14 +62,14 @@ class Net(nn.Module):
             nn.Linear(conv_val_size, 256),
             nn.LeakyReLU(),
             nn.Linear(256, 1),
-            nn.Tanh()
+            nn.Tanh(),
         ).to(device)
 
         # policy head
         self.conv_policy = nn.Sequential(
             nn.Conv2d(NUM_FILTERS, input_shape[0], kernel_size=1),
             nn.BatchNorm2d(input_shape[0]),
-            nn.LeakyReLU()
+            nn.LeakyReLU(),
         ).to(device)
         conv_policy_size = self._get_conv_policy_size(body_out_shape)
         self.policy = nn.Sequential(
@@ -108,18 +108,18 @@ class Net(nn.Module):
         Infer node data given an state
 
         param s: 
-            encoded state of the game
+            list of encoded states of the game
         param available_actions
-            encoded valid actions from a position of the game
+            list of encoded valids actions from a position of the game
 
         return
-            (Move probabilities P, value V)
+            (Move probabilities P vector, value V vector)
         """
         self.eval()
         batch = self.state_lists_to_batch(s)
-        mask = self.valids_actions_to_tensor(valids_actions)
+        masks = [self.valids_actions_to_tensor(va) for va in valids_actions]
         pol, val = self(batch)
-        pol = self.get_policy_value(pol, mask, False)
+        pol = [self.get_policy_value(p, mask, False) for p, mask in zip(pol, masks)]
         return pol, val
 
     def get_policy_value(self, logits, valids_actions, log_softmax):
@@ -130,6 +130,8 @@ class Net(nn.Module):
             list of 111 bits. Raw policy head
         param available_actions
             list of 111 bits. Mask of available actions
+        param log_softmax
+            Set True to use log_softmax as activation function. Set False to use softmax 
 
         return
             Move probabilities
@@ -224,6 +226,7 @@ class Net(nn.Module):
     def load(self, tag='latest', load_logs=False):
         net_name = f'AlphaZero_Dom_{tag}.ckpt'
         net_checkpoint = torch.load(self.save_path + net_name)
+        # //TODO: Review device issue after load
         self.load_state_dict(net_checkpoint['model_state_dict'])
         self.optimizer.load_state_dict(net_checkpoint['optimizer_state_dict'])
         self.eval()

@@ -12,7 +12,16 @@ class AlphaZeroTrainer(Trainer):
     """
     Trainer manager for Alpha Zero model
     """
-    def __init__(self, net: Net, batch_size: int, handouts: int, rollouts: int, data_path: str = 'data'):
+    def __init__(
+        self,
+        net: Net,
+        batch_size: int,
+        handouts: int,
+        rollouts: int,
+        max_number: int,
+        pieces_per_player: int,
+        data_path: str = 'data'
+    ):
         """
         param net: nn.Module
             Neural Network to train
@@ -22,6 +31,10 @@ class AlphaZeroTrainer(Trainer):
             Number of handouts per move search
         param rollouts: int
             Number of rollouts per handout
+        param max_number:
+            Max piece number
+        param pieces_per_player:
+            Number of pieces distributed per player
         param data_path: string
             Path to the folder where training data will be saved
         """
@@ -29,6 +42,8 @@ class AlphaZeroTrainer(Trainer):
         self.batch_size = batch_size
         self.handouts = handouts
         self.rollouts = rollouts
+        self.max_number = max_number
+        self.pieces_per_player = pieces_per_player
         self.data_path = data_path
         self.error_log = []
 
@@ -37,7 +52,11 @@ class AlphaZeroTrainer(Trainer):
 
         self.net.eval()
         
-    def self_play(self, handouts, rollouts):
+    def self_play(
+        self,
+        handouts,
+        rollouts
+    ):
         """
         Simulate one game via self play and save moves played
 
@@ -51,16 +70,20 @@ class AlphaZeroTrainer(Trainer):
         """
         data = []
         game_over = False
+        root = True
         players = [BasePlayer(i) for i in range(4)]
         manager = DominoManager()
-        manager.init(players, hand_out, max_number=9, pieces_per_player=10)
+        manager.init(players, hand_out, self.max_number, self.pieces_per_player)
 
         while not game_over:
             stats = {}
             cur_player = players[manager.domino.current_player]
-            selector = selector_maker(stats, cur_player.valid_moves(), cur_player.pieces_per_player - len(cur_player.pieces), True)
-            encoder = encoder_generator(9)
+            selector = selector_maker(stats, cur_player.valid_moves(), cur_player.pieces_per_player - len(cur_player.pieces), root, 6)
+            encoder = encoder_generator(self.max_number)
             rollout = rollout_maker(stats, self.net)
+
+            if root:
+                root = False
 
             state, action, pi = monte_carlo(
                 cur_player, 
@@ -70,19 +93,27 @@ class AlphaZeroTrainer(Trainer):
                 handouts,
                 rollouts,
             )
+            _, mask = get_valids_data(manager.domino)
             game_over = manager.step(action=action)
-            data.append((state, pi, cur_player))
+            data.append((state, pi, cur_player, mask))
 
         training_data = []
-        for state, pi, player in data:
+        for state, pi, player, mask in data:
             end_value = [0, 0, 0]
             end_value[player.team] = 1
             end_value[1 - player.team] = -1
             result = end_value[manager.domino.winner] 
-            training_data.append((state, pi, result))
+            training_data.append((state, pi, result, mask))
         return data
 
-    def policy_iteration(self, epoch: int, simulate: bool, num_process=1, verbose=False, save_data=False):
+    def policy_iteration(
+        self,
+        epoch: int,
+        simulate: bool,
+        num_process=1,
+        verbose=False,
+        save_data=False
+    ):
         """
         Do a training iteration (epoch)
 
@@ -131,7 +162,13 @@ class AlphaZeroTrainer(Trainer):
 
         return loss
 
-    def _get_data(self, simulate: bool, num_process: int, verbose: bool, batch_size: int):
+    def _get_data(
+        self,
+        simulate: bool,
+        num_process: int,
+        verbose: bool,
+        batch_size: int
+    ):
         data = []
         num_games = 0
 
@@ -148,7 +185,8 @@ class AlphaZeroTrainer(Trainer):
                     new_data = pool.map(self.self_play, jobs)
                     pool.close()
                     pool.join()
-                    data.extend(new_data)
+                    for d in new_data:
+                        data.extend(d)
             else:
                 while len(data) < batch_size:
                     data.extend(self.self_play(self.handouts, self.rollouts))
@@ -178,7 +216,7 @@ class AlphaZeroTrainer(Trainer):
             if len(data) < batch_size:
                 if verbose:
                     print('Insuficient data. Proceding to generate data with self play')
-                data.extend(self.get_data(True, num_process, verbose, batch_size - len(data)))
+                data.extend(self._get_data(True, num_process, verbose, batch_size - len(data)))
 
         return data
 

@@ -85,20 +85,23 @@ def rollout_maker(
             history = domino.logs
 
             state = encoder(pieces, history, current_player)
-            valids, mask111 = get_valids_data(domino)
+            valids, mask = get_valids_data(domino)
             try:
                 N, P, Q = data[state][:, 0], data[state][:, 1], data[state][:, 2]
                 all_N = sqrt(N.sum())
                 U = Cput * P * all_N / (1 + N)
                 values = Q + U
-                best_index = np.argmax(values)
+
+                args_max = np.argwhere(values == np.max(values)).flatten()
+                best_index = np.random.choice(args_max)
 
                 s_comma_a.append((state, best_index))
 
                 if domino.step(valids[best_index]):
                     v = end_value[domino.winner]
             except KeyError:
-                P, v = NN.predict(state, mask111)
+                P, v = NN.predict([state], [mask])
+                P, v = P[0], v[0]
                 size = len(P)
                 npq = np.zeros((size, 3), dtype=object)
                 npq[:, 1] = P
@@ -135,22 +138,21 @@ def selector_maker(
     data: Dict,
     valids: List[Action],
     turn: int,
-    root: bool = True,
+    root: bool,
+    tau_threshold: int,
     alpha: float = 0.03,
     epsilon: float = 0.25,
 ):
     def selector(state):
-        nonlocal root
-        tau = get_temperature(turn)
-
         # data = {state: [N, P, Q]}
         N = data[state][:, 0]
-        try:
-            move_values = np.power(N, 1 / tau)
-        # As temperature approaches 0, the effect becomes equivalent to argmax.
-        except (ZeroDivisionError, OverflowError):
+
+        if turn <= tau_threshold:
+            move_values = N
+        else:
             move_values = np.zeros_like(N)
-            move_values[N.argmax()] = 1
+            args_max = np.argwhere(N == np.max(N)).flatten()
+            move_values[args_max] = 1
         total = move_values.sum()
 
         # If all actions are unexplored, move_values is uniform.
@@ -161,7 +163,6 @@ def selector_maker(
         pi = move_values / total
 
         if root:
-            root = False
             noice = np.random.dirichlet(np.array(alpha*np.ones_like(pi)))
             pi = (1 - epsilon)*pi + epsilon*noice
 
@@ -170,8 +171,3 @@ def selector_maker(
         return action, pi
         
     return selector
-
-def get_temperature(turn):
-    if turn <= 6:
-        return 1
-    return 1 / 10 ** turn

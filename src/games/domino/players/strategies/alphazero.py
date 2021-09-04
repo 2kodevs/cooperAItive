@@ -12,7 +12,7 @@ class AlphaZero(BasePlayer):
 
     def filter(self, valids):
         data = {}
-        selector = selector_maker(data, self.valid_moves(), self.pieces_per_player - len(self.pieces), False)
+        selector = selector_maker(data, self.valid_moves(), self.pieces_per_player - len(self.pieces), False, 6)
         encoder = encoder_generator(self.max_number)
         rollout = rollout_maker(data, self.NN)
 
