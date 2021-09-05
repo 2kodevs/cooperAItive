@@ -1,4 +1,5 @@
 from multiprocessing import Pool
+from src.games.domino.domino import Domino
 from torch.utils.tensorboard import SummaryWriter
 from ..players import alpha_zero_net as Net
 from .trainer import Trainer
@@ -75,13 +76,12 @@ class AlphaZeroTrainer(Trainer):
         data = []
         game_over = False
         root = True
-        players = [BasePlayer(i) for i in range(4)]
-        manager = DominoManager()
-        manager.init(players, hand_out, self.max_number, self.pieces_per_player)
+        domino = Domino()
+        domino.reset(hand_out, self.max_number, self.pieces_per_player)
 
         while not game_over:
             stats = {}
-            cur_player = players[manager.domino.current_player]
+            cur_player = BasePlayer.from_domino(domino)
             selector = selector_maker(stats, cur_player.valid_moves(), cur_player.pieces_per_player - len(cur_player.pieces), root, self.tau_threshold)
             encoder = encoder_generator(self.max_number)
             rollout = rollout_maker(stats, self.net)
@@ -96,8 +96,8 @@ class AlphaZeroTrainer(Trainer):
                 handouts,
                 rollouts,
             )
-            _, mask = get_valids_data(manager.domino)
-            game_over = manager.step(True, action)
+            _, mask = get_valids_data(domino)
+            game_over = domino.step(action)
             data.append((state, pi, cur_player, mask))
 
         training_data = []
@@ -105,7 +105,7 @@ class AlphaZeroTrainer(Trainer):
             end_value = [0, 0, 0]
             end_value[player.team] = 1
             end_value[1 - player.team] = -1
-            result = end_value[manager.domino.winner] 
+            result = end_value[domino.winner] 
             training_data.append((state, pi, result, mask))
         return data
 

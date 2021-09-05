@@ -1,4 +1,5 @@
 import random
+from ..domino import Domino
 
 class BasePlayer:
     def __init__(self, name):
@@ -124,3 +125,12 @@ class BasePlayer:
         if position is None:
             position = self.me
         return (position + 1) & 3
+
+    @staticmethod
+    def from_domino(domino: Domino):
+        player = BasePlayer('DominoPlayer')
+        player.position = domino.current_player
+        player.pieces = domino.players[player.me].remaining[:]
+        player.history = domino.logs[:]
+        player.heads = domino.heads[:]
+        return player
