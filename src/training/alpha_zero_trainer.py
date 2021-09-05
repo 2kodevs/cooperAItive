@@ -94,7 +94,7 @@ class AlphaZeroTrainer(Trainer):
                 rollouts,
             )
             _, mask = get_valids_data(manager.domino)
-            game_over = manager.step(action=action)
+            game_over = manager.step(True, action)
             data.append((state, pi, cur_player, mask))
 
         training_data = []
