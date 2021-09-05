@@ -1,12 +1,13 @@
 from ..player import BasePlayer
 from .utils.alphazero import encoder_generator, rollout_maker, selector_maker
 from .utils.mc import monte_carlo
+from .models import alpha_zero_net as net
 
 
 class AlphaZero(BasePlayer):
     def __init__(self, name, handouts=10, rollouts=10, NN=None):
         super().__init__(f'AlphaZero::{name}')
-        self.NN = None # //TODO: Init test NN here
+        self.NN = net(device='gpu')
         self.handouts = handouts
         self.rollouts = rollouts
 
