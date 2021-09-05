@@ -129,7 +129,7 @@ class BasePlayer:
     def from_domino(domino):
         player = BasePlayer('DominoPlayer')
         player.position = domino.current_player
-        player.pieces = domino.players[player.me].remaining[:]
+        player.pieces = domino.players[player.me].remaining.copy()
         player.history = domino.logs[:]
         player.heads = domino.heads[:]
         player.pieces_per_player = domino.pieces_per_player
