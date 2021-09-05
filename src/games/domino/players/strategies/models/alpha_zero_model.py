@@ -261,10 +261,12 @@ class Net(nn.Module):
         """
         assert isinstance(state_lists, list)
         batch_size = len(state_lists)
-        batch = np.zeros((batch_size,) + STATE_SHAPE, dtype=np.float32)
+        batch = torch.zeros((batch_size,) + STATE_SHAPE, dtype=torch.float32)
+        size = np.array(STATE_SHAPE).prod()
         for idx, state in enumerate(state_lists):
-            batch[idx] = state_to_list(state, 2542)
-        return torch.tensor(batch).to(self.device)
+            decoded = torch.tensor([state_to_list(state, size)])
+            batch[idx] = decoded.view(STATE_SHAPE)
+        return batch.to(self.device)
 
     def valids_actions_to_tensor(self, valids_actions):
         mask = state_to_list(valids_actions, 111)

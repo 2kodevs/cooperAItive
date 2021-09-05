@@ -1,1 +1,1 @@
-from .models import alpha_zero_net, STATE_SHAPE
+from .games import alpha_zero_net, AZ_STATE_SHAPE
