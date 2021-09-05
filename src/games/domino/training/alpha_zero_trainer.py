@@ -1,9 +1,9 @@
 from multiprocessing import Pool
-from src.games.domino.domino import Domino
 from torch.utils.tensorboard import SummaryWriter
 from ..players import alpha_zero_net as Net
 from .trainer import Trainer
 from ..players import *
+from ..domino import Domino
 
 import random
 import time
