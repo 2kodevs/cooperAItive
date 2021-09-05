@@ -5,7 +5,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 import numpy as np
 
-from ..games import state_to_list
+from ..utils import state_to_list
 
 #STATE= [(56bits, 4bits, 2bits) x 41]
 STATE_SHAPE = (1, 41, 62)

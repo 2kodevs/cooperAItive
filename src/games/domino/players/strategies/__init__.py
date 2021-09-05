@@ -17,6 +17,7 @@ from .passer import Passer
 from .alphazero import AlphaZero
 
 from .utils import state_to_list, selector_maker, encoder_generator, rollout_maker, monte_carlo, get_valids_data
+from .models import alpha_zero_net, AZ_STATE_SHAPE
 
 # Add players to this list
 PLAYERS = [

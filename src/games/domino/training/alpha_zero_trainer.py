@@ -1,8 +1,8 @@
 from multiprocessing import Pool
 from torch.utils.tensorboard import SummaryWriter
-from ..models import alpha_zero_net as Net
+from ..players import alpha_zero_net as Net
 from .trainer import Trainer
-from ..games import *
+from ..players import *
 
 import random
 import time
