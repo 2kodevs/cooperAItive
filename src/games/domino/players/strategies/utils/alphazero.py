@@ -3,6 +3,7 @@ from ....domino import Domino
 from math import sqrt
 from random import choice
 
+import numpy as np
 
 def gauss(num): 
     return (num * (num + 1)) // 2
@@ -84,33 +85,32 @@ def rollout_maker(
             history = domino.logs
 
             state = encoder(pieces, history, current_player)
-            valids, mask111 = get_valids_data(domino)
+            valids, mask = get_valids_data(domino)
             try:
-                N, P, Q = data[state]
-                all_N = sqrt(sum(N))
+                N, P, Q = data[state][:, 0], data[state][:, 1], data[state][:, 2]
+                all_N = sqrt(N.sum())
+                U = Cput * P * all_N / (1 + N)
+                values = Q + U
 
-                values = [
-                    q + Cput * p * all_N / (1 + n) # utility value
-                    for n, p, q in zip(N, P, Q)
-                ]
+                args_max = np.argwhere(values == np.max(values)).flatten()
+                best_index = np.random.choice(args_max)
 
-                best = max(values)
-                filtered_values = [i for i, x in enumerate(values) if x == best]
-                index = choice(filtered_values)
+                s_comma_a.append((state, best_index))
 
-                s_comma_a.append((state, index))
-
-                if domino.step(valids[index]):
+                if domino.step(valids[best_index]):
                     v = end_value[domino.winner]
             except KeyError:
-                P, v = NN(state, mask111)
+                [P], [v] = NN.predict([state], [mask])
                 size = len(P)
-                data[state] = [[0] * size, P, [0] * size]
+                npq = np.zeros((size, 3), dtype=object)
+                npq[:, 1] = P
+                data[state] = npq
 
-        for (N, _, Q), index in s_comma_a:
-            W = (Q[index] * N[index]) + v
-            N[index] += 1
-            Q[index] = W / N[index]
+        for state, index in s_comma_a:
+            n, q = data[state][index, 0], data[state][index, 2]
+            W = (q * n) + v
+            data[state][index, 0] += 1
+            data[state][index, 2] = (n*q + v) / (n + 1)
 
     return maker
     
@@ -132,3 +132,41 @@ def get_valids_data(
 
     return valids, mask[0] + (mask[1] << mask_size)
     
+
+def selector_maker(
+    data: Dict,
+    valids: List[Action],
+    turn: int,
+    root: bool,
+    tau_threshold: int,
+    alpha: float = 0.03,
+    epsilon: float = 0.25,
+):
+    def selector(state):
+        # data = {state: [N, P, Q]}
+        N = data[state][:, 0]
+
+        if turn <= tau_threshold:
+            move_values = N
+        else:
+            move_values = np.zeros_like(N)
+            args_max = np.argwhere(N == np.max(N)).flatten()
+            move_values[args_max] = 1
+        total = move_values.sum()
+
+        # If all actions are unexplored, move_values is uniform.
+        if total == 0:
+            move_values[:] = 1
+            total = len(move_values)
+
+        pi = move_values / total
+
+        if root:
+            noice = np.random.dirichlet(np.array(alpha*np.ones_like(pi)))
+            pi = (1 - epsilon)*pi + epsilon*noice
+
+        action_idx = np.random.choice(len(pi), p=pi)
+        action = valids[action_idx] if valids != [] else None
+        return action, pi
+        
+    return selector
