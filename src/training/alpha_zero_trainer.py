@@ -86,8 +86,7 @@ class AlphaZeroTrainer(Trainer):
             encoder = encoder_generator(self.max_number)
             rollout = rollout_maker(stats, self.net)
 
-            if root:
-                root = False
+            root = False
 
             state, action, pi = monte_carlo(
                 cur_player, 
@@ -98,7 +97,7 @@ class AlphaZeroTrainer(Trainer):
                 rollouts,
             )
             _, mask = get_valids_data(manager.domino)
-            game_over = manager.step(action=action)
+            game_over = manager.step(True, action)
             data.append((state, pi, cur_player, mask))
 
         training_data = []
