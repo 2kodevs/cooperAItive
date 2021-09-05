@@ -82,8 +82,7 @@ class AlphaZeroTrainer(Trainer):
             encoder = encoder_generator(self.max_number)
             rollout = rollout_maker(stats, self.net)
 
-            if root:
-                root = False
+            root = False
 
             state, action, pi = monte_carlo(
                 cur_player, 
