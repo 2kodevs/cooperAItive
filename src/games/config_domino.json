@@ -1,0 +1,18 @@
+{   
+    "batch_size": 64,
+    "handouts": 10,
+    "rollouts": 10,
+    "tau_threshold": 6,
+    "max_number": 9,
+    "pieces_per_player": 10,
+    "data_path": "src/games/domino/training/data", 
+    "save_path": "src/games/domino/training",
+
+    "epochs": 10,
+    "simulate": true,
+    "load_checkpoint": false,
+    "tag": "latest",
+    "num_process": 1,
+    "verbose": true,
+    "save_data": true
+}
