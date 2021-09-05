@@ -22,6 +22,7 @@ class AlphaZeroTrainer(Trainer):
         rollouts: int,
         max_number: int,
         pieces_per_player: int,
+        tau_threshold: int = 6,
         data_path: str = 'data'
     ):
         """
@@ -37,6 +38,8 @@ class AlphaZeroTrainer(Trainer):
             Max piece number
         param pieces_per_player:
             Number of pieces distributed per player
+        param tau_threshold:
+            Threshold for temperature behavior to become equivalent to argmax
         param data_path: string
             Path to the folder where training data will be saved
         """
@@ -46,6 +49,7 @@ class AlphaZeroTrainer(Trainer):
         self.rollouts = rollouts
         self.max_number = max_number
         self.pieces_per_player = pieces_per_player
+        self.tau_threshold = tau_threshold
         self.data_path = data_path
         self.error_log = []
 
@@ -78,7 +82,7 @@ class AlphaZeroTrainer(Trainer):
         while not game_over:
             stats = {}
             cur_player = players[manager.domino.current_player]
-            selector = selector_maker(stats, cur_player.valid_moves(), cur_player.pieces_per_player - len(cur_player.pieces), root, 6)
+            selector = selector_maker(stats, cur_player.valid_moves(), cur_player.pieces_per_player - len(cur_player.pieces), root, self.tau_threshold)
             encoder = encoder_generator(self.max_number)
             rollout = rollout_maker(stats, self.net)
 
