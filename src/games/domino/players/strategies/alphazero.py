@@ -4,9 +4,9 @@ from .utils.mc import monte_carlo
 
 
 class AlphaZero(BasePlayer):
-    def __init__(self, name, handouts, rollouts, NN):
+    def __init__(self, name, handouts=10, rollouts=10, NN=None):
         super().__init__(f'AlphaZero::{name}')
-        self.NN = NN
+        self.NN = None # //TODO: Init test NN here
         self.handouts = handouts
         self.rollouts = rollouts
 

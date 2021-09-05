@@ -16,7 +16,7 @@ class Net(nn.Module):
     """
     Neural Network for Alpha Zero implementation of Dominoes
     """
-    def __init__(self, input_shape, policy_shape, device='cpu'):
+    def __init__(self, input_shape=STATE_SHAPE, policy_shape=111, device='cpu'):
         """
         param input_shape: (int, int, int)
             Dimensions of the input.
