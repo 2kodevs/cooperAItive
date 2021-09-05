@@ -1,4 +1,5 @@
 from multiprocessing import Pool
+from torch.utils.tensorboard import SummaryWriter
 from ..models import alpha_zero_net as Net
 from .trainer import Trainer
 from ..games import *
@@ -7,6 +8,7 @@ import random
 import time
 import os
 import json
+import torch.profiler
 
 class AlphaZeroTrainer(Trainer):
     """
@@ -49,8 +51,6 @@ class AlphaZeroTrainer(Trainer):
 
         if not os.path.exists(self.data_path):
             os.makedirs(self.data_path)
-        
-        self.net.eval()
         
     def self_play(
         self,
@@ -220,11 +220,36 @@ class AlphaZeroTrainer(Trainer):
 
         return data
 
-    def train(self, verbose=False):
+    def train(self, epochs: int, simulate: bool, load_checkpoint: bool, tag='latest', num_process=1, verbose=False, save_data=False):
         """
         Training Pipeline
         """
-        # //TODO: Setup profilers and print mean loss on verbose mode
-        # //TODO: Run epochs until training cancellation
-        # //TODO: Add support for loading a checkpoint
-        pass
+        writer = SummaryWriter()
+        last_epoch = -1
+
+        if load_checkpoint:
+            error_log, e = self.net.load(tag, True)
+            self.error_log = error_log
+            last_epoch = e
+
+        with torch.profiler.profile(
+            schedule=torch.profiler.schedule(wait=1, warmup=1, active=epochs, repeat=1),
+            on_trace_ready=torch.profiler.tensorboard_trace_handler('./runs/'),
+            record_shapes=True,
+            with_stack=True,
+            profile_memory=True
+        ) as prof:
+            for e in range(last_epoch + 1, epochs + 1):
+                loss = self.policy_iteration(e, simulate, num_process, verbose, save_data)
+                total_loss, policy_loss, value_loss = loss
+                if simulate:
+                    simulate = False
+                loss = {
+                    'Total loss': total_loss,
+                    'Policy loss': policy_loss,
+                    'Value loss': value_loss,
+                }
+                writer.add_scalars('Loss', loss, e)
+                prof.step()
+
+        writer.flush()
