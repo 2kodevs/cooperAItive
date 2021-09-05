@@ -49,7 +49,7 @@ class AlphaZeroTrainer(Trainer):
 
         if not os.path.exists(self.data_path):
             os.makedirs(self.data_path)
-
+        
         self.net.eval()
         
     def self_play(
@@ -150,7 +150,7 @@ class AlphaZeroTrainer(Trainer):
             start = time.time()
 
         Trainer.adjust_learning_rate(epoch, self.net.optimizer)
-        loss = self.net.train(batch)
+        loss = self.net.train_batch(batch)
         self.error_log.append(loss)
         self.net.save(self.error_log, epoch, verbose=True)
 

@@ -1,1 +1,1 @@
-from .models import alpha_zero_net
+from .models import alpha_zero_net, STATE_SHAPE
