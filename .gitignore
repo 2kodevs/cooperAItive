@@ -133,3 +133,4 @@ test_model.py
 *.ckpt
 training_data_*.json
 .vscode/launch.json
+*.tfevents.*

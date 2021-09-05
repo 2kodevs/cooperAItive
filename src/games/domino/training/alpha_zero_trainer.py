@@ -1,6 +1,6 @@
 from multiprocessing import Pool
 from torch.utils.tensorboard import SummaryWriter
-from ..players import alpha_zero_net as Net
+from ..players import alpha_zero_net as Net, az_selector_maker, az_rollout_maker
 from .trainer import Trainer
 from ..players import *
 from ..domino import Domino
@@ -23,8 +23,9 @@ class AlphaZeroTrainer(Trainer):
         rollouts: int,
         max_number: int,
         pieces_per_player: int,
+        data_path: str,
+        save_path: str,
         tau_threshold: int = 6,
-        data_path: str = 'data'
     ):
         """
         param net: nn.Module
@@ -39,10 +40,12 @@ class AlphaZeroTrainer(Trainer):
             Max piece number
         param pieces_per_player:
             Number of pieces distributed per player
-        param tau_threshold:
-            Threshold for temperature behavior to become equivalent to argmax
         param data_path: string
             Path to the folder where training data will be saved
+        param data_path: string
+            Path to the folder where network data will be saved    
+        param tau_threshold:
+            Threshold for temperature behavior to become equivalent to argmax
         """
         self.net = net
         self.batch_size = batch_size
@@ -50,8 +53,9 @@ class AlphaZeroTrainer(Trainer):
         self.rollouts = rollouts
         self.max_number = max_number
         self.pieces_per_player = pieces_per_player
-        self.tau_threshold = tau_threshold
         self.data_path = data_path
+        self.save_path = save_path
+        self.tau_threshold = tau_threshold
         self.error_log = []
 
         if not os.path.exists(self.data_path):
@@ -82,9 +86,9 @@ class AlphaZeroTrainer(Trainer):
         while not game_over:
             stats = {}
             cur_player = BasePlayer.from_domino(domino)
-            selector = selector_maker(stats, cur_player.valid_moves(), cur_player.pieces_per_player - len(cur_player.pieces), root, self.tau_threshold)
+            selector = az_selector_maker(stats, cur_player.valid_moves(), cur_player.pieces_per_player - len(cur_player.pieces), root, self.tau_threshold)
             encoder = encoder_generator(self.max_number)
-            rollout = rollout_maker(stats, self.net)
+            rollout = az_rollout_maker(stats, self.net)
 
             root = False
 
@@ -98,7 +102,7 @@ class AlphaZeroTrainer(Trainer):
             )
             _, mask = get_valids_data(domino)
             game_over = domino.step(action)
-            data.append((state, pi, cur_player, mask))
+            data.append((state, pi.tolist(), cur_player, mask))
 
         training_data = []
         for state, pi, player, mask in data:
@@ -107,12 +111,12 @@ class AlphaZeroTrainer(Trainer):
             end_value[1 - player.team] = -1
             result = end_value[domino.winner] 
             training_data.append((state, pi, result, mask))
-        return data
+        return training_data
 
     def policy_iteration(
         self,
         epoch: int,
-        simulate: bool,
+        simulate: bool, 
         num_process=1,
         verbose=False,
         save_data=False
@@ -155,7 +159,7 @@ class AlphaZeroTrainer(Trainer):
         Trainer.adjust_learning_rate(epoch, self.net.optimizer)
         loss = self.net.train_batch(batch)
         self.error_log.append(loss)
-        self.net.save(self.error_log, epoch, verbose=True)
+        self.net.save(self.error_log, epoch, self.save_path, verbose=True)
 
         if verbose:
             print(f'-- Training took {str(int(time.time() - start))} seconds --')
@@ -196,7 +200,7 @@ class AlphaZeroTrainer(Trainer):
                     num_games += 1
 
             if verbose:
-                print(f'Simulated {num_games} in {str(int(time.time() - start))} seconds')
+                print(f'Simulated {num_games} games in {str(int(time.time() - start))} seconds')
         else:
             # Get saved training data
             if verbose:
@@ -231,13 +235,13 @@ class AlphaZeroTrainer(Trainer):
         last_epoch = -1
 
         if load_checkpoint:
-            error_log, e = self.net.load(tag, True)
+            error_log, e = self.net.load(self.save_path, tag, True)
             self.error_log = error_log
             last_epoch = e
 
         with torch.profiler.profile(
             schedule=torch.profiler.schedule(wait=1, warmup=1, active=epochs, repeat=1),
-            on_trace_ready=torch.profiler.tensorboard_trace_handler('./runs/'),
+            on_trace_ready=torch.profiler.tensorboard_trace_handler('src/games/domino/training/runs/'),
             record_shapes=True,
             with_stack=True,
             profile_memory=True

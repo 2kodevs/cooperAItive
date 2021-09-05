@@ -90,51 +90,51 @@ class Net(nn.Module):
             nn.BatchNorm2d(NUM_FILTERS),
             nn.LeakyReLU(),
             ).to(device)
-        self.conv_11 = nn.Sequential(
-            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-            nn.BatchNorm2d(NUM_FILTERS),
-            nn.LeakyReLU(),
-            ).to(device)
-        self.conv_12 = nn.Sequential(
-            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-            nn.BatchNorm2d(NUM_FILTERS),
-            nn.LeakyReLU(),
-            ).to(device)
-        self.conv_13 = nn.Sequential(
-            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-            nn.BatchNorm2d(NUM_FILTERS),
-            nn.LeakyReLU(),
-            ).to(device)
-        self.conv_14 = nn.Sequential(
-            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-            nn.BatchNorm2d(NUM_FILTERS),
-            nn.LeakyReLU(),
-            ).to(device)
-        self.conv_15 = nn.Sequential(
-            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-            nn.BatchNorm2d(NUM_FILTERS),
-            nn.LeakyReLU(),
-            ).to(device)
-        self.conv_16 = nn.Sequential(
-            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-            nn.BatchNorm2d(NUM_FILTERS),
-            nn.LeakyReLU(),
-            ).to(device)
-        self.conv_17 = nn.Sequential(
-            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-            nn.BatchNorm2d(NUM_FILTERS),
-            nn.LeakyReLU(),
-            ).to(device)
-        self.conv_18 = nn.Sequential(
-            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-            nn.BatchNorm2d(NUM_FILTERS),
-            nn.LeakyReLU(),
-            ).to(device)
-        self.conv_19 = nn.Sequential(
-            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-            nn.BatchNorm2d(NUM_FILTERS),
-            nn.LeakyReLU(),
-            ).to(device)
+        # self.conv_11 = nn.Sequential(
+        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
+        #     nn.BatchNorm2d(NUM_FILTERS),
+        #     nn.LeakyReLU(),
+        #     ).to(device)
+        # self.conv_12 = nn.Sequential(
+        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
+        #     nn.BatchNorm2d(NUM_FILTERS),
+        #     nn.LeakyReLU(),
+        #     ).to(device)
+        # self.conv_13 = nn.Sequential(
+        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
+        #     nn.BatchNorm2d(NUM_FILTERS),
+        #     nn.LeakyReLU(),
+        #     ).to(device)
+        # self.conv_14 = nn.Sequential(
+        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
+        #     nn.BatchNorm2d(NUM_FILTERS),
+        #     nn.LeakyReLU(),
+        #     ).to(device)
+        # self.conv_15 = nn.Sequential(
+        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
+        #     nn.BatchNorm2d(NUM_FILTERS),
+        #     nn.LeakyReLU(),
+        #     ).to(device)
+        # self.conv_16 = nn.Sequential(
+        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
+        #     nn.BatchNorm2d(NUM_FILTERS),
+        #     nn.LeakyReLU(),
+        #     ).to(device)
+        # self.conv_17 = nn.Sequential(
+        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
+        #     nn.BatchNorm2d(NUM_FILTERS),
+        #     nn.LeakyReLU(),
+        #     ).to(device)
+        # self.conv_18 = nn.Sequential(
+        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
+        #     nn.BatchNorm2d(NUM_FILTERS),
+        #     nn.LeakyReLU(),
+        #     ).to(device)
+        # self.conv_19 = nn.Sequential(
+        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
+        #     nn.BatchNorm2d(NUM_FILTERS),
+        #     nn.LeakyReLU(),
+        #     ).to(device)
 
         # value head
         self.conv_val = nn.Sequential(
@@ -191,15 +191,15 @@ class Net(nn.Module):
         v = self.conv_8(v)
         v = self.conv_9(v)
         v = self.conv_10(v)
-        v = self.conv_11(v)
-        v = self.conv_12(v)
-        v = self.conv_13(v)
-        v = self.conv_14(v)
-        v = self.conv_15(v)
-        v = self.conv_16(v)
-        v = self.conv_17(v)
-        v = self.conv_18(v)
-        v = self.conv_19(v)
+        # v = self.conv_11(v)
+        # v = self.conv_12(v)
+        # v = self.conv_13(v)
+        # v = self.conv_14(v)
+        # v = self.conv_15(v)
+        # v = self.conv_16(v)
+        # v = self.conv_17(v)
+        # v = self.conv_18(v)
+        # v = self.conv_19(v)
         
         val = self.conv_val(v)
         val = self.value(val.view(batch_size, -1))
@@ -228,7 +228,7 @@ class Net(nn.Module):
         pol = [self.get_policy_value(p, mask, False) for p, mask in zip(pol, masks)]
         return pol, val
 
-    def get_policy_value(self, logits, valids_actions, log_softmax):
+    def get_policy_value(self, logits, mask, log_softmax):
         """
         Get move probabilities distribution.
 
@@ -242,7 +242,6 @@ class Net(nn.Module):
         return
             Move probabilities
         """
-        mask = torch.tensor(valids_actions, dtype=torch.bool).to(self.device)
         selection = torch.masked_select(logits, mask)
         dist = F.log_softmax(selection, dim=-1)
         if log_softmax:
@@ -312,16 +311,17 @@ class Net(nn.Module):
         # Return loss values to track total loss mean for epoch
         return (loss.item(), loss_policy.item(), loss_value.item())
 
-    def save(self, error_log, epoch, tag='latest', verbose=False):
+    def save(self, error_log, epoch, save_path, tag='latest', verbose=False):
         net_name = f'AlphaZero_Dom_{tag}_.ckpt'
+        save_path = f'{save_path}/{self.save_path}'
 
-        if not os.path.exists(self.save_path):
-            os.makedirs(self.save_path)
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
 
-        if os.path.exists(self.save_path + net_name):
+        if os.path.exists(save_path + net_name):
             # Save backup for tag
-            latest_model = torch.load(self.save_path + net_name)
-            torch.save(latest_model, f'{self.save_path}AlphaZero_Dom_backup-{tag}_.ckpt')
+            latest_model = torch.load(save_path + net_name)
+            torch.save(latest_model, f'{save_path}AlphaZero_Dom_backup-{tag}_.ckpt')
 
         torch.save({
             'model_state_dict': self.state_dict(),
@@ -329,13 +329,13 @@ class Net(nn.Module):
             'device': self.device,
             'error_log': error_log,
             'epoch': epoch,
-        }, self.save_path + net_name)
+        }, save_path + net_name)
         if verbose:
             print(f'Model saved with name: {net_name[:-5]}')
 
-    def load(self, tag='latest', load_logs=False):
+    def load(self, save_path, tag='latest', load_logs=False):
         net_name = f'AlphaZero_Dom_{tag}.ckpt'
-        net_checkpoint = torch.load(self.save_path + net_name)
+        net_checkpoint = torch.load(save_path + '/' + self.save_path + net_name)
         device = net_checkpoint['device']
         self.load_state_dict(net_checkpoint['model_state_dict'])
         self.to(device)
