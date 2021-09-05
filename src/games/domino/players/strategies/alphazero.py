@@ -9,7 +9,7 @@ class AlphaZero(BasePlayer):
         super().__init__(f'AlphaZero::{name}')
 
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.NN = net(device='device')
+        self.NN = net(device=device)
         self.handouts = handouts
         self.rollouts = rollouts
 
