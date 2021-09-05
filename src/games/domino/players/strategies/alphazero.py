@@ -2,12 +2,14 @@ from ..player import BasePlayer
 from .utils.alphazero import encoder_generator, rollout_maker, selector_maker
 from .utils.mc import monte_carlo
 from .models import alpha_zero_net as net
-
+import torch
 
 class AlphaZero(BasePlayer):
     def __init__(self, name, handouts=10, rollouts=10, NN=None):
         super().__init__(f'AlphaZero::{name}')
-        self.NN = net(device='gpu')
+
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.NN = net(device='device')
         self.handouts = handouts
         self.rollouts = rollouts
 

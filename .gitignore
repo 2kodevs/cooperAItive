@@ -132,3 +132,4 @@ test_model.py
 # Trainer files
 *.ckpt
 training_data_*.json
+.vscode/launch.json

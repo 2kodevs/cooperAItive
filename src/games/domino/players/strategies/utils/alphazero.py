@@ -101,9 +101,10 @@ def rollout_maker(
                     v = end_value[domino.winner]
             except KeyError:
                 [P], [v] = NN.predict([state], [mask])
+                v = v.cpu().detach().numpy()
                 size = len(P)
                 npq = np.zeros((size, 3), dtype=object)
-                npq[:, 1] = P
+                npq[:, 1] = P.cpu().detach().numpy()
                 data[state] = npq
 
         for state, index in s_comma_a:
@@ -147,9 +148,9 @@ def selector_maker(
         N = data[state][:, 0]
 
         if turn <= tau_threshold:
-            move_values = N
+            move_values = N.astype(np.float64)
         else:
-            move_values = np.zeros_like(N)
+            move_values = np.zeros_like(N, dtype=np.float64)
             args_max = np.argwhere(N == np.max(N)).flatten()
             move_values[args_max] = 1
         total = move_values.sum()
