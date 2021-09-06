@@ -14,6 +14,8 @@ from .non_double import NonDouble
 from .repeater import Repeater
 from .agachao import Agachao
 from .passer import Passer
+from .alphazero import AlphaZero
+from .monte_carlo import MonteCarlo
 
 from .utils import state_to_list, selector_maker, encoder_generator, rollout_maker, monte_carlo, get_valids_data
 

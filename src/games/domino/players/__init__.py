@@ -1,4 +1,4 @@
-from .strategies import PLAYERS, MergeFactory
+from .strategies import PLAYERS, MergeFactory, AlphaZero, MonteCarlo 
 from .hands import HANDS, get_hand, hand_out
 from .behaviors import BEHAVIORS
 from .player import BasePlayer
