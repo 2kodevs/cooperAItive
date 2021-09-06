@@ -1,18 +1,22 @@
 {   
-    "batch_size": 64,
+    "batch_size": 2000,
     "handouts": 10,
-    "rollouts": 10,
-    "tau_threshold": 6,
+    "rollouts": 50,
+    "alpha": 0.5,
+    "tau_threshold": 7,
     "max_number": 9,
     "pieces_per_player": 10,
-    "data_path": "src/games/domino/training/data", 
-    "save_path": "src/games/domino/training",
+    "data_path": "domino/training/data", 
+    "save_path": "domino/training",
+    "lr": 0.02,
 
     "epochs": 10,
     "simulate": true,
     "load_checkpoint": false,
-    "tag": "latest",
+    "load_model": false,
+    "sample": 50,
+    "tag": "64-6",
     "num_process": 1,
     "verbose": true,
-    "save_data": true
+    "save_data": false
 }
