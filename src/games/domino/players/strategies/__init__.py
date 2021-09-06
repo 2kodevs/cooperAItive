@@ -14,6 +14,7 @@ from .non_double import NonDouble
 from .repeater import Repeater
 from .agachao import Agachao
 from .passer import Passer
+from .human import Human
 
 from .utils import state_to_list, selector_maker, encoder_generator, rollout_maker, monte_carlo, get_valids_data
 
@@ -36,4 +37,5 @@ PLAYERS = [
     DoubleEnd,
     NonDouble,
     SingletonRLPlayer(),
+    Human,
 ]
