@@ -276,6 +276,7 @@ class AlphaZeroTrainer(Trainer):
         """
         writer = SummaryWriter()
         last_epoch = 0
+        self.loss = 1e30
         self.epochs = epochs
 
         if load_checkpoint:
@@ -293,8 +294,6 @@ class AlphaZeroTrainer(Trainer):
             last_epoch = e
             sample, tag = self.load_config(config, epochs)
         
-        self.loss = 1e30
-
         for e in range(last_epoch + 1, self.epochs + 1):
             loss = self.policy_iteration(e, simulate, sample, tag, num_process, verbose, save_data)
             if not simulate:
@@ -316,6 +315,7 @@ class AlphaZeroTrainer(Trainer):
             "save_path": self.save_path,
             "lr": self.lr,
 
+            "min_loss": self.loss,
             "epochs": self.epochs - cur_epoch,
             "sample": sample,
             "tag": tag,
@@ -331,6 +331,7 @@ class AlphaZeroTrainer(Trainer):
         self.data_path = config["data_path"]
         self.save_path = config["save_path"]
         self.lr = config["lr"]
+        self.loss = config["min_loss"]
         self.epochs = config["epochs"]
         if epochs:
             self.epochs += epochs
