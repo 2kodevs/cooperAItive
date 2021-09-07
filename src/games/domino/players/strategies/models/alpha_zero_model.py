@@ -327,7 +327,7 @@ class Net(nn.Module):
         if os.path.exists(save_path + net_name):
             # Save backup for tag
             latest_model = torch.load(save_path + net_name)
-            torch.save(latest_model, f'{save_path}AlphaZero_Dom_backup-{tag}.ckpt')
+            torch.save(latest_model, f'{save_path}{net_name[:-5]}_backup.ckpt')
 
         if save_model:
             torch.save({
