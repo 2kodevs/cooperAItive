@@ -124,6 +124,8 @@ class AlphaZeroTrainer(Trainer):
         self,
         epoch: int,
         simulate: bool, 
+        sample: int,
+        tag: str,
         num_process=1,
         verbose=False,
         save_data=False
@@ -136,6 +138,10 @@ class AlphaZeroTrainer(Trainer):
         param simulate: bool
             Set True if data must be generated via self play. Set False to load saved data if possible. 
             If there is not enough saved data, missing data will be generated via self play.
+        param sample: int:
+            Size of NN input in training
+        param tag: str
+            Tag of the checkpoint to be saved
         param num_process: int
             Number of parallel self_play games. Set to one to disable parallelism.
         param verbose: bool
@@ -151,8 +157,8 @@ class AlphaZeroTrainer(Trainer):
         data = self._get_data(simulate, num_process, verbose, self.batch_size)
         
         if save_data:
-            num_files = len([name for name in os.listdir(self.data_path) if os.path.isfile(name)])
-            path = f'{self.data_path}/training_data_{num_files}'
+            num_files = len([name for name in os.listdir(self.data_path) if os.path.isfile(f'{self.data_path}/{name}')])
+            path = f'{self.data_path}/training_data_{num_files}.json'
             with open(path, 'w') as writer:
                 json.dump(data, writer)
             if verbose:
@@ -166,12 +172,17 @@ class AlphaZeroTrainer(Trainer):
         self.adjust_learning_rate(epoch, self.net.optimizer)
         loss = self.net.train_batch(batch)
         self.error_log.append(loss)
-        self.net.save(self.error_log, epoch, self.save_path, verbose=True)
+
+        config = self.build_config(sample, tag, epoch)
+        if self.loss > loss[0]:
+            self.loss = loss[0]
+            self.net.save(self.error_log, config, epoch, self.save_path, True, tag + '-min', verbose=True)
+        else:
+            self.net.save(self.error_log, config, epoch, self.save_path, False, tag, verbose=True)
 
         if verbose:
             print(f'-- Training took {str(int(time.time() - start))} seconds --')
             print(f'policy head loss: {loss[1]} -- value head loss: {loss[2]} -- TOTAL LOSS: {loss[0]}')
-            print('Checkpoint saved')
             print('')
 
         return loss
@@ -212,7 +223,7 @@ class AlphaZeroTrainer(Trainer):
             # Get saved training data
             if verbose:
                 print('Loading saved data...')
-            file_names = [name for name in os.listdir(self.data_path) if os.path.isfile(name)]
+            file_names = [name for name in os.listdir(self.data_path) if os.path.isfile(f'{self.data_path}/{name}')]
             file_names.sort()
             file_names.reverse() # Reverse to get newest data first
 
@@ -234,35 +245,94 @@ class AlphaZeroTrainer(Trainer):
 
         return data
 
-    def train(self, epochs: int, simulate: bool, load_checkpoint: bool, tag='latest', num_process=1, verbose=False, save_data=False):
+    def train(
+        self,
+        epochs: int,
+        simulate: bool,
+        load_checkpoint: bool,
+        load_model: bool,
+        sample: int,
+        tag='latest',
+        num_process=1,
+        verbose=False,
+        save_data=False
+    ):
         """
         Training Pipeline
         """
         writer = SummaryWriter()
-        last_epoch = -1
+        last_epoch = 0
+        self.epochs = epochs
 
         if load_checkpoint:
-            error_log, e = self.net.load(self.save_path, tag, True)
+            if load_model:
+                config, model, error_log, e = self.net.load(self.save_path, tag, True, load_model)
+                self.net = model
+            else:
+                config, error_log, e = self.net.load(self.save_path, tag, True)
+            
             self.error_log = error_log
-            last_epoch = e
+            
+            for e, loss in enumerate(error_log):
+                self.write_loss(writer, e + 1, *loss)
 
-        with torch.profiler.profile(
-            schedule=torch.profiler.schedule(wait=1, warmup=1, active=epochs, repeat=1),
-            on_trace_ready=torch.profiler.tensorboard_trace_handler('src/games/domino/training/runs/'),
-            record_shapes=True,
-            with_stack=True,
-            profile_memory=True
-        ) as prof:
-            for e in range(last_epoch + 1, epochs + 1):
-                loss = self.policy_iteration(e, simulate, num_process, verbose, save_data)
-                total_loss, policy_loss, value_loss = loss
-                if simulate:
-                    simulate = False
-                loss = {
-                    'Total loss': total_loss,
-                    'Policy loss': policy_loss,
-                    'Value loss': value_loss,
-                }
+            last_epoch = e
+            sample, tag = self.load_config(config, epochs)
+        
+        self.loss = 1e30
+
+        for e in range(last_epoch + 1, self.epochs + 1):
+            loss = self.policy_iteration(e, simulate, sample, tag, num_process, verbose, save_data)
+            if not simulate:
+                simulate = True
+                save_data = True
+            self.write_loss(writer, e + 1, *loss)
+
+        writer.flush()
+
+    def build_config(self, sample, tag, cur_epoch):
+        return {
+            "batch_size": self.batch_size,
+            "handouts": self.handouts,
+            "rollouts": self.rollouts,
+            "tau_threshold": self.tau_threshold,
+            "max_number": self.max_number,
+            "pieces_per_player": self.pieces_per_player,
+            "data_path": self.data_path, 
+            "save_path": self.save_path,
+            "lr": self.lr,
+
+            "epochs": self.epochs - cur_epoch,
+            "sample": sample,
+            "tag": tag,
+        }
+
+    def load_config(self, config, epochs: int = 0):
+        self.batch_size = config["batch_size"]
+        self.handouts = config["handouts"]
+        self.rollouts = config["rollouts"]
+        self.tau_threshold = config["tau_threshold"]
+        self.max_number = config["max_number"]
+        self.pieces_per_player = config["pieces_per_player"]
+        self.data_path = config["data_path"]
+        self.save_path = config["save_path"]
+        self.lr = config["lr"]
+        self.epochs = config["epochs"]
+        if epochs:
+            self.epochs += epochs
+        sample = config["sample"]
+        tag = config["tag"]
+
+        return sample, tag
+
+    def write_loss(self, writer, e, total, policy, value):
+        loss = {
+            'Total loss': total,
+            'Policy loss': policy,
+            'Value loss': value,
+            }
+        writer.add_scalars('Loss', loss, e + 1)
+
     def adjust_learning_rate(self, epoch, optimizer):
         lr = self.lr
 
