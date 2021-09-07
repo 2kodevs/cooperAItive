@@ -47,7 +47,7 @@ def game_view(history):
     ]
     size = max(len(x) for x in data)
     view = [infinite_list(x, " " * sz) for x, sz in zip(data, [5, 9, 5])]
-    table = '\n'.join(x + y + z for x, y, z in take(zip(*view), size))
+    table = '\n'.join(''.join(row) for row in take(zip(*view), size))
     return table, data
 
 
