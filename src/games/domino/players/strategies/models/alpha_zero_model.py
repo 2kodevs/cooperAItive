@@ -16,7 +16,7 @@ class Net(nn.Module):
     """
     Neural Network for Alpha Zero implementation of Dominoes
     """
-    def __init__(self, input_shape=STATE_SHAPE, policy_shape=111, device='cpu'):
+    def __init__(self, input_shape=STATE_SHAPE, policy_shape=111, lr=0.02, device='cpu'):
         """
         param input_shape: (int, int, int)
             Dimensions of the input.
@@ -165,7 +165,7 @@ class Net(nn.Module):
         ).to(device)
 
         #optimizer
-        self.optimizer = optim.SGD(self.parameters(), lr=0.2, momentum=0.9, weight_decay=1e-4)
+        self.optimizer = optim.SGD(self.parameters(), lr=lr, momentum=0.9, weight_decay=1e-4)
 
 
     def _get_conv_val_size(self, shape):

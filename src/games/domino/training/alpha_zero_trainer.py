@@ -25,6 +25,7 @@ class AlphaZeroTrainer(Trainer):
         pieces_per_player: int,
         data_path: str,
         save_path: str,
+        lr: int,
         tau_threshold: int = 6,
     ):
         """
@@ -44,17 +45,21 @@ class AlphaZeroTrainer(Trainer):
             Path to the folder where training data will be saved
         param save_path: string
             Path to the folder where network data will be saved    
-        param tau_threshold:
+        param lr: int
+            Learning rate
+        param tau_threshold: int
             Threshold for temperature behavior to become equivalent to argmax
         """
         self.net = net
         self.batch_size = batch_size
         self.handouts = handouts
         self.rollouts = rollouts
+        self.alpha = alpha
         self.max_number = max_number
         self.pieces_per_player = pieces_per_player
         self.data_path = data_path
         self.save_path = save_path
+        self.lr = lr
         self.tau_threshold = tau_threshold
         self.error_log = []
 
@@ -158,7 +163,7 @@ class AlphaZeroTrainer(Trainer):
             print(f'[Epoch {epoch}] -- Training net --')
             start = time.time()
 
-        Trainer.adjust_learning_rate(epoch, self.net.optimizer)
+        self.adjust_learning_rate(epoch, self.net.optimizer)
         loss = self.net.train_batch(batch)
         self.error_log.append(loss)
         self.net.save(self.error_log, epoch, self.save_path, verbose=True)
@@ -258,7 +263,16 @@ class AlphaZeroTrainer(Trainer):
                     'Policy loss': policy_loss,
                     'Value loss': value_loss,
                 }
-                writer.add_scalars('Loss', loss, e)
-                prof.step()
+    def adjust_learning_rate(self, epoch, optimizer):
+        lr = self.lr
 
-        writer.flush()
+        if epoch == 50:
+            self.lr = lr / 1000
+        elif epoch == 30:
+            self.lr = lr / 100
+        elif epoch == 10:
+            self.lr = lr / 10
+
+        if epoch in [10, 30, 50]:
+            for param_group in optimizer.param_groups:
+                param_group["lr"] = lr
