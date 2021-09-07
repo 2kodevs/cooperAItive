@@ -50,7 +50,6 @@ class AlphaZeroTrainer(Trainer):
         param tau_threshold: int
             Threshold for temperature behavior to become equivalent to argmax
         """
-        self.net = net
         self.batch_size = batch_size
         self.handouts = handouts
         self.rollouts = rollouts
@@ -62,6 +61,10 @@ class AlphaZeroTrainer(Trainer):
         self.lr = lr
         self.tau_threshold = tau_threshold
         self.error_log = []
+
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.device = device
+        self.net = Net(lr=lr, device=torch.device(device))
 
         if not os.path.exists(self.data_path):
             os.makedirs(self.data_path)
@@ -164,13 +167,24 @@ class AlphaZeroTrainer(Trainer):
             if verbose:
                 print(f'Training data saved at {path}')
 
-        batch = random.sample(data, self.batch_size)
         if verbose:
             print(f'[Epoch {epoch}] -- Training net --')
             start = time.time()
 
         self.adjust_learning_rate(epoch, self.net.optimizer)
-        loss = self.net.train_batch(batch)
+        total_loss, policy_loss, value_loss = 0,0,0
+        batch_size = len(data)
+        total = 0
+
+        for _ in range(batch_size // sample):
+            batch = random.sample(data, sample)
+            total += sample
+            loss = self.net.train_batch(batch)
+            total_loss += loss[0]
+            policy_loss += loss[1]
+            value_loss += loss[2]
+
+        loss = (total_loss / total, policy_loss / total, value_loss / total)
         self.error_log.append(loss)
 
         config = self.build_config(sample, tag, epoch)
@@ -272,9 +286,9 @@ class AlphaZeroTrainer(Trainer):
                 config, error_log, e = self.net.load(self.save_path, tag, True)
             
             self.error_log = error_log
-            
             for e, loss in enumerate(error_log):
                 self.write_loss(writer, e + 1, *loss)
+            writer.flush()
 
             last_epoch = e
             sample, tag = self.load_config(config, epochs)

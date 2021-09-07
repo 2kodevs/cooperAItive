@@ -5,7 +5,7 @@ from .models import alpha_zero_net as net
 import torch
 
 class AlphaZero(BasePlayer):
-    def __init__(self, name, handouts=1, rollouts=1, NN=None):
+    def __init__(self, name, handouts=10, rollouts=50, NN=None):
         super().__init__(f'AlphaZero::{name}')
 
         device = 'cuda' if torch.cuda.is_available() else 'cpu'

@@ -9,7 +9,7 @@ from ..utils import state_to_list
 
 #STATE= [(56bits, 4bits, 2bits) x 41]
 STATE_SHAPE = (1, 41, 62)
-NUM_FILTERS = 256
+NUM_FILTERS = 64
 KERNEL_SIZE = 3
 
 class Net(nn.Module):
@@ -70,26 +70,26 @@ class Net(nn.Module):
             nn.BatchNorm2d(NUM_FILTERS),
             nn.LeakyReLU(),
             ).to(device)
-        self.conv_7 = nn.Sequential(
-            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-            nn.BatchNorm2d(NUM_FILTERS),
-            nn.LeakyReLU(),
-            ).to(device)
-        self.conv_8 = nn.Sequential(
-            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-            nn.BatchNorm2d(NUM_FILTERS),
-            nn.LeakyReLU(),
-            ).to(device)
-        self.conv_9 = nn.Sequential(
-            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-            nn.BatchNorm2d(NUM_FILTERS),
-            nn.LeakyReLU(),
-            ).to(device)
-        self.conv_10 = nn.Sequential(
-            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-            nn.BatchNorm2d(NUM_FILTERS),
-            nn.LeakyReLU(),
-            ).to(device)
+        # self.conv_7 = nn.Sequential(
+        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
+        #     nn.BatchNorm2d(NUM_FILTERS),
+        #     nn.LeakyReLU(),
+        #     ).to(device)
+        # self.conv_8 = nn.Sequential(
+        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
+        #     nn.BatchNorm2d(NUM_FILTERS),
+        #     nn.LeakyReLU(),
+        #     ).to(device)
+        # self.conv_9 = nn.Sequential(
+        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
+        #     nn.BatchNorm2d(NUM_FILTERS),
+        #     nn.LeakyReLU(),
+        #     ).to(device)
+        # self.conv_10 = nn.Sequential(
+        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
+        #     nn.BatchNorm2d(NUM_FILTERS),
+        #     nn.LeakyReLU(),
+        #     ).to(device)
         # self.conv_11 = nn.Sequential(
         #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
         #     nn.BatchNorm2d(NUM_FILTERS),
@@ -187,10 +187,10 @@ class Net(nn.Module):
         v = self.conv_4(v)
         v = self.conv_5(v)
         v = self.conv_6(v)
-        v = self.conv_7(v)
-        v = self.conv_8(v)
-        v = self.conv_9(v)
-        v = self.conv_10(v)
+        # v = self.conv_7(v)
+        # v = self.conv_8(v)
+        # v = self.conv_9(v)
+        # v = self.conv_10(v)
         # v = self.conv_11(v)
         # v = self.conv_12(v)
         # v = self.conv_13(v)
@@ -285,24 +285,29 @@ class Net(nn.Module):
         batch, p_targets, v_targets, valids_actions = [], [], [], []
         for (state, p, v, actions) in data:
             # state and available_actions are encoded
-            batch.append([self.state_lists_to_batch(state)])
+            batch.append(state)
             p_targets.append(p)
             v_targets.append(v)
             valids_actions.append(actions)
+        batch = self.state_lists_to_batch(batch)
 
         self.train()
         self.optimizer.zero_grad()
 
-        p_targets = torch.FloatTensor(p_targets).to(self.device)    
-        v_targets = torch.FloatTensor(v_targets).to(self.device)
-        p_preds, v_preds = self(batch)
+        p_targets = [torch.tensor(p_target, dtype=torch.float32).to(self.device) for p_target in p_targets]     
+        v_targets = torch.tensor(v_targets, dtype=torch.float32).to(self.device)#[torch.tensor(v_target, dtype=torch.float32).to(self.device) for v_target in v_targets]
+        p_preds_t, v_preds = self(batch)
+        p_preds = []
 
         for i, a in enumerate(valids_actions):
             mask = self.valids_actions_to_tensor(a)
-            p_preds[i] = self.get_policy_value(p_preds[i], mask, True)
+            p_preds.append(self.get_policy_value(p_preds_t[i], mask, True))
 
         loss_value = F.mse_loss(v_preds.squeeze(-1), v_targets)
-        loss_policy = -torch.sum(p_preds * p_targets)
+        loss_policy = torch.zeros(1).to(self.device)
+        for pred, target in zip(p_preds, p_targets):
+            loss_policy += torch.sum(pred * target)
+        loss_policy = -loss_policy
 
         loss = loss_policy + loss_value
         loss.backward()
