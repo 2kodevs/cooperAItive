@@ -275,7 +275,7 @@ class AlphaZeroTrainer(Trainer):
         Training Pipeline
         """
         writer = SummaryWriter()
-        last_epoch = 0
+        last_epoch = 1
         self.loss = 1e30
         self.epochs = epochs
 
@@ -287,19 +287,19 @@ class AlphaZeroTrainer(Trainer):
                 config, error_log, e = self.net.load(self.save_path, tag, True)
             
             self.error_log = error_log
-            for e, loss in enumerate(error_log):
-                self.write_loss(writer, e + 1, *loss)
+            for ep, loss in enumerate(error_log):
+                self.write_loss(writer, ep + 1, *loss)
             writer.flush()
 
             last_epoch = e
             sample, tag = self.load_config(config, epochs)
         
-        for e in range(last_epoch + 1, self.epochs + 1):
+        for e in range(last_epoch, self.epochs + 1):
             loss = self.policy_iteration(e, simulate, sample, tag, num_process, verbose, save_data)
             if not simulate:
                 simulate = True
                 save_data = True
-            self.write_loss(writer, e + 1, *loss)
+            self.write_loss(writer, e, *loss)
 
         writer.flush()
 
