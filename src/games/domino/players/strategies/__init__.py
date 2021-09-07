@@ -14,7 +14,6 @@ from .non_double import NonDouble
 from .repeater import Repeater
 from .agachao import Agachao
 from .passer import Passer
-from .alphazero import AlphaZero
 
 from .utils import state_to_list, encoder_generator, rollout_maker, monte_carlo, get_valids_data, az_selector_maker, az_rollout_maker
 from .models import alpha_zero_net, AZ_STATE_SHAPE
@@ -38,5 +37,4 @@ PLAYERS = [
     DoubleEnd,
     NonDouble,
     SingletonRLPlayer(),
-    AlphaZero,
 ]
