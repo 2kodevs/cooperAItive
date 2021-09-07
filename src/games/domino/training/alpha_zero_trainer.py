@@ -1,4 +1,4 @@
-from multiprocessing import Pool
+from torch.multiprocessing import Pool
 from torch.utils.tensorboard import SummaryWriter
 from ..players import alpha_zero_net as Net, az_selector_maker, az_rollout_maker
 from .trainer import Trainer
@@ -9,7 +9,7 @@ import random
 import time
 import os
 import json
-import torch.profiler
+import torch
 
 class AlphaZeroTrainer(Trainer):
     """
@@ -17,10 +17,10 @@ class AlphaZeroTrainer(Trainer):
     """
     def __init__(
         self,
-        net: Net,
         batch_size: int,
         handouts: int,
         rollouts: int,
+        alpha: float,
         max_number: int,
         pieces_per_player: int,
         data_path: str,
@@ -28,21 +28,21 @@ class AlphaZeroTrainer(Trainer):
         tau_threshold: int = 6,
     ):
         """
-        param net: nn.Module
-            Neural Network to train
         param batch_size: int
             Size of training data used per epoch
         param handouts: int
             Number of handouts per move search
         param rollouts: int
             Number of rollouts per handout
-        param max_number:
+        param alpha: float
+            Parameter of Dirichlet random variable
+        param max_number: int:
             Max piece number
-        param pieces_per_player:
+        param pieces_per_player: int:
             Number of pieces distributed per player
         param data_path: string
             Path to the folder where training data will be saved
-        param data_path: string
+        param save_path: string
             Path to the folder where network data will be saved    
         param tau_threshold:
             Threshold for temperature behavior to become equivalent to argmax
@@ -63,8 +63,7 @@ class AlphaZeroTrainer(Trainer):
         
     def self_play(
         self,
-        handouts,
-        rollouts
+        args,
     ):
         """
         Simulate one game via self play and save moves played
@@ -73,10 +72,13 @@ class AlphaZeroTrainer(Trainer):
             Number of handouts per move search
         param rollouts: int
             Number of rollouts per handout
+        param alpha: float
+            Parameter of Dirichlet random variable
 
         return
             Data of the game. List[(state, pi, result)]
         """
+        handouts, rollouts, alpha = args
         data = []
         game_over = False
         root = True
@@ -86,7 +88,7 @@ class AlphaZeroTrainer(Trainer):
         while not game_over:
             stats = {}
             cur_player = BasePlayer.from_domino(domino)
-            selector = az_selector_maker(stats, cur_player.valid_moves(), cur_player.pieces_per_player - len(cur_player.pieces), root, self.tau_threshold)
+            selector = az_selector_maker(stats, cur_player.valid_moves(), cur_player.pieces_per_player - len(cur_player.pieces), root, self.tau_threshold, alpha)
             encoder = encoder_generator(self.max_number)
             rollout = az_rollout_maker(stats, self.net)
 
@@ -186,7 +188,7 @@ class AlphaZeroTrainer(Trainer):
 
             if num_process > 1:
                 while len(data) < batch_size:
-                    jobs = [self.handouts, self.rollouts] * (batch_size / num_process)
+                    jobs = [(self.handouts, self.rollouts, self.alpha)] * (batch_size // num_process)
                     num_games += batch_size / num_process
                     pool = Pool(num_process)
                     new_data = pool.map(self.self_play, jobs)
@@ -196,7 +198,7 @@ class AlphaZeroTrainer(Trainer):
                         data.extend(d)
             else:
                 while len(data) < batch_size:
-                    data.extend(self.self_play(self.handouts, self.rollouts))
+                    data.extend(self.self_play((self.handouts, self.rollouts, self.alpha)))
                     num_games += 1
 
             if verbose:
