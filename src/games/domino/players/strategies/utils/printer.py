@@ -13,7 +13,7 @@ def take(iterator, size):
         a += 1
         if a == size:
             break
-    # raise StopIteration()    
+  
 
 
 def infinite_list(iterator, element):
