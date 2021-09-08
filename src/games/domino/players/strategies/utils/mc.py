@@ -67,6 +67,9 @@ def rollout_maker(
             state = encoder(pieces, history, current_player)
             valids, _ = get_valids_data(domino)
             try:
+                # Check if state is explored
+                _, _ = data[state]
+
                 index = randint(0, len(valids) - 1)
 
                 s_comma_a.append((state, index))
