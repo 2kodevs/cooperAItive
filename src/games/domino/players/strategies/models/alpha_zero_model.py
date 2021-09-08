@@ -316,18 +316,18 @@ class Net(nn.Module):
         # Return loss values to track total loss mean for epoch
         return (loss.item(), loss_policy.item(), loss_value.item())
 
-    def save(self, error_log, config, epoch, save_path, save_model, tag='latest', verbose=False):
+    def save(self, error_log, config, epoch, path, save_model, tag='latest', verbose=False):
         net_name = [f'AlphaZero_Dom_{tag}.ckpt', f'AlphaZero_Dom_model_{tag}.ckpt'][save_model]
 
-        save_path = f'{save_path}/{self.save_path}'
+        save_path = f'{path}/{self.save_path}'
+        full_path = f'{save_path}{net_name}'
 
-        if not os.path.exists(save_path):
-            os.makedirs(save_path)
+        if not os.path.exists(path):
+            os.makedirs(path)
 
-        if os.path.exists(save_path + net_name):
+        if os.path.exists(full_path):
             # Save backup for tag
-            latest_model = torch.load(save_path + net_name)
-            torch.save(latest_model, f'{save_path}{net_name[:-5]}_backup.ckpt')
+            os.rename(full_path, f'{save_path}{net_name[:-5]}_backup.ckpt')
 
         if save_model:
             torch.save({
@@ -336,7 +336,7 @@ class Net(nn.Module):
                 'error_log': error_log,
                 'config': config,
                 'epoch': epoch,
-            }, save_path + net_name)
+            }, full_path)
         else:
             torch.save({
                 'model_state_dict': self.state_dict(),
@@ -345,7 +345,7 @@ class Net(nn.Module):
                 'error_log': error_log,
                 'config': config,
                 'epoch': epoch,
-            }, save_path + net_name)
+            }, full_path)
         if verbose:
             print(f'Model saved with name: {net_name[:-5]}')
             print('Checkpoint saved')
@@ -353,7 +353,7 @@ class Net(nn.Module):
     def load(self, save_path, tag='latest', load_logs=False, load_model=False):
         net_name = [f'AlphaZero_Dom_{tag}.ckpt', f'AlphaZero_Dom_model_{tag}.ckpt'][load_model]
 
-        net_checkpoint = torch.load(save_path + '/' + self.save_path + net_name)
+        net_checkpoint = torch.load(f'{save_path}/{self.save_path}{net_name}')
         device = net_checkpoint['device']
 
         ret = [net_checkpoint['config']]
