@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 import argparse
 from module import get_player, get_rule, get_hand, PLAYERS, RULES, BEHAVIORS, HANDS
 
