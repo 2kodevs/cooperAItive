@@ -22,11 +22,15 @@ def runner(data, rep, output, game_config, hand='hand_out'):
         d[winner] += 1
 
 
-def alphazero_vs_monte_carlo(NN, handouts=1, rollouts=1, rep=10, game_config=[9, 10]):
+def alphazero_vs_monte_carlo(args):
+    net = alpha_zero_net()
+    net.save_path = ''
+    _, NN = net.load(args.path, tag=args.model, load_model=True)
+
     output = {}
-    data0 = (AlphaZero, handouts, rollouts, NN)
-    data1 = (MonteCarlo, handouts, rollouts)
-    runner([data0, data1], rep, output, game_config)
-    runner([data1, data0], rep, output, game_config)
+    data0 = (AlphaZero, args.handoutsP0, args.rolloutsP0, NN)
+    data1 = (MonteCarlo, args.handoutsP1, args.rolloutsP1)
+    runner([data0, data1], args.rep, output, args.game_config)
+    runner([data1, data0], args.rep, output, args.game_config)
     print(output)
     
