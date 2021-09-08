@@ -296,9 +296,8 @@ class AlphaZeroTrainer(Trainer):
         
         for e in range(last_epoch, self.epochs + 1):
             loss = self.policy_iteration(e, simulate, sample, tag, num_process, verbose, save_data)
-            if not simulate:
-                simulate = True
-                save_data = True
+            simulate = True
+            save_data = True
             self.write_loss(writer, e, *loss)
 
         writer.flush()
