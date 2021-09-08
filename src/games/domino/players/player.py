@@ -124,3 +124,14 @@ class BasePlayer:
         if position is None:
             position = self.me
         return (position + 1) & 3
+
+    @staticmethod
+    def from_domino(domino):
+        player = BasePlayer('DominoPlayer')
+        player.position = domino.current_player
+        player.pieces = domino.players[player.me].remaining.copy()
+        player.history = domino.logs[:]
+        player.heads = domino.heads[:]
+        player.pieces_per_player = domino.pieces_per_player
+        player.max_number = domino.max_number
+        return player
