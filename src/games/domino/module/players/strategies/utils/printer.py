@@ -15,7 +15,6 @@ def take(iterator, size):
             break
   
 
-
 def infinite_list(iterator, element):
     for x in iterator:
         yield x
@@ -70,3 +69,6 @@ def hand_view(pieces):
 def hand_printer(pieces):
     hand, _ = hand_view(pieces)
     print(hand)
+
+
+__all__ = ["hand_printer", "game_printer"]

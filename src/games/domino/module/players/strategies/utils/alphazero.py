@@ -1,7 +1,6 @@
 from .types import State, Action, Piece, Encoder, List, History, Any, Dict
 from ....domino import Domino
 from math import sqrt
-from random import choice
 
 import numpy as np
 
@@ -171,3 +170,10 @@ def selector_maker(
         return action, pi
         
     return selector
+
+
+__all__ = [
+    "encoder_generator", 
+    "state_to_list", 
+    "get_valids_data",
+]

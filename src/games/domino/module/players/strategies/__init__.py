@@ -18,8 +18,8 @@ from .alphazero import AlphaZero
 from .monte_carlo import MonteCarlo
 from .human import Human
 
-from .utils import state_to_list, encoder_generator, rollout_maker, monte_carlo, get_valids_data, az_selector_maker, az_rollout_maker
-from .models import alpha_zero_net, AZ_STATE_SHAPE
+from .utils import alphazero as alphazero_utils, mc as mc_utils
+from .models import alpha_zero_model as AlphaZeroModel
 
 # Add players to this list
 PLAYERS = [

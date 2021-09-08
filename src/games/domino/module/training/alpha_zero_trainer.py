@@ -1,6 +1,6 @@
 from torch.multiprocessing import Pool
 from torch.utils.tensorboard import SummaryWriter
-from ..players import alpha_zero_net as Net, az_selector_maker, az_rollout_maker
+from ..players import AlphaZeroModel, alphazero_utils as utils, mc_utils
 from .trainer import Trainer
 from ..players import *
 from ..domino import Domino
@@ -10,6 +10,7 @@ import time
 import os
 import json
 import torch
+
 
 class AlphaZeroTrainer(Trainer):
     """
@@ -64,7 +65,7 @@ class AlphaZeroTrainer(Trainer):
 
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.device = device
-        self.net = Net(lr=lr, device=torch.device(device))
+        self.net = AlphaZeroModel.Net(lr=lr, device=torch.device(device))
 
         if not os.path.exists(self.data_path):
             os.makedirs(self.data_path)
@@ -96,13 +97,13 @@ class AlphaZeroTrainer(Trainer):
         while not game_over:
             stats = {}
             cur_player = BasePlayer.from_domino(domino)
-            selector = az_selector_maker(stats, cur_player.valid_moves(), cur_player.pieces_per_player - len(cur_player.pieces), root, self.tau_threshold, alpha)
-            encoder = encoder_generator(self.max_number)
-            rollout = az_rollout_maker(stats, self.net)
+            selector = utils.selector_maker(stats, cur_player.valid_moves(), cur_player.pieces_per_player - len(cur_player.pieces), root, self.tau_threshold, alpha)
+            encoder = utils.encoder_generator(self.max_number)
+            rollout = utils.rollout_maker(stats, self.net)
 
             root = False
 
-            state, action, pi = monte_carlo(
+            state, action, pi = mc_utils.monte_carlo(
                 cur_player, 
                 encoder, 
                 rollout, 
@@ -110,7 +111,7 @@ class AlphaZeroTrainer(Trainer):
                 handouts,
                 rollouts,
             )
-            _, mask = get_valids_data(domino)
+            _, mask = utils.get_valids_data(domino)
             game_over = domino.step(action)
             data.append((state, pi.tolist(), cur_player, mask))
 
@@ -360,3 +361,4 @@ class AlphaZeroTrainer(Trainer):
         if epoch in [10, 30, 50]:
             for param_group in optimizer.param_groups:
                 param_group["lr"] = lr
+                

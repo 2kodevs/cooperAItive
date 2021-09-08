@@ -1,8 +1,8 @@
-from .strategies import PLAYERS, MergeFactory, AlphaZero, MonteCarlo 
+from .strategies import PLAYERS, MergeFactory, AlphaZero, MonteCarlo, AlphaZeroModel
+from .strategies import alphazero_utils, mc_utils
 from .hands import HANDS, get_hand, hand_out
 from .behaviors import BEHAVIORS
 from .player import BasePlayer
-from .strategies import state_to_list, az_selector_maker, az_rollout_maker, encoder_generator, rollout_maker, monte_carlo, get_valids_data, alpha_zero_net, AZ_STATE_SHAPE
 
 ALL = [*PLAYERS, *BEHAVIORS]
 

@@ -133,3 +133,5 @@ class CapicuaDoble(FirstToGain100):
         capicua = domino.logs[-2][0] == Event.FINAL and domino.heads[0] == domino.heads[1]
         return score * (capicua + 1)
     
+
+__all__ = ["OneGame", "TwoOfThree", "FirstToGain100", "FirstDoble", "CapicuaDoble"]

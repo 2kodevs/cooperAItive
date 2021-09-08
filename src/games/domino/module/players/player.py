@@ -1,5 +1,6 @@
 import random
 
+
 class BasePlayer:
     def __init__(self, name):
         self.name = name
@@ -135,3 +136,4 @@ class BasePlayer:
         player.pieces_per_player = domino.pieces_per_player
         player.max_number = domino.max_number
         return player
+        

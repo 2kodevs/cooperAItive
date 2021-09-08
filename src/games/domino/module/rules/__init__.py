@@ -1,4 +1,4 @@
-from .rules import OneGame, TwoOfThree, FirstToGain100, FirstDoble, CapicuaDoble
+from .rules import *
 
 RULES = [
     OneGame,
