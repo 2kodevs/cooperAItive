@@ -95,7 +95,7 @@ class RLPlayer(BasePlayer):
         elif e.name == 'PASS':
             self.steps += 1
         elif e.name == 'WIN':
-            new_val = [0, 1][d[0] == self.me % 2]
+            new_val = 0.5 if d[0] == -1 else [0, 1][d[0] == self.me % 2]
             self.measure(new_val)
 
     def measure(self, new_val):
