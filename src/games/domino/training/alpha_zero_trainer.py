@@ -219,7 +219,7 @@ class AlphaZeroTrainer(Trainer):
             if num_process > 1:
                 while len(data) < batch_size:
                     jobs = [(self.handouts, self.rollouts, self.alpha)] * (batch_size // num_process)
-                    num_games += batch_size / num_process
+                    num_games += batch_size // num_process
                     pool = Pool(num_process)
                     new_data = pool.map(self.self_play, jobs)
                     pool.close()
