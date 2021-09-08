@@ -24,7 +24,7 @@ class Human(BasePlayer):
 
         while True:
             try:
-                a, b, h = input("The format to select your move is (#1, #2, head) without the parenthesis, were head is 0 o 1 indicating the left and right sides of the table respectively.\nType the piece you want play: ").split(',')
+                a, b, h = input("The format to select your move is (#1, #2, head) without the parenthesis, where head is 0 o 1 indicating the left and right sides of the table respectively.\nType the piece you want to play: ").split(',')
                 a, b, h = int(a), int(b), int(h)
                 assert self.valid((a, b), h)
                 for x in [(a, b), (b, a)]:
