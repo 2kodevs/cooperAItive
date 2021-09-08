@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 import argparse
-from domino import get_player, get_rule, get_hand, PLAYERS, RULES, BEHAVIORS, HANDS
+from module import get_player, get_rule, get_hand, PLAYERS, RULES, BEHAVIORS, HANDS
 
 
 def info(args):

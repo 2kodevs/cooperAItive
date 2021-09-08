@@ -1,7 +1,20 @@
 import argparse
-from domino import alphazero_vs_monte_carlo
+from module import alphazero_vs_monte_carlo, alpha_zero_net
 
-def main():
+def main(args):
+    net = alpha_zero_net()
+    net.save_path = ''
+    _, NN = net.load(args.path, tag=args.model, load_model=True)
+
+    alphazero_vs_monte_carlo(
+        (args.handoutsP0, args.rolloutsP0, NN),
+        (args.handoutsP1, args.rolloutsP1),
+        args.rep,
+        args.game_config,
+    )
+    
+
+if __name__ == '__main__':
     parser = argparse.ArgumentParser("DomAIno Tournament")
 
     subparsers = parser.add_subparsers()
@@ -15,7 +28,7 @@ def main():
     play_parser.add_argument('-r1',  '--rolloutsPlayer1', dest='rolloutsP1',  type=int, default=50)
     play_parser.add_argument('-m',   '--model',           dest='model', help='NN\'s tag')
     play_parser.add_argument('-p',   '--path',            dest='path', default='domino/training/checkpoints', help='NN\'s folder path')
-    play_parser.set_defaults(command=alphazero_vs_monte_carlo)
+    play_parser.set_defaults(command=main)
 
     args = parser.parse_args()
 
@@ -23,10 +36,3 @@ def main():
         parser.print_help()
     else:
         args.command(args)
-
-if __name__ == '__main__':
-    main()
-
- # net = alpha_zero_net()
-# net.save_path = ''
-# _, NN = net.load(args.path, tag=args.model, load_model=True)
