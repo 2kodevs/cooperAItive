@@ -19,7 +19,7 @@ class Human(BasePlayer):
     def filter(self, valids):
         print("Current table:\n")
         game_printer(self.history)
-        input(f"\nThe pieces of the player {self.me} are goin to be shown. \nPress enter when you are ready to see them.")
+        input(f"\nThe pieces of the player {self.me} are going to be shown. \nPress enter when you are ready to see them.")
         hand_printer(self.pieces)
 
         while True:
