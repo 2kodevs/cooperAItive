@@ -10,6 +10,7 @@ import time
 import os
 import json
 import torch
+import shutil
 
 class AlphaZeroTrainer(Trainer):
     """
@@ -274,7 +275,7 @@ class AlphaZeroTrainer(Trainer):
         """
         Training Pipeline
         """
-        writer = SummaryWriter()
+        writer = SummaryWriter(comment=tag)
         last_epoch = 1
         self.loss = 1e30
         self.epochs = epochs
@@ -286,19 +287,24 @@ class AlphaZeroTrainer(Trainer):
             else:
                 config, error_log, e = self.net.load(self.save_path, tag, True)
             
+            if verbose:
+                print(json.dumps(config, indent=4))
+
+            self.remove_last_run(tag)
             self.error_log = error_log
             for ep, loss in enumerate(error_log):
-                self.write_loss(writer, ep + 1, *loss)
+                self.write_loss(writer, ep, *loss)
             writer.flush()
 
-            last_epoch = e
+            last_epoch = e + 1
+            self.epochs += e
             sample, tag = self.load_config(config, epochs)
         
         for e in range(last_epoch, self.epochs + 1):
             loss = self.policy_iteration(e, simulate, sample, tag, num_process, verbose, save_data)
             simulate = True
             save_data = True
-            self.write_loss(writer, e, *loss)
+            self.write_loss(writer, e - 1, *loss)
 
         writer.flush()
 
@@ -360,3 +366,12 @@ class AlphaZeroTrainer(Trainer):
         if epoch in [10, 30, 50]:
             for param_group in optimizer.param_groups:
                 param_group["lr"] = lr
+
+    def remove_last_run(self, tag, path='./runs/'):
+        if os.path.exists(path):
+            folder_names = [name for name in os.listdir(path) if tag in name]
+            try:
+                for f in folder_names:
+                    shutil.rmtree(path + f)
+            except [OSError, Exception] as e:
+                print(e)
