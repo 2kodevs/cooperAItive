@@ -10,8 +10,7 @@ class AlphaZero(BasePlayer):
         super().__init__(f'AlphaZero::{name}')
 
         if isinstance(NN, str):
-            self.NN = AlphaZeroNet()
-            self.NN.load(NN, tag, parse_bool(load_model))
+            _, self.NN = AlphaZeroNet().load(NN, tag, parse_bool(load_model))
         else: 
             self.NN = NN
         self.handouts = int(handouts)
