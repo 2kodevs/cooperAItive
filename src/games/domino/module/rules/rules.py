@@ -7,7 +7,7 @@ class BaseRule:
         on particular rules to determine the winner. This is a
         wrapper to implement and play with different rules.
     """
-    def run(self, players):
+    def start(self, player0, player1, hand, *pieces_config):
         """
             Return id of winner team (-1 for tie)
         """
