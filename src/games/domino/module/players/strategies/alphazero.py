@@ -6,7 +6,7 @@ from .utils import parse_bool
 
 
 class AlphaZero(BasePlayer):
-    def __init__(self, name, handouts, rollouts, NN, tag=None, load_model=True):
+    def __init__(self, name, handouts, rollouts, NN, tag='', load_model=True):
         super().__init__(f'AlphaZero::{name}')
 
         if isinstance(NN, str):
