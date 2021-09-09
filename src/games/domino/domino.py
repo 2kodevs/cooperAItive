@@ -41,12 +41,15 @@ def match(args):
     rule = get_rule(args.rule)
     hand = get_hand(args.hand)
 
-    status = {-1:0, 0:0, 1:0}
+    status = {-1:0, 0:0, 1:0, 2:0}
     for _ in range(args.rep):
         for other in args.oponents:
             oponent = get_player(other)
             game = rule()
             status[game.start(player, oponent, player, oponent, hand, *args.pieces)] += 1
+            game = rule()
+            status[1 - game.start(oponent, player, oponent, player, hand, *args.pieces)] += 1
+    status[-1] += status.pop(2)
     print(status)
     return status 
 
