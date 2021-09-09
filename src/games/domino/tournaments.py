@@ -27,7 +27,7 @@ if __name__ == '__main__':
     play_parser.add_argument('-r0',  '--rolloutsPlayer0', dest='rolloutsP0',  type=int, default=50)
     play_parser.add_argument('-r1',  '--rolloutsPlayer1', dest='rolloutsP1',  type=int, default=50)
     play_parser.add_argument('-m',   '--model',           dest='model', help='NN\'s tag')
-    play_parser.add_argument('-p',   '--path',            dest='path', default='domino/training/checkpoints', help='NN\'s folder path')
+    play_parser.add_argument('-p',   '--path',            dest='path', default='module/training/checkpoints', help='NN\'s folder path')
     play_parser.set_defaults(command=main)
 
     args = parser.parse_args()
