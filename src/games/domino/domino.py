@@ -46,7 +46,7 @@ def match(args):
         for other in args.oponents:
             oponent = get_player(other)
             game = rule()
-            status[game.start(player, oponent, hand, *args.pieces)] += 1
+            status[game.start(player, oponent, player, oponent, hand, *args.pieces)] += 1
     print(status)
     return status 
 
