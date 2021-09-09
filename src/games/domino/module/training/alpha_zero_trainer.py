@@ -1,8 +1,7 @@
 from torch.multiprocessing import Pool
 from torch.utils.tensorboard import SummaryWriter
-from ..players import AlphaZeroModel, alphazero_utils as utils, mc_utils
+from ..players import AlphaZeroModel, alphazero_utils as utils, mc_utils, BasePlayer, hand_out
 from .trainer import Trainer
-from ..players import *
 from ..domino import Domino
 
 import random
@@ -174,18 +173,10 @@ class AlphaZeroTrainer(Trainer):
             start = time.time()
 
         self.adjust_learning_rate(epoch, self.net.optimizer)
-        total_loss, policy_loss, value_loss = 0,0,0
-        batch_size = len(data)
-        total = 0
-
-        for _ in range(batch_size // sample):
-            batch = random.sample(data, sample)
-            total += sample
-            loss = self.net.train_batch(batch)
-            total_loss += loss[0]
-            policy_loss += loss[1]
-            value_loss += loss[2]
-
+        total = min(sample, len(data))
+        batch = random.sample(data, total)
+        
+        total_loss, policy_loss, value_loss = self.net.train_batch(batch)
         loss = (total_loss / total, policy_loss / total, value_loss / total)
         self.error_log.append(loss)
 
@@ -357,14 +348,14 @@ class AlphaZeroTrainer(Trainer):
     def adjust_learning_rate(self, epoch, optimizer):
         lr = self.lr
 
-        if epoch == 50:
+        if epoch == 500:
             self.lr = lr / 1000
-        elif epoch == 30:
+        elif epoch == 300:
             self.lr = lr / 100
-        elif epoch == 10:
+        elif epoch == 100:
             self.lr = lr / 10
 
-        if epoch in [10, 30, 50]:
+        if epoch in [100, 300, 500]:
             for param_group in optimizer.param_groups:
                 param_group["lr"] = lr
 
