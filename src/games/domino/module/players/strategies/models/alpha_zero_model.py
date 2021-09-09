@@ -167,7 +167,6 @@ class Net(nn.Module):
         #optimizer
         self.optimizer = optim.SGD(self.parameters(), lr=lr, momentum=0.9, weight_decay=1e-4)
 
-
     def _get_conv_val_size(self, shape):
         o = self.conv_val(torch.zeros(1, *shape).to(self.device))
         return int(np.prod(o.size()))
