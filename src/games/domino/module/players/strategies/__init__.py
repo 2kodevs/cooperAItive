@@ -41,4 +41,5 @@ PLAYERS = [
     NonDouble,
     SingletonRLPlayer(),
     Human,
+    AlphaZero,
 ]
