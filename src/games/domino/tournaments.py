@@ -1,8 +1,8 @@
 import argparse
-from module import alphazero_vs_monte_carlo, alpha_zero_net
+from module import alphazero_vs_monte_carlo, AlphaZeroModel
 
 def main(args):
-    net = alpha_zero_net()
+    net = AlphaZeroModel.Net()
     net.save_path = ''
     _, NN = net.load(args.path, tag=args.model, load_model=True)
 
