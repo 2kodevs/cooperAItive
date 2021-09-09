@@ -2,15 +2,16 @@ from ..player import BasePlayer
 from .utils.alphazero import encoder_generator, rollout_maker, selector_maker
 from .utils.mc import monte_carlo
 from .models import AlphaZeroNet
+from .utils import parse_bool
 
 
 class AlphaZero(BasePlayer):
-    def __init__(self, name, handouts, rollouts, NN):
+    def __init__(self, name, handouts, rollouts, NN, tag=None, load_model=True):
         super().__init__(f'AlphaZero::{name}')
 
         if isinstance(NN, str):
             self.NN = AlphaZeroNet()
-            self.NN.load(NN)
+            self.NN.load(NN, tag, parse_bool(load_model))
         else: 
             self.NN = NN
         self.handouts = int(handouts)
