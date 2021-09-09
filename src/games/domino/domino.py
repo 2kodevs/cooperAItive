@@ -76,7 +76,7 @@ def main():
     play_parser = subparsers.add_parser('match', help="Run a domino match")
     play_parser.add_argument('-p',    '--player',     dest='player',   nargs='+', default=['random'], help="Player class name & arguments if needed")
     play_parser.add_argument('-r',   '--rule',        dest='rule',     default='onegame', help="Game rule to use in each play")
-    play_parser.add_argument('-n',   '--nine',        dest='pieces',   action='store_const', const=[9,10], default=[], help="Doble nine mode")
+    play_parser.add_argument('-n',   '--nine',        dest='pieces',   action='store_const', const=[9,10], default=[], help="Double nine mode")
     play_parser.add_argument('-rep', '--repetitions', dest='rep',      type=int, default=1, help="Numbers of plays to run per oponent")
     play_parser.add_argument('-H',   '--hand',        dest='hand',     default='hand_out', help="Game handout strategy")
     play_parser.add_argument('-o',   '--oponents',    dest='oponents', type=str, nargs='+', required=True, help="Oponents class names")
