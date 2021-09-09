@@ -18,9 +18,9 @@ class OneGame:
     """
         Play one game
     """
-    def start(self, player0, player1, hand, *pieces_config):
+    def start(self, player0, player1, player2, player3, hand, *pieces_config):
         env = DominoManager()
-        players = [player0("0"), player1("1"), player0("2"), player1("3")]
+        players = [player0("0"), player1("1"), player2("2"), player3("3")]
         return env.run(players, hand, *pieces_config)
 
 
@@ -31,9 +31,9 @@ class TwoOfThree:
     def __init__(self, random_start=True):
         self.random_start = random_start
 
-    def start(self, player0, player1, hand, *pieces_config):
+    def start(self, player0, player1, player2, player3, hand, *pieces_config):
         env = DominoManager()
-        players = [player0("0"), player1("1"), player0("2"), player1("3")]
+        players = [player0("0"), player1("1"), player2("2"), player3("3")]
 
         cur_start = 0
 
@@ -70,9 +70,9 @@ class FirstToGain100:
     def update_score(self, **kwargs):
         return sum([player.score() for player in kwargs['players']])
 
-    def start(self, player0, player1, hand, *pieces_config):
+    def start(self, player0, player1, player2, player3, hand, *pieces_config):
         env = DominoManager()
-        players = [player0("0"), player1("1"), player0("2"), player1("3")]
+        players = [player0("0"), player1("1"), player2("2"), player3("3")]
 
         cur_start = 0
 

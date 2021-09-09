@@ -23,13 +23,15 @@ def info(args):
 def play(args):
     player0 = get_player(args.player0)
     player1 = get_player(args.player1)
+    player2 = get_player(args.player0 if args.player2 is None else args.player2)
+    player3 = get_player(args.player1 if args.player3 is None else args.player3)
     rule = get_rule(args.rule)
     hand = get_hand(args.hand)
 
     status = {-1:0, 0:0, 1:0}
     for _ in range(args.rep):
         game = rule()
-        status[game.start(player0, player1, hand, *args.pieces)] += 1
+        status[game.start(player0, player1, player2, player3, hand, *args.pieces)] += 1
     print(status)
     return status
 
@@ -39,12 +41,15 @@ def match(args):
     rule = get_rule(args.rule)
     hand = get_hand(args.hand)
 
-    status = {-1:0, 0:0, 1:0}
+    status = {-1:0, 0:0, 1:0, 2:0}
     for _ in range(args.rep):
         for other in args.oponents:
             oponent = get_player(other)
             game = rule()
-            status[game.start(player, oponent, hand, *args.pieces)] += 1
+            status[game.start(player, oponent, player, oponent, hand, *args.pieces)] += 1
+            game = rule()
+            status[1 - game.start(oponent, player, oponent, player, hand, *args.pieces)] += 1
+    status[-1] += status.pop(2)
     print(status)
     return status 
 
@@ -59,6 +64,8 @@ def main():
     play_parser = subparsers.add_parser('play', help="Run a domino game")
     play_parser.add_argument('-p0',  '--player0',     dest='player0', default='random')
     play_parser.add_argument('-p1',  '--player1',     dest='player1', default='random')
+    play_parser.add_argument('-p2',  '--player2',     dest='player2', default=None)
+    play_parser.add_argument('-p3',  '--player3',     dest='player3', default=None)
     play_parser.add_argument('-r',   '--rule',        dest='rule',    default='onegame')
     play_parser.add_argument('-n',   '--nine',        dest='pieces',  action='store_const', const=[9,10], default=[])
     play_parser.add_argument('-rep', '--repetitions', dest='rep',     type=int, default=1)
