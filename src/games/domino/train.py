@@ -1,7 +1,5 @@
-import torch
-import sys
-import json
-from domino import AlphaZeroTrainer, alpha_zero_net as azn
+import torch, sys, json
+from module import AlphaZeroTrainer, AlphaZeroModel
 
 def main():
     # Load configuration
@@ -9,7 +7,7 @@ def main():
         config = json.load(reader)
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    net = azn(device=device)
+    net = AlphaZeroModel.Net(device=device)
 
     trainer = AlphaZeroTrainer(
         config['batch_size'],

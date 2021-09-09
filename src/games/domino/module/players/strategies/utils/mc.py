@@ -106,3 +106,6 @@ def selector_maker(
         return (to_order[choice(filtered_data)],)
 
     return selector
+
+
+__all__ = ["monte_carlo"]

@@ -1,1 +1,0 @@
-from .games import alpha_zero_net, AZ_STATE_SHAPE

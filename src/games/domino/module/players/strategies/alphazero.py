@@ -1,8 +1,7 @@
 from ..player import BasePlayer
 from .utils.alphazero import encoder_generator, rollout_maker, selector_maker
 from .utils.mc import monte_carlo
-from .models import alpha_zero_net as net
-import torch
+
 
 class AlphaZero(BasePlayer):
     def __init__(self, name, handouts, rollouts, NN):
