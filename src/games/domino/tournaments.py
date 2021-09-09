@@ -23,7 +23,7 @@ if __name__ == '__main__':
     play_parser.add_argument('-n',   '--nine',            dest='game_config', action='store_const', const=[9,10], default=[6, 7], help="Double nine mode")
     play_parser.add_argument('-rep', '--repetitions',     dest='rep',         type=int, default=10, help="Numbers of plays to run")
     play_parser.add_argument('-h0',  '--handoutsPlayer0', dest='handoutsP0',  type=int, default=10, help="Numbers of handouts for AlphaZero")
-    play_parser.add_argument('-h1',  '--handoutsPlayer1', dest='handoutsP1',  type=int, default=10, help="Numbers of handouts for AlphaZero")
+    play_parser.add_argument('-h1',  '--handoutsPlayer1', dest='handoutsP1',  type=int, default=10, help="Numbers of handouts for Monte Carlo")
     play_parser.add_argument('-r0',  '--rolloutsPlayer0', dest='rolloutsP0',  type=int, default=50, help="Numbers of rollouts for Monte Carlo")
     play_parser.add_argument('-r1',  '--rolloutsPlayer1', dest='rolloutsP1',  type=int, default=50, help="Numbers of rollouts for Monte Carlo")
     play_parser.add_argument('-m',   '--model',           dest='model', help='NN\'s tag')
