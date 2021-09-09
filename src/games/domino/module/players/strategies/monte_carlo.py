@@ -6,8 +6,8 @@ from .utils.mc import monte_carlo, rollout_maker, selector_maker
 class MonteCarlo(BasePlayer):
     def __init__(self, name, handouts=10, rollouts=50):
         super().__init__(f'MonteCarlo::{name}')
-        self.handouts = handouts
-        self.rollouts = rollouts
+        self.handouts = int(handouts)
+        self.rollouts = int(rollouts)
 
     def filter(self, valids):
         data = {}

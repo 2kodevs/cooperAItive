@@ -1,5 +1,6 @@
 import argparse
-from module import get_player, get_rule, get_hand, PLAYERS, RULES, BEHAVIORS, HANDS
+from utils import prepare_player as get_player
+from module import get_rule, get_hand, PLAYERS, RULES, BEHAVIORS, HANDS, get_player as get_player_by_name
 
 
 def info(args):
@@ -44,7 +45,7 @@ def match(args):
     status = {-1:0, 0:0, 1:0, 2:0}
     for _ in range(args.rep):
         for other in args.oponents:
-            oponent = get_player(other)
+            oponent = get_player_by_name(other)
             game = rule()
             status[game.start(player, oponent, player, oponent, hand, *args.pieces)] += 1
             game = rule()
@@ -62,10 +63,10 @@ def main():
     info_parser.set_defaults(command=info)
 
     play_parser = subparsers.add_parser('play', help="Run a domino game")
-    play_parser.add_argument('-p0',  '--player0',     dest='player0', default='random')
-    play_parser.add_argument('-p1',  '--player1',     dest='player1', default='random')
-    play_parser.add_argument('-p2',  '--player2',     dest='player2', default=None)
-    play_parser.add_argument('-p3',  '--player3',     dest='player3', default=None)
+    play_parser.add_argument('-p0',  '--player0',     dest='player0', nargs='+', default=['random'])
+    play_parser.add_argument('-p1',  '--player1',     dest='player1', nargs='+', default=['random'])
+    play_parser.add_argument('-p2',  '--player2',     dest='player2', nargs='+', default=None)
+    play_parser.add_argument('-p3',  '--player3',     dest='player3', nargs='+', default=None)
     play_parser.add_argument('-r',   '--rule',        dest='rule',    default='onegame')
     play_parser.add_argument('-n',   '--nine',        dest='pieces',  action='store_const', const=[9,10], default=[])
     play_parser.add_argument('-rep', '--repetitions', dest='rep',     type=int, default=1)
@@ -73,7 +74,7 @@ def main():
     play_parser.set_defaults(command=play)
 
     play_parser = subparsers.add_parser('match', help="Run a domino match")
-    play_parser.add_argument('-p',    '--player',     dest='player',   default='random')
+    play_parser.add_argument('-p',    '--player',     dest='player',   nargs='+', default=['random'])
     play_parser.add_argument('-r',   '--rule',        dest='rule',     default='onegame')
     play_parser.add_argument('-n',   '--nine',        dest='pieces',   action='store_const', const=[9,10], default=[])
     play_parser.add_argument('-rep', '--repetitions', dest='rep',      type=int, default=1)
