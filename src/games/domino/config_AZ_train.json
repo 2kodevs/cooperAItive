@@ -1,0 +1,22 @@
+{   
+    "batch_size": 2000,
+    "handouts": 10,
+    "rollouts": 50,
+    "alpha": 0.5,
+    "tau_threshold": 7,
+    "max_number": 9,
+    "pieces_per_player": 10,
+    "data_path": "module/training/data", 
+    "save_path": "module/training",
+    "lr": 0.02,
+
+    "epochs": 1000,
+    "simulate": true,
+    "load_checkpoint": false,
+    "load_model": false,
+    "sample": 50,
+    "tag": "64c-6l-10h-50r-2000bs",
+    "num_process": 1,
+    "verbose": true,
+    "save_data": false
+}

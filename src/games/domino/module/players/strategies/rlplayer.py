@@ -39,6 +39,9 @@ class RLPlayer(BasePlayer):
                     heads[head] = piece[piece[0] == heads[head]]
 
     def get_rep(self, piece, head):
+        '''
+        Build a action.
+        '''
         piece = list(piece)
         if piece[0] != self.heads[head]:
             piece.reverse()
@@ -62,10 +65,12 @@ class RLPlayer(BasePlayer):
         rep.append((self.steps + 9) // 10)
         return str(rep)
 
+    #//TODO: Infer value here from NN
     def get_value(self, piece, head):
         return self.values.get(self.get_rep(piece, head), [0.5, 0])[0]
 
     def policy(self, valids):
+        #//TODO: Parametrize exploration constant
         if random() <= 0.3: return valids
         self.get_movements()
 
@@ -90,10 +95,11 @@ class RLPlayer(BasePlayer):
         elif e.name == 'PASS':
             self.steps += 1
         elif e.name == 'WIN':
-            new_val = [0, 1][d[0] == self.me % 2]
+            new_val = 0.5 if d[0] == -1 else [0, 1][d[0] == self.me % 2]
             self.measure(new_val)
 
     def measure(self, new_val):
+        #//TODO: Parametrize step_size_numerator
         step_size_numerator = 0.1
 
         for action in self.actions:

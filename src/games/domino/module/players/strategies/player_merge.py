@@ -10,10 +10,10 @@ class Merge(BasePlayer):
         for player in self.players:
             player.log(data)
 
-    def reset(self, position, pieces):
-        super().reset(position, pieces)
+    def reset(self, position, pieces, max_number):
+        super().reset(position, pieces, max_number)
         for player in self.players:
-            player.reset(position, pieces)
+            player.reset(position, pieces, max_number)
 
     def filter(self, valids=None):
         valids = super().filter(valids)

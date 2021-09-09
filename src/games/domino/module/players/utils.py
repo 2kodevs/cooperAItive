@@ -5,4 +5,3 @@ def count_min(player, piece):
         cant[1] += (piece[1] in item)
     val = min(cant)
     return val, cant.index(val)
-    

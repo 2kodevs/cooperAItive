@@ -14,6 +14,12 @@ from .non_double import NonDouble
 from .repeater import Repeater
 from .agachao import Agachao
 from .passer import Passer
+from .alphazero import AlphaZero
+from .monte_carlo import MonteCarlo
+from .human import Human
+
+from .utils import alphazero as alphazero_utils, mc as mc_utils
+from .models import alpha_zero_model as AlphaZeroModel
 
 # Add players to this list
 PLAYERS = [
@@ -34,4 +40,7 @@ PLAYERS = [
     DoubleEnd,
     NonDouble,
     SingletonRLPlayer(),
+    Human,
+    MonteCarlo,
+    AlphaZero,
 ]

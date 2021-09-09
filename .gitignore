@@ -127,3 +127,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+test_model.py
+
+# Trainer files
+*.ckpt
+training_data_*.json
+.vscode/launch.json
+*.tfevents.*
