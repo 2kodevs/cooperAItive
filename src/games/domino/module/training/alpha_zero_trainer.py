@@ -27,6 +27,7 @@ class AlphaZeroTrainer(Trainer):
         data_path: str,
         save_path: str,
         lr: int,
+        cput: int,
         tau_threshold: int = 8,
     ):
         """
@@ -48,6 +49,8 @@ class AlphaZeroTrainer(Trainer):
             Path to the folder where network data will be saved    
         param lr: int
             Learning rate
+        param cput: int
+            Exploration constant
         param tau_threshold: int
             Threshold for temperature behavior to become equivalent to argmax
         """
@@ -60,6 +63,7 @@ class AlphaZeroTrainer(Trainer):
         self.data_path = data_path
         self.save_path = save_path
         self.lr = lr
+        self.cput = cput
         self.tau_threshold = tau_threshold
         self.error_log = []
 
@@ -99,7 +103,7 @@ class AlphaZeroTrainer(Trainer):
             cur_player = BasePlayer.from_domino(domino)
             selector = utils.selector_maker(stats, cur_player.valid_moves(), cur_player.pieces_per_player - len(cur_player.pieces), root, self.tau_threshold, alpha)
             encoder = utils.encoder_generator(self.max_number)
-            rollout = utils.rollout_maker(stats, self.net)
+            rollout = utils.rollout_maker(stats, self.net, self.cput)
 
             root = False
 
@@ -320,6 +324,7 @@ class AlphaZeroTrainer(Trainer):
             "data_path": self.data_path, 
             "save_path": self.save_path,
             "lr": self.lr,
+            "cput:": self.cput,
 
             "min_loss": self.loss,
             "epochs": self.epochs - cur_epoch,
@@ -337,6 +342,7 @@ class AlphaZeroTrainer(Trainer):
         self.data_path = config["data_path"]
         self.save_path = config["save_path"]
         self.lr = config["lr"]
+        self.cput = config["cput"]
         self.loss = config["min_loss"]
         self.epochs += config["epochs"]
         if epochs:
