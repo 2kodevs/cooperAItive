@@ -27,7 +27,7 @@ class AlphaZeroTrainer(Trainer):
         data_path: str,
         save_path: str,
         lr: int,
-        tau_threshold: int = 6,
+        tau_threshold: int = 8,
     ):
         """
         param batch_size: int
@@ -231,8 +231,7 @@ class AlphaZeroTrainer(Trainer):
             if verbose:
                 print('Loading saved data...')
             file_names = [name for name in os.listdir(self.data_path) if os.path.isfile(f'{self.data_path}/{name}')]
-            file_names.sort()
-            file_names.reverse() # Reverse to get newest data first
+            file_names.sort(key= lambda x: int(x[14:-5]), reverse=True)
 
             for name in file_names:
                 path = f'{self.data_path}/{name}'
@@ -329,7 +328,7 @@ class AlphaZeroTrainer(Trainer):
         self.save_path = config["save_path"]
         self.lr = config["lr"]
         self.loss = config["min_loss"]
-        self.epochs = config["epochs"]
+        self.epochs += config["epochs"]
         if epochs:
             self.epochs += epochs
         sample = config["sample"]
