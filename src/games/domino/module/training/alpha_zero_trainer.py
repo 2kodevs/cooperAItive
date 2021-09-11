@@ -173,10 +173,18 @@ class AlphaZeroTrainer(Trainer):
             start = time.time()
 
         self.adjust_learning_rate(epoch, self.net.optimizer)
-        total = min(sample, len(data))
-        batch = random.sample(data, total)
+        total_loss, policy_loss, value_loss = 0,0,0
+        batch_size = len(data)
+        total = 0
+
+        for _ in range(batch_size // sample):
+            batch = random.sample(data, sample)
+            total += sample
+            loss = self.net.train_batch(batch)
+            total_loss += loss[0]
+            policy_loss += loss[1]
+            value_loss += loss[2]
         
-        total_loss, policy_loss, value_loss = self.net.train_batch(batch)
         loss = (total_loss / total, policy_loss / total, value_loss / total)
         self.error_log.append(loss)
 
