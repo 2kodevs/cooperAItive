@@ -9,7 +9,7 @@ from ..utils import state_to_list
 
 #STATE= [(56bits, 4bits, 2bits) x 41]
 STATE_SHAPE = (1, 41, 62)
-NUM_FILTERS = 64
+NUM_FILTERS = 70
 KERNEL_SIZE = 3
 
 class Net(nn.Module):
@@ -70,16 +70,16 @@ class Net(nn.Module):
             nn.BatchNorm2d(NUM_FILTERS),
             nn.LeakyReLU(),
             ).to(device)
-        # self.conv_7 = nn.Sequential(
-        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-        #     nn.BatchNorm2d(NUM_FILTERS),
-        #     nn.LeakyReLU(),
-        #     ).to(device)
-        # self.conv_8 = nn.Sequential(
-        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-        #     nn.BatchNorm2d(NUM_FILTERS),
-        #     nn.LeakyReLU(),
-        #     ).to(device)
+        self.conv_7 = nn.Sequential(
+            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
+            nn.BatchNorm2d(NUM_FILTERS),
+            nn.LeakyReLU(),
+            ).to(device)
+        self.conv_8 = nn.Sequential(
+            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
+            nn.BatchNorm2d(NUM_FILTERS),
+            nn.LeakyReLU(),
+            ).to(device)
         # self.conv_9 = nn.Sequential(
         #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
         #     nn.BatchNorm2d(NUM_FILTERS),
@@ -186,8 +186,8 @@ class Net(nn.Module):
         v = self.conv_4(v)
         v = self.conv_5(v)
         v = self.conv_6(v)
-        # v = self.conv_7(v)
-        # v = self.conv_8(v)
+        v = self.conv_7(v)
+        v = self.conv_8(v)
         # v = self.conv_9(v)
         # v = self.conv_10(v)
         # v = self.conv_11(v)
@@ -305,8 +305,7 @@ class Net(nn.Module):
         loss_value = F.mse_loss(v_preds.squeeze(-1), v_targets)
         loss_policy = torch.zeros(1).to(self.device)
         for pred, target in zip(p_preds, p_targets):
-            loss_policy += torch.sum(pred * target)
-        loss_policy = -loss_policy
+            loss_policy += -torch.sum(pred * target)
 
         loss = loss_policy + loss_value
         loss.backward()
