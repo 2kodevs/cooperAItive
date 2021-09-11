@@ -297,6 +297,8 @@ class AlphaZeroTrainer(Trainer):
             save_data = True
             self.write_loss(writer, e - 1, *loss)
 
+        config = self.build_config(sample, tag, self.epochs)
+        self.net.save(self.error_log, config, self.epochs, self.save_path, True, tag + '-completed', verbose=True)
         writer.flush()
 
     def build_config(self, sample, tag, cur_epoch):
