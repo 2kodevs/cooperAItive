@@ -348,7 +348,7 @@ class Net(nn.Module):
             print(f'Model saved with name: {net_name[:-5]}')
             print('Checkpoint saved')
 
-    def load(self, save_path, tag='latest', load_logs=False, load_model=False):
+    def load_checkpoint(self, save_path, tag='latest', load_logs=False, load_model=False):
         net_name = [f'AlphaZero_Dom_{tag}.ckpt', f'AlphaZero_Dom_model_{tag}.ckpt'][load_model]
 
         net_checkpoint = torch.load(f'{save_path}/{self.save_path}{net_name}')
@@ -378,3 +378,8 @@ class Net(nn.Module):
         if load_logs:
             ret.extend([net_checkpoint['error_log'], net_checkpoint['epoch']])
         return ret
+
+    @staticmethod
+    def load(path):
+        net_checkpoint = torch.load(path)
+        return net_checkpoint['model']

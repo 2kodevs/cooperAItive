@@ -285,10 +285,10 @@ class AlphaZeroTrainer(Trainer):
 
         if load_checkpoint:
             if load_model:
-                config, model, error_log, e = self.net.load(self.save_path, tag, True, load_model)
+                config, model, error_log, e = self.net.load_checkpoint(self.save_path, tag, True, load_model)
                 self.net = model
             else:
-                config, error_log, e = self.net.load(self.save_path, tag, True)
+                config, error_log, e = self.net.load_checkpoint(self.save_path, tag, True)
             
             if verbose:
                 print(json.dumps(config, indent=4))
