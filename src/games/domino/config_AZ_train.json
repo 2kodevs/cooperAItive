@@ -1,22 +1,23 @@
 {   
     "batch_size": 2000,
-    "handouts": 10,
-    "rollouts": 50,
-    "alpha": 0.5,
-    "tau_threshold": 7,
+    "handouts": 50,
+    "rollouts": 10,
+    "alpha": 1.0,
+    "tau_threshold": 11,
     "max_number": 9,
     "pieces_per_player": 10,
     "data_path": "module/training/data", 
     "save_path": "module/training",
-    "lr": 0.02,
+    "lr": 0.001,
+    "cput": 3,
 
-    "epochs": 1000,
+    "epochs": 0,
     "simulate": true,
-    "load_checkpoint": false,
+    "load_checkpoint": true,
     "load_model": false,
-    "sample": 50,
-    "tag": "64c-6l-10h-50r-2000bs",
+    "sample": 35,
+    "tag": "70c-8l-50h-10r-1.0",
     "num_process": 1,
     "verbose": true,
-    "save_data": false
+    "save_data": true
 }

@@ -108,7 +108,6 @@ def rollout_maker(
 
         for state, index in s_comma_a:
             n, q = data[state][index, 0], data[state][index, 2]
-            W = (q * n) + v
             data[state][index, 0] += 1
             data[state][index, 2] = (n*q + v) / (n + 1)
 

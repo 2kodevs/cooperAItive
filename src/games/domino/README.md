@@ -100,7 +100,8 @@ That configuration file should be a json with the following fields:
     "pieces_per_player": int, 
     "data_path": str,          
     "save_path": str,         
-    "lr": float,              
+    "lr": float,
+    "cput": int,              
     "tau_threshold": int,     
     "epochs": int,            
     "simulate": bool,         
@@ -123,6 +124,7 @@ That configuration file should be a json with the following fields:
 - `data_path`: Path to the folder where training data will be saved.
 - `save_path`: Path to the folder where network data will be saved .
 - `lr`: Learning Rate.
+- `cput`: Exploration constant.
 - `tau_threshold`: Threshold for temperature behavior to become equivalent to argmax.
 - `epochs`: Number of training epochs.
 - `simulate`: Set True if data must be generated via self play. Set False to load saved data if possible. If there is not enough saved data, missing data will be generated via self play.

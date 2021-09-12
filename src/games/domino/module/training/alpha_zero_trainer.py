@@ -27,7 +27,8 @@ class AlphaZeroTrainer(Trainer):
         data_path: str,
         save_path: str,
         lr: int,
-        tau_threshold: int = 6,
+        cput: int,
+        tau_threshold: int = 8,
     ):
         """
         param batch_size: int
@@ -48,6 +49,8 @@ class AlphaZeroTrainer(Trainer):
             Path to the folder where network data will be saved    
         param lr: int
             Learning rate
+        param cput: int
+            Exploration constant
         param tau_threshold: int
             Threshold for temperature behavior to become equivalent to argmax
         """
@@ -60,6 +63,7 @@ class AlphaZeroTrainer(Trainer):
         self.data_path = data_path
         self.save_path = save_path
         self.lr = lr
+        self.cput = cput
         self.tau_threshold = tau_threshold
         self.error_log = []
 
@@ -99,7 +103,7 @@ class AlphaZeroTrainer(Trainer):
             cur_player = BasePlayer.from_domino(domino)
             selector = utils.selector_maker(stats, cur_player.valid_moves(), cur_player.pieces_per_player - len(cur_player.pieces), root, self.tau_threshold, alpha)
             encoder = utils.encoder_generator(self.max_number)
-            rollout = utils.rollout_maker(stats, self.net)
+            rollout = utils.rollout_maker(stats, self.net, self.cput)
 
             root = False
 
@@ -173,10 +177,18 @@ class AlphaZeroTrainer(Trainer):
             start = time.time()
 
         self.adjust_learning_rate(epoch, self.net.optimizer)
-        total = min(sample, len(data))
-        batch = random.sample(data, total)
+        total_loss, policy_loss, value_loss = 0,0,0
+        batch_size = len(data)
+        total = 0
+
+        for _ in range(batch_size // sample):
+            batch = random.sample(data, sample)
+            total += sample
+            loss = self.net.train_batch(batch)
+            total_loss += loss[0]
+            policy_loss += loss[1]
+            value_loss += loss[2]
         
-        total_loss, policy_loss, value_loss = self.net.train_batch(batch)
         loss = (total_loss / total, policy_loss / total, value_loss / total)
         self.error_log.append(loss)
 
@@ -231,8 +243,7 @@ class AlphaZeroTrainer(Trainer):
             if verbose:
                 print('Loading saved data...')
             file_names = [name for name in os.listdir(self.data_path) if os.path.isfile(f'{self.data_path}/{name}')]
-            file_names.sort()
-            file_names.reverse() # Reverse to get newest data first
+            file_names.sort(key= lambda x: int(x[14:-5]), reverse=True)
 
             for name in file_names:
                 path = f'{self.data_path}/{name}'
@@ -274,10 +285,10 @@ class AlphaZeroTrainer(Trainer):
 
         if load_checkpoint:
             if load_model:
-                config, model, error_log, e = self.net.load(self.save_path, tag, True, load_model)
+                config, model, error_log, e = self.net.load_checkpoint(self.save_path, tag, True, load_model)
                 self.net = model
             else:
-                config, error_log, e = self.net.load(self.save_path, tag, True)
+                config, error_log, e = self.net.load_checkpoint(self.save_path, tag, True)
             
             if verbose:
                 print(json.dumps(config, indent=4))
@@ -298,6 +309,8 @@ class AlphaZeroTrainer(Trainer):
             save_data = True
             self.write_loss(writer, e - 1, *loss)
 
+        config = self.build_config(sample, tag, self.epochs)
+        self.net.save(self.error_log, config, self.epochs, self.save_path, True, tag + '-completed', verbose=True)
         writer.flush()
 
     def build_config(self, sample, tag, cur_epoch):
@@ -311,6 +324,7 @@ class AlphaZeroTrainer(Trainer):
             "data_path": self.data_path, 
             "save_path": self.save_path,
             "lr": self.lr,
+            "cput:": self.cput,
 
             "min_loss": self.loss,
             "epochs": self.epochs - cur_epoch,
@@ -328,8 +342,9 @@ class AlphaZeroTrainer(Trainer):
         self.data_path = config["data_path"]
         self.save_path = config["save_path"]
         self.lr = config["lr"]
+        self.cput = config["cput"]
         self.loss = config["min_loss"]
-        self.epochs = config["epochs"]
+        self.epochs += config["epochs"]
         if epochs:
             self.epochs += epochs
         sample = config["sample"]
