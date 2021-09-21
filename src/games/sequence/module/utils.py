@@ -1,4 +1,61 @@
 from random import shuffle
+from typing import Sequence
+
+
+class Color:
+    def __init__(self, color=None, seq=None):
+        self.color = color
+        self.sequence = seq
+
+    def clone(self):
+        return Color(self.color, self.sequence)
+
+    def set_sequence(self, number):
+        self.sequence = number
+
+    def bypass(self):
+        return False
+
+    def __eq__(self, other):
+        '''
+        Check if the objects have the same color & sequence id
+
+        * return False if sequence is None
+        '''
+        if not isinstance(other, Color):
+            raise TypeError(f"& operator not defined for `Color` and `{type(other).__name__}")
+        if other.bypass() or (None in [self.sequence, other.sequence]):
+            return False
+        return (self == other) and (self.sequence == other.sequence)
+
+    def __and__(self, other):
+        '''
+        Check if the objects have the same color
+        '''
+        if not isinstance(other, Color):
+            return False
+        return (self.color == other.color) or other.bypass()
+
+    @staticmethod
+    def fixed(self):
+        return not self.sequence is None 
+    
+    def __bool__(self):
+        # return is the color is not None
+        return not self.color is None 
+
+
+class ByPassColor(Color):
+    def bypass(self):
+        return True
+
+    def __and__(self, other):
+        return isinstance(other, Color)
+
+    def __eq__(self, other):
+        super().__and__(other)
+        return False
+
 
 def append_type(deck, dtype):
     return [(x, dtype) for x in deck]

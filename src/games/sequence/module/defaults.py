@@ -2,16 +2,18 @@ from enum import Enum
 
 
 JACK = 11
-REMOVE = [2, 3] # //TODO: Select the correct card types
 CARD_SIMBOLS = ["❤︎", "♦", "♠", "♣"]
 
 
 class Card(Enum):
-    HEART=0     # ❤︎
-    DIAMOND=1   # ♦
-    SPADES=2    # ♠
-    CLUBS=3     # ♣
-    ESPECIAL=4  # Board corners
+    HEART = 0     # ❤︎
+    DIAMOND = 1   # ♦
+    SPADES = 2    # ♠
+    CLUBS = 3     # ♣
+    ESPECIAL = 4  # Board corners
+
+
+REMOVE = [Card.CLUBS, Card.SPADES] # //TODO: Select the correct card types
 
 
 # board from https://steamcommunity.com/sharedfiles/filedetails/?id=639670109&searchtext=
@@ -30,7 +32,6 @@ BOARD = [
 
 
 CARDS_POSITIONS = {
-    (Card.ESPECIAL, 0): [(0, 0), (0, 9)],
     (Card.DIAMOND, 6):  [(0, 1), (7, 3)],
     (Card.DIAMOND, 7):  [(0, 2), (7, 2)],
     (Card.DIAMOND, 8):  [(0, 3), (6, 2)],
@@ -79,5 +80,7 @@ CARDS_POSITIONS = {
     (Card.CLUBS, 4):    [(6, 5), (8, 7)],
     (Card.CLUBS, 5):    [(6, 6), (8, 8)],
     (Card.CLUBS, 6):    [(6, 7), (8, 9)],
-    (Card.ESPECIAL, 1): [(9, 0), (9, 9)]
 }
+
+
+CORNERS = [(0, 0), (0, -1), (-1, 0), (-1, -1)]
