@@ -64,6 +64,9 @@ class Sequence:
         assert self.logs[-1][0] == Event.WIN
         return self.logs[-1][0]
 
+    def empty(self, i, j):
+        return bool(self.board[i][j])
+
     def is_winner(self, playerId):
         return self.colors[playerId] == self.colors[self.winner]
 
@@ -129,7 +132,7 @@ class Sequence:
                 assert number == JACK, "Unexpected card number"
                 for i, row in enumerate(self.board):
                     for j, color in enumerate(row):
-                        if (not color.fixed) and (bool(color) == (ctype in REMOVE)):
+                        if (not color.fixed) and (self.empty(i, j) == (ctype in REMOVE)):
                             valids.append((card, (i, j)))
         return valids
 
