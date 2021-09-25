@@ -20,7 +20,7 @@ class BasePlayer:
     def step(self):
         choice = self.choice()
         if choice is not None:
-            card, position = self.choice()
+            card, position = choice
             assert card in list(self.cards())
             self.cand_discard = (position is not None)
         else:
