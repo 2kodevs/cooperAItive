@@ -53,7 +53,7 @@ class Sequence:
         self.can_discard = None
         self.discard_pile = None
         self.current_player = None
-        self.pieces_per_player = None
+        self.cards_per_player = None
 
     def log(self, data):
         self.logs.append(data)
@@ -72,11 +72,11 @@ class Sequence:
     def is_winner(self, playerId):
         return self.colors[playerId] == self.winner
 
-    def reset(self, hand, number_of_players, players_colors, pieces_per_player, win_strike=2):
+    def reset(self, hand, number_of_players, players_colors, cards_per_player, win_strike=2):
         self.win_strike = win_strike
-        self.pieces_per_player = pieces_per_player
+        self.cards_per_player = cards_per_player
         self.colors = [Color(c) for c in players_colors]
-        self.players, self.deck = hand(number_of_players, self.pieces_per_player)
+        self.players, self.deck = hand(number_of_players, self.cards_per_player)
 
         self.logs = []
         self.sequence_id = 0
@@ -278,3 +278,42 @@ class Sequence:
             self.sequence(seq, line)
               
         return self._next()
+
+
+class SequenceManager:
+    @property
+    def cur_player(self):
+        return self.players[self.seq.current_player]
+
+    def feed_logs(self):
+        while self.logs_transmitted < len(self.seq.logs):
+            data = self.seq.logs[self.logs_transmitted]
+            for player in self.players:
+                player.log(data)
+            self.logs_transmitted += 1
+
+    def init(self, hand, players, players_colors, cards_per_player, win_strike=2):
+        self.logs_transmitted = 0
+        self.players = players
+        self.seq = Sequence()
+
+        self.seq.reset(hand, len(players), players_colors, cards_per_player, win_strike)
+
+        for i, player in enumerate(players):
+            player.reset(i, self.seq.players[i].view(), players_colors[i], cards_per_player)
+        self.feed_logs()
+
+    def step(self, fixed_action=False, action=None):
+        if not fixed_action:
+            action = self.cur_player().step()
+        done = self.seq.step(action)
+        self.feed_logs()
+        return done
+
+    def run(self, hand, players, players_colors, cards_per_player, win_strike=2):
+        self.init(players, hand, players, players_colors, cards_per_player, win_strike)
+
+        while not self.step(): pass
+
+        return self.seq.winner
+        
