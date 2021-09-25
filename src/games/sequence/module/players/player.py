@@ -1,5 +1,7 @@
-from random import choice
+from ..defaults import BOARD
+from ..utils import Color
 from ..sequence import Sequence
+import random
 
 class BasePlayer:
     def __init__(self, name):
@@ -10,14 +12,20 @@ class BasePlayer:
         self.history = None
         self.position = None
         self.cand_discard = None
+        self.number_of_cards= None
 
     def log(self, data):
         self.history.append(data)
 
     def step(self):
-        card, position = self.choice()
-        assert card in list(self.cards())
-        return card, position
+        choice = self.choice()
+        if choice is not None:
+            card, position = self.choice()
+            assert card in list(self.cards())
+            self.cand_discard = (position is not None)
+        else:
+            self.cand_discard = True
+            return None
 
     def choice(self, valids=None):
         """
@@ -25,7 +33,7 @@ class BasePlayer:
         """
         valids = self.filter(valids)
         assert len(valids), "Player strategy return 0 options to select"
-        return choice(valids)
+        return random.choice(valids)
 
     def filter(self, valids=None):
         """
@@ -43,6 +51,15 @@ class BasePlayer:
         if valids is None:
             return Sequence.valid_moves(self.board, list(self.cards()), self.cand_discard)
         return valids
+
+    def reset(self, position, card_view, color, number_of_cards):
+        self.position = position
+        self.cards = card_view
+        self.color = color
+        self.number_of_cards = number_of_cards
+        self.history = []
+        self.cand_discard = True
+        self.board = [[Color() for _ in range(len(l))] for l in BOARD]
 
     @property
     def me(self):
