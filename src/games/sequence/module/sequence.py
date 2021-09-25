@@ -118,27 +118,8 @@ class Sequence:
         # not a valid move
         return False
 
-    def valid_moves(self):
-        # List all valid moves in the form (card, position).
-        valids = []
-
-        cards = self.players[self.current_player].cards
-        for card in cards:
-            try:
-                for pos in CARDS_POSITIONS[card]:
-                    if self.empty(*pos):
-                        valids.append((card, pos))
-                else:
-                    if self.can_discard:
-                        valids.append((card, None))
-            except KeyError:
-                ctype, number = card
-                assert number is JACK, "Unexpected card number"
-                for i, row in enumerate(self.board):
-                    for j, color in enumerate(row):
-                        if (not color.fixed) and (self.empty(i, j) == (ctype in REMOVE)):
-                            valids.append((card, (i, j)))
-        return valids
+    def _valid_moves(self):
+       return Sequence.valid_moves(self.board, self.players[self.current_player].cards, self.can_discard)
 
     def _is_over(self):
         if max(self.score) >= self.win_strike:
@@ -279,6 +260,28 @@ class Sequence:
               
         return self._next()
 
+    @staticmethod
+    def valid_moves(board, cards, can_discard):
+        # List all valid moves in the form (card, position).
+        valids = []
+
+        for card in cards:
+            try:
+                for i, j in CARDS_POSITIONS[card]:
+                    if not board[i][j]:
+                        valids.append((card, (i, j)))
+                else:
+                    if can_discard:
+                        valids.append((card, None))
+            except KeyError:
+                ctype, number = card
+                assert number is JACK, "Unexpected card number"
+                for i, row in enumerate(board):
+                    for j, color in enumerate(row):
+                        if (not color.fixed) and (bool(board[i][j]) != (ctype in REMOVE)):
+                            valids.append((card, (i, j)))
+        return valids
+
 
 class SequenceManager:
     @property
@@ -316,4 +319,3 @@ class SequenceManager:
         while not self.step(): pass
 
         return self.seq.winner
-        
