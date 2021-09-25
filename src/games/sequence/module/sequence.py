@@ -90,7 +90,7 @@ class Sequence:
             self.board[i][j] = ByPassColor(-1)
         self.score = {i:0 for i in set(players_colors)}
 
-        self.log(Event.NEW_GAME)
+        self.log((Event.NEW_GAME,))
 
     def check_valid(self, action):
         card, pos = action
@@ -122,17 +122,17 @@ class Sequence:
        return Sequence.valid_moves(self.board, self.players[self.current_player].cards, self.can_discard)
 
     def _is_over(self):
-        if max(self.score) >= self.win_strike:
+        if max(self.score.values()) >= self.win_strike:
             player = self.current_player
-            self.log(Event.WIN, player, self.colors[player].color)
+            self.log((Event.WIN, player, self.colors[player].color))
             return True
         if self.count == self.board_size:
             for (e, player, color, _) in self.logs:
                 if e is Event.SEQUENCE:
-                    self.log(Event.WIN, player, color)
+                    self.log((Event.WIN, player, color))
                     break
             else:
-                self.log(Event.WIN, None, None)
+                self.log((Event.WIN, None, None))
             return True
         return False
 
@@ -185,7 +185,7 @@ class Sequence:
         """
         # Check PASS
         if action is None:
-            self.log(Event.PASS, self.current_player)
+            self.log((Event.PASS, self.current_player))
             return self._next()
 
         if not self.check_valid(action):
@@ -194,7 +194,7 @@ class Sequence:
         card, pos = action
         # Check DISCARD
         if pos is None:
-            self.log(Event.DISCARD, self.current_player, card)
+            self.log((Event.DISCARD, self.current_player, card))
             self._discard(card)
             self.can_discard = False # Discard only one card per turn
             return False # Game not finished, still the current_player turn
@@ -206,11 +206,11 @@ class Sequence:
         if self.board[i][j]:
             self.board[i][j] = Color()
             self.count -= 1
-            self.log(Event.REMOVE, card, pos)
+            self.log((Event.REMOVE, card, pos))
             return self._next()
 
         # Normal play, or a JACK
-        self.log(Event.PLAY, card, pos)
+        self.log((Event.PLAY, card, pos))
         self._discard(card)
         self.board[i][j] = color.clone()
         self.count += 1
@@ -275,7 +275,7 @@ class Sequence:
                         valids.append((card, None))
             except KeyError:
                 ctype, number = card
-                assert number is JACK, "Unexpected card number"
+                assert number is JACK, f"Unexpected card number ({number})"
                 for i, row in enumerate(board):
                     for j, color in enumerate(row):
                         if (not color.fixed) and (bool(board[i][j]) != (ctype in REMOVE)):
@@ -308,13 +308,13 @@ class SequenceManager:
 
     def step(self, fixed_action=False, action=None):
         if not fixed_action:
-            action = self.cur_player().step()
+            action = self.cur_player.step()
         done = self.seq.step(action)
         self.feed_logs()
         return done
 
     def run(self, hand, players, players_colors, cards_per_player, win_strike=2):
-        self.init(players, hand, players, players_colors, cards_per_player, win_strike)
+        self.init(hand, players, players_colors, cards_per_player, win_strike)
 
         while not self.step(): pass
 
