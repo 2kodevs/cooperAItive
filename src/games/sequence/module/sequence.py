@@ -42,10 +42,12 @@ class Sequence:
         self.deck = None
         self.logs = None
         self.board = None
+        self.count = None
         self.score = None
         self.colors = None
         self.sealed = None
         self.players = None
+        self.board_size = None
         self.win_strike = None
         self.sequence_id = None
         self.can_discard = None
@@ -62,13 +64,13 @@ class Sequence:
     @property
     def winner(self):
         assert self.logs[-1][0] == Event.WIN
-        return self.logs[-1][0]
+        return self.logs[-1][2]
 
     def empty(self, i, j):
-        return bool(self.board[i][j])
+        return not self.board[i][j]
 
     def is_winner(self, playerId):
-        return self.colors[playerId] == self.colors[self.winner]
+        return self.colors[playerId] == self.winner
 
     def reset(self, hand, number_of_players, players_colors, pieces_per_player, win_strike=2):
         self.win_strike = win_strike
@@ -82,6 +84,8 @@ class Sequence:
         self.current_player = 0
         self.can_discard = True
         self.board = [[Color() for _ in range(len(l))] for l in BOARD]
+        self.board_size = sum(len(l) for l in self.board)
+        self.count = 0
         for i, j in CORNERS:
             self.board[i][j] = ByPassColor(-1)
         self.score = {i:0 for i in set(players_colors)}
@@ -95,9 +99,9 @@ class Sequence:
         # check dead cards
         if pos is None:
             if number is JACK:
-                return False
-            for i, j in CARDS_POSITIONS[card]:
-                if not self.board[i][j]:
+                return False # //TODO: Not sure about it
+            for (i, j) in CARDS_POSITIONS[card]:
+                if self.empty(i, j):
                     return False
             return True
         i, j = pos
@@ -108,7 +112,7 @@ class Sequence:
             return self.empty(i, j)
 
         # check if the card is a JACK
-        if number == JACK:
+        if number is JACK:
             # check if the JACK is used correctly
             return self.empty(i, j) == (ctype in REMOVE)
         # not a valid move
@@ -121,15 +125,15 @@ class Sequence:
         cards = self.players[self.current_player].cards
         for card in cards:
             try:
-                for (i, j) in CARDS_POSITIONS[card]:
-                    if not self.board[i][j]:
-                        valids.append((card, (i, j)))
+                for pos in CARDS_POSITIONS[card]:
+                    if self.empty(*pos):
+                        valids.append((card, pos))
                 else:
                     if self.can_discard:
                         valids.append((card, None))
             except KeyError:
                 ctype, number = card
-                assert number == JACK, "Unexpected card number"
+                assert number is JACK, "Unexpected card number"
                 for i, row in enumerate(self.board):
                     for j, color in enumerate(row):
                         if (not color.fixed) and (self.empty(i, j) == (ctype in REMOVE)):
@@ -140,6 +144,14 @@ class Sequence:
         if max(self.score) >= self.win_strike:
             player = self.current_player
             self.log(Event.WIN, player, self.colors[player].color)
+            return True
+        if self.count == self.board_size:
+            for (e, player, color, _) in self.logs:
+                if e is Event.SEQUENCE:
+                    self.log(Event.WIN, player, color)
+                    break
+            else:
+                self.log(Event.WIN, None, None)
             return True
         return False
 
@@ -157,6 +169,7 @@ class Sequence:
         color = self.colors[player]
         new_score = {x:0 for x in self.score}
         new_score[color.color] = self.score[color.color] + 1 + (size > 5)
+        self.score = new_score
         # Report the sequence
         self.log((Event.SEQUENCE, player, color.color, size))
 
@@ -192,7 +205,7 @@ class Sequence:
         # Check PASS
         if action is None:
             self.log(Event.PASS, self.current_player)
-            return self._next(False)
+            return self._next()
 
         if not self.check_valid(action):
             raise ValueError("Invalid move.")
@@ -211,6 +224,7 @@ class Sequence:
         # check REMOVE action
         if self.board[i][j]:
             self.board[i][j] = Color()
+            self.count -= 1
             self.log(Event.REMOVE, card, pos)
             return self._next()
 
@@ -218,6 +232,7 @@ class Sequence:
         self.log(Event.PLAY, card, pos)
         self._discard(card)
         self.board[i][j] = color.clone()
+        self.count += 1
 
         # check for sequences
         data = [[], [], [], []] # one per direction
@@ -262,4 +277,4 @@ class Sequence:
             seq = [0, 5, 9][(size >= 5) + (size >= 9)]
             self.sequence(seq, line)
               
-        return self.next()
+        return self._next()

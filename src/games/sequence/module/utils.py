@@ -23,7 +23,7 @@ class Color:
         * return False if sequence is None
         '''
         if not isinstance(other, Color):
-            raise TypeError(f"& operator not defined for `Color` and `{type(other).__name__}")
+            return False
         if other.bypass() or (None in [self.sequence, other.sequence]):
             return False
         return (self == other) and (self.sequence == other.sequence)
