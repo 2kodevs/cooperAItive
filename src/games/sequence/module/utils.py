@@ -116,7 +116,7 @@ class BoardViewer:
 
     def __getitem__(self, pos):
         i, j = pos
-        return super().__getattribute__('board')[i][j]
+        return super().__getattribute__('board')[i][j].clone()
 
     def __iter__(self):
         board = super().__getattribute__('board')
