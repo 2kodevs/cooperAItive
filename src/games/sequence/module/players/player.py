@@ -41,13 +41,12 @@ class BasePlayer:
             Logic of each agent. This function given a set of valids move select the posible options. 
             Notice that rules force player to always make a move whenever is possible.
 
-            Player can access to current heads using `self.heads` or even full match history
-            through `self.history`
+            Player can access the full match history through `self.history`
 
             Return:
                 List of:
-                    piece:  (tuple<int>) Piece player is going to play. It must have it.
-                    head:   (int in {0, 1}) What head is it going to put the piece. This will be ignored in the first move.
+                    cards:    (Tuple<Card, int>) Card player is going to play. It must have it.
+                    Position: (Tuple<int, int>)  Selected board position to play the card
         """
         if valids is None:
             return Sequence.valid_moves(self.board, self.cards(), self.can_discard)
