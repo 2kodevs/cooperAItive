@@ -314,7 +314,7 @@ class SequenceManager:
         self.seq.reset(hand, len(players), players_colors, cards_per_player, win_strike)
 
         for i, player in enumerate(players):
-            player.reset(i, BoardViewer(self.seq.board), self.seq.players[i].view(), players_colors[i], cards_per_player)
+            player.reset(i, BoardViewer(self.seq.board), self.seq.players[i].view(), Color(players_colors[i]), cards_per_player)
         self.feed_logs()
 
     def step(self, fixed_action=False, action=None):
