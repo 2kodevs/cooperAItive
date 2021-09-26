@@ -65,20 +65,6 @@ class ByPassColor(Color):
         return False
 
 
-def append_type(deck, dtype):
-    return [(x, dtype) for x in deck]
-
-
-def hand_out(min_number=1, max_number=13):
-    deck = [x for x in range(min_number, max_number + 1)]
-    sequence_deck = []
-    for t in range(4):
-        sequence_deck.extend(append_type(deck, t))
-    sequence_deck = [*sequence_deck, *sequence_deck]
-    shuffle(sequence_deck)
-    return sequence_deck
-
-
 def find_pairs(board):
     pairs = {}
 

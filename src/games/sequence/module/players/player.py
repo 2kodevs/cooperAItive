@@ -10,7 +10,7 @@ class BasePlayer:
         self.color = None           # Player color
         self.history = None         # Game history
         self.position = None        # Player number
-        self.cand_discard = None    # Indicates if the player can change a dead card
+        self.can_discard = None    # Indicates if the player can change a dead card
         self.number_of_cards= None  # The number of cards per player
 
     def log(self, data):
@@ -21,10 +21,10 @@ class BasePlayer:
         if choice is not None:
             card, position = choice
             assert card in list(self.cards())
-            self.cand_discard = (position is not None)
+            self.can_discard = (position is not None)
             return card, position
         else:
-            self.cand_discard = True
+            self.can_discard = True
             return None
 
     def choice(self, valids=None):
@@ -49,7 +49,7 @@ class BasePlayer:
                     head:   (int in {0, 1}) What head is it going to put the piece. This will be ignored in the first move.
         """
         if valids is None:
-            return Sequence.valid_moves(self.board, self.cards(), self.cand_discard)
+            return Sequence.valid_moves(self.board, self.cards(), self.can_discard)
         return valids
 
     def reset(self, position, board, card_view, color, number_of_cards):
@@ -58,7 +58,7 @@ class BasePlayer:
         self.color = color
         self.number_of_cards = number_of_cards
         self.history = []
-        self.cand_discard = True
+        self.can_discard = True
         self.board = board
 
     @property
