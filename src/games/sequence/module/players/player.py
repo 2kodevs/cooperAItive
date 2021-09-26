@@ -1,5 +1,6 @@
 from ..defaults import BOARD
 from ..sequence import Sequence
+from ..utils import BoardViewer
 import random
 
 class BasePlayer:
@@ -70,12 +71,14 @@ class BasePlayer:
         return self.color
 
     @staticmethod
-    def from_sequence(sequence):
+    def from_sequence(sequence: Sequence):
         player = BasePlayer('SequencePlayer')
+        player.board = BoardViewer(sequence.board)
+        player.cards = sequence.cards
         player.position = sequence.current_player
-        player.cards = sequence.players[player.me].view()
+        player.color = sequence.color
         player.history = sequence.logs[:]
-        player.pieces_per_player = sequence.pieces_per_player
-        player.color = sequence.colors[player.me]
+        player.can_discard = sequence.can_discard
+        player.number_of_cards = sequence.cards_per_player
         return player
         

@@ -1,5 +1,5 @@
 from enum import Enum
-from .utils import Color, ByPassColor, get_rep, get_board_rep, BoardViewer
+from .utils import Color, ByPassColor, BoardViewer
 from .defaults import *
 from random import shuffle
 
@@ -57,8 +57,13 @@ class Sequence:
     def log(self, data):
         self.logs.append(data)
 
-    def get_cards(self):
-        return [player.cards for player in self.players]
+    @property
+    def cards(self):
+        return self.players[self.current_player].view()
+
+    @property
+    def color(self):
+        return self.colors[self.current_player].clone()
 
     @property
     def winner(self):
@@ -103,7 +108,7 @@ class Sequence:
     def check_valid(self, action):
         if action is None:
             # All the cards should be dead
-            for card in self.players[self.current_player].cards:
+            for card in self.cards():
                 if not self._is_dead_card(card):
                     return False
             return True
@@ -129,12 +134,11 @@ class Sequence:
         return False
 
     def _valid_moves(self):
-       return Sequence.valid_moves(BoardViewer(self.board), self.players[self.current_player].cards, self.can_discard)
+       return Sequence.valid_moves(BoardViewer(self.board), self.cards(), self.can_discard)
 
     def _is_over(self):
         if max(self.score.values()) >= self.win_strike:
-            player = self.current_player
-            self.log((Event.WIN, player, self.colors[player].color))
+            self.log((Event.WIN, self.current_player, self.color))
             return True
         if self.count == self.board_size:
             for (e, player, color, _) in self.logs:
@@ -156,13 +160,9 @@ class Sequence:
         # increase the sequence number
         self.sequence_id += 1
         # update players score
-        player = self.current_player
-        color = self.colors[player]
-        new_score = {x:0 for x in self.score}
-        new_score[color.color] = self.score[color.color] + 1 + (size > 5)
-        self.score = new_score
+        self.score[self.color.color] += 1 + (size > 5)
         # Report the sequence
-        self.log((Event.SEQUENCE, player, color.color, size))
+        self.log((Event.SEQUENCE, self.current_player, self.color, size))
 
     def _next(self):
         over = self._is_over()
@@ -194,13 +194,6 @@ class Sequence:
         raise ValueError if it's an invalid move.
         """
         if not self.check_valid(action):
-            print('\n'.join(str(l) for l in self.board))
-            print()
-            print(get_board_rep())
-            print()
-            print([get_rep(x) for x in self.players[self.current_player].cards])
-            print()
-            print(self._valid_moves())
             raise ValueError(f"Invalid move ({action})")
 
         # Check PASS
@@ -217,7 +210,6 @@ class Sequence:
             return False # Game not finished, still the current_player turn
         
         i, j = pos
-        color = self.colors[self.current_player]
 
         # check REMOVE action
         if self.board[i][j]:
@@ -227,9 +219,9 @@ class Sequence:
             return self._next()
 
         # Normal play, or a JACK
-        self.log((Event.PLAY, self.current_player, card, color.color, pos))
+        self.log((Event.PLAY, self.current_player, card, self.color, pos))
         self._discard(card)
-        self.board[i][j] = color.clone()
+        self.board[i][j] = self.color.clone()
         self.count += 1
 
         # check for sequences
@@ -243,7 +235,7 @@ class Sequence:
         ]
         # check a half of the line
         for inc_i, inc_j, idx in moves:
-            last = color.clone()
+            last = self.color.clone()
             cur_i, cur_j = i, j
             while last & self.board[cur_i][cur_j]:
                 if last == self.board[cur_i][cur_j]:
@@ -257,7 +249,7 @@ class Sequence:
 
         # check the other line half
         for inc_i, inc_j, idx in moves:
-            last = color.clone()
+            last = self.color.clone()
             cur_i, cur_j = i - inc_i, j - inc_j
             if not ((0 <= cur_i < 10) and (0 <= cur_j < 10)):
                 continue
