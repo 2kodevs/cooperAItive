@@ -18,7 +18,7 @@ class Color:
 
     def __eq__(self, other):
         '''
-        Check if the objects have the same color & sequence id
+        Check if the objects have the same sequence id
 
         * return False if sequence is None
         '''
@@ -26,7 +26,7 @@ class Color:
             return False
         if other.bypass() or (None in [self.sequence, other.sequence]):
             return False
-        return (self == other) and (self.sequence == other.sequence)
+        return self.sequence == other.sequence
 
     def __and__(self, other):
         '''
