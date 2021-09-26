@@ -1,5 +1,5 @@
 from random import shuffle
-from typing import Sequence
+from .defaults import BOARD, CARD_SIMBOLS, CARD_NUMBERS
 
 
 class Color:
@@ -36,13 +36,21 @@ class Color:
             return False
         return (self.color == other.color) or other.bypass()
 
-    @staticmethod
+    @property
     def fixed(self):
-        return not self.sequence is None 
+        return self.sequence is not None 
     
     def __bool__(self):
         # return is the color is not None
         return not self.color is None 
+
+    def __str__(self):
+        if self.color is None:
+            return " "
+        return str(self.color)
+
+    def __repr__(self):
+        return str(self)
 
 
 class ByPassColor(Color):
@@ -70,6 +78,7 @@ def hand_out(min_number=1, max_number=13):
     shuffle(sequence_deck)
     return sequence_deck
 
+
 def find_pairs(board):
     pairs = {}
 
@@ -81,6 +90,7 @@ def find_pairs(board):
 
     return pairs
 
+
 def printer(cards):
     output = [
         f'\t(Card.{card.name}, {num}): ' + str(value) 
@@ -89,3 +99,31 @@ def printer(cards):
     print('{')
     print(',\n'.join(output))
     print('}')
+
+
+def get_rep(card):
+    ctype, number = card
+    return CARD_NUMBERS[number] + CARD_SIMBOLS[ctype.value]
+
+
+def get_board_rep():
+    return '\n'.join(str(', '.join(get_rep(x) for x in l)) for l in BOARD)
+
+
+class BoardViewer:
+    def __init__(self, board):
+        self.board = board
+
+    def __getitem__(self, pos):
+        i, j = pos
+        return super().__getattribute__('board')[i][j]
+
+    def __iter__(self):
+        board = super().__getattribute__('board')
+        for i, row in enumerate(board):
+            for j, color in enumerate(row):
+                yield (i, j), color.clone()
+
+    def __getattribute__(self, name: str):
+        raise AttributeError("BoardViewer doesn't have attributes")
+        

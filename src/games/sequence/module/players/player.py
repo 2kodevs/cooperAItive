@@ -1,5 +1,4 @@
 from ..defaults import BOARD
-from ..utils import Color
 from ..sequence import Sequence
 import random
 
@@ -23,6 +22,7 @@ class BasePlayer:
             card, position = choice
             assert card in list(self.cards())
             self.cand_discard = (position is not None)
+            return card, position
         else:
             self.cand_discard = True
             return None
@@ -49,17 +49,17 @@ class BasePlayer:
                     head:   (int in {0, 1}) What head is it going to put the piece. This will be ignored in the first move.
         """
         if valids is None:
-            return Sequence.valid_moves(self.board, list(self.cards()), self.cand_discard)
+            return Sequence.valid_moves(self.board, self.cards(), self.cand_discard)
         return valids
 
-    def reset(self, position, card_view, color, number_of_cards):
+    def reset(self, position, board, card_view, color, number_of_cards):
         self.position = position
         self.cards = card_view
         self.color = color
         self.number_of_cards = number_of_cards
         self.history = []
         self.cand_discard = True
-        self.board = [[Color() for _ in range(len(l))] for l in BOARD]
+        self.board = board
 
     @property
     def me(self):

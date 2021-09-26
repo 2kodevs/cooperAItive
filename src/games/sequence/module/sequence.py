@@ -1,5 +1,5 @@
 from enum import Enum
-from .utils import Color, ByPassColor 
+from .utils import Color, ByPassColor, get_rep, get_board_rep, BoardViewer
 from .defaults import *
 from random import shuffle
 
@@ -10,7 +10,7 @@ class Event(Enum):
     NEW_GAME = 0
 
     # Player use a put a new chip on the board
-    # params: (playerId, card, position)
+    # params: (playerId, card, color, position)
     PLAY = 1
 
     # Player remove a chip from the board
@@ -87,23 +87,34 @@ class Sequence:
         self.board_size = sum(len(l) for l in self.board)
         self.count = 0
         for i, j in CORNERS:
-            self.board[i][j] = ByPassColor(-1)
+            self.board[i][j] = ByPassColor("X")
         self.score = {i:0 for i in set(players_colors)}
 
         self.log((Event.NEW_GAME,))
 
+    def _is_dead_card(self, card):
+        _, number = card
+        if number is JACK:
+            return False # //TODO: Not sure about it
+        for (i, j) in CARDS_POSITIONS[card]:
+            if self.empty(i, j):
+                return False
+        return True
+
     def check_valid(self, action):
+        if action is None:
+            # All the cards should be dead
+            for card in self.players[self.current_player].cards:
+                if not self._is_dead_card(card):
+                    return False
+            return True
+
         card, pos = action
         ctype, number = card
 
         # check dead cards
         if pos is None:
-            if number is JACK:
-                return False # //TODO: Not sure about it
-            for (i, j) in CARDS_POSITIONS[card]:
-                if self.empty(i, j):
-                    return False
-            return True
+            return self._is_dead_card(card)
         i, j = pos
 
         # check card in the board
@@ -114,12 +125,12 @@ class Sequence:
         # check if the card is a JACK
         if number is JACK:
             # check if the JACK is used correctly
-            return self.empty(i, j) == (ctype in REMOVE)
+            return self.empty(i, j) != (ctype in REMOVE)
         # not a valid move
         return False
 
     def _valid_moves(self):
-       return Sequence.valid_moves(self.board, self.players[self.current_player].cards, self.can_discard)
+       return Sequence.valid_moves(BoardViewer(self.board), self.players[self.current_player].cards, self.can_discard)
 
     def _is_over(self):
         if max(self.score.values()) >= self.win_strike:
@@ -183,13 +194,20 @@ class Sequence:
 
         raise ValueError if it's an invalid move.
         """
+        if not self.check_valid(action):
+            print('\n'.join(str(l) for l in self.board))
+            print()
+            print(get_board_rep())
+            print()
+            print([get_rep(x) for x in self.players[self.current_player].cards])
+            print()
+            print(self._valid_moves())
+            raise ValueError(f"Invalid move ({action})")
+
         # Check PASS
         if action is None:
             self.log((Event.PASS, self.current_player))
             return self._next()
-
-        if not self.check_valid(action):
-            raise ValueError("Invalid move.")
 
         card, pos = action
         # Check DISCARD
@@ -210,7 +228,7 @@ class Sequence:
             return self._next()
 
         # Normal play, or a JACK
-        self.log((Event.PLAY, card, pos))
+        self.log((Event.PLAY, self.current_player, card, color.color, pos))
         self._discard(card)
         self.board[i][j] = color.clone()
         self.count += 1
@@ -256,7 +274,7 @@ class Sequence:
         for line in data:
             size = len(line)
             seq = [0, 5, 9][(size >= 5) + (size >= 9)]
-            self.sequence(seq, line)
+            self._sequence(seq, line)
               
         return self._next()
 
@@ -267,20 +285,20 @@ class Sequence:
 
         for card in cards:
             try:
+                is_dead = True
                 for i, j in CARDS_POSITIONS[card]:
-                    if not board[i][j]:
+                    if not board[i, j]:
+                        is_dead = False
                         valids.append((card, (i, j)))
-                else:
-                    if can_discard:
-                        valids.append((card, None))
+                if can_discard and is_dead:
+                    valids.append((card, None))
             except KeyError:
                 ctype, number = card
                 assert number is JACK, f"Unexpected card number ({number})"
-                for i, row in enumerate(board):
-                    for j, color in enumerate(row):
-                        if (not color.fixed) and (bool(board[i][j]) != (ctype in REMOVE)):
-                            valids.append((card, (i, j)))
-        return valids
+                for (i, j), color in board:
+                    if (not color.fixed) and (bool(board[i, j]) == (ctype in REMOVE)):
+                        valids.append((card, (i, j)))
+        return valids if valids else [None]
 
 
 class SequenceManager:
@@ -303,7 +321,7 @@ class SequenceManager:
         self.seq.reset(hand, len(players), players_colors, cards_per_player, win_strike)
 
         for i, player in enumerate(players):
-            player.reset(i, self.seq.players[i].view(), players_colors[i], cards_per_player)
+            player.reset(i, BoardViewer(self.seq.board), self.seq.players[i].view(), players_colors[i], cards_per_player)
         self.feed_logs()
 
     def step(self, fixed_action=False, action=None):

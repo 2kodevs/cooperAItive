@@ -2,7 +2,8 @@ from enum import Enum
 
 
 JACK = 11
-CARD_SIMBOLS = ["❤︎", "♦", "♠", "♣"]
+CARD_SIMBOLS = ["❤︎", "♦", "♠", "♣", "X"]
+CARD_NUMBERS = "XA23456789TJQK"
 
 
 class Card(Enum):
@@ -27,7 +28,7 @@ BOARD = [
     [(Card.SPADES, 13) , (Card.HEART, 8)  , (Card.DIAMOND, 8) , (Card.CLUBS, 2)  , (Card.CLUBS, 3)  , (Card.CLUBS, 4)   , (Card.CLUBS, 5)   , (Card.CLUBS, 6)   , (Card.SPADES, 13), (Card.CLUBS, 8)   ],
     [(Card.SPADES, 12) , (Card.HEART, 9)  , (Card.DIAMOND, 7) , (Card.DIAMOND, 6), (Card.DIAMOND, 5), (Card.DIAMOND, 4) , (Card.DIAMOND, 3) , (Card.DIAMOND, 2) , (Card.SPADES, 1) , (Card.CLUBS, 7)   ],
     [(Card.SPADES, 10) , (Card.HEART, 10) , (Card.HEART, 12)  , (Card.HEART, 13) , (Card.HEART, 1)  , (Card.CLUBS, 2)   , (Card.CLUBS, 3)   , (Card.CLUBS, 4)   , (Card.CLUBS, 5)  , (Card.CLUBS, 6)   ],
-    [(Card.ESPECIAL, 1), (Card.SPADES, 9) , (Card.SPADES, 8)  , (Card.SPADES, 7) , (Card.SPADES, 6) , (Card.SPADES, 5)  , (Card.SPADES, 4)  , (Card.SPADES, 3)  , (Card.SPADES, 2) , (Card.ESPECIAL, 1)],
+    [(Card.ESPECIAL, 0), (Card.SPADES, 9) , (Card.SPADES, 8)  , (Card.SPADES, 7) , (Card.SPADES, 6) , (Card.SPADES, 5)  , (Card.SPADES, 4)  , (Card.SPADES, 3)  , (Card.SPADES, 2) , (Card.ESPECIAL, 0)],
 ]
 
 
