@@ -5,13 +5,14 @@ from random import shuffle
 
 def handout(number_of_player, pieces_per_player):
     # Check valid game distribution
-    assert 4 * 13 >= number_of_player * pieces_per_player, "Not enough cards for this game"
+    assert 2 * 4 * 13 >= number_of_player * pieces_per_player, "Not enough cards for this game"
 
     # Generate the cards
     cards = []
     for ctype in range(4):
         for num in range(1, 14):
             cards.append((Card(ctype), num))
+    cards = [*cards, *cards]
     shuffle(cards)
 
     # handout the player cards and the deck 
