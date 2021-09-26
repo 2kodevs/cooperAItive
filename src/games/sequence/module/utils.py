@@ -61,7 +61,6 @@ class ByPassColor(Color):
         return isinstance(other, Color)
 
     def __eq__(self, other):
-        super().__and__(other)
         return False
 
 
