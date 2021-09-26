@@ -63,6 +63,10 @@ class ByPassColor(Color):
     def __eq__(self, other):
         return False
 
+    @property
+    def fixed(self):
+        return True
+
 
 def find_pairs(board):
     pairs = {}
@@ -86,13 +90,50 @@ def printer(cards):
     print('}')
 
 
+BLACK   = "\x1b[30m"
+RED     = "\x1b[31m"
+GREEN   = "\x1b[32m"
+YELLOW  = "\x1b[33m"
+BLUE    = "\x1b[34m"
+MAGENTA = "\x1b[35m"
+CYAN    = "\x1b[36m"
+RESET   = "\x1b[0m"
+BOLD    = "\x1b[1m"
+BLACKB  =  BLACK   +   BOLD
+REDB    =  RED     +   BOLD
+GREENB  =  GREEN   +   BOLD
+YELLOWB =  YELLOW  +   BOLD
+BLUEB   =  BLUE    +   BOLD
+MAGENTAB=  MAGENTA +   BOLD
+CYANB   =  CYAN    +   BOLD
+COLORS = {
+    None:RESET,
+    'X':RESET,
+    '0':RED, 
+    '1':BLUE, 
+    '2':GREEN, 
+    '3':YELLOW,
+}
+
+
 def get_rep(card):
     ctype, number = card
     return CARD_NUMBERS[number] + CARD_SIMBOLS[ctype.value]
 
 
-def get_board_rep():
-    return '\n'.join(str(', '.join(get_rep(x) for x in l)) for l in BOARD)
+def get_color(color):
+    return COLORS[color.color] + str(color) + RESET + " X"[color.fixed]
+
+
+def get_board_cards_rep():
+    return '\n'.join((', '.join(get_rep(x) for x in l) for l in BOARD))
+
+
+def get_board_rep(board):
+    return '\n'.join(
+        (', '.join(f'{get_rep(ca)}{get_color(co)}' for ca, co in zip(cards, colors))) 
+        for cards, colors in zip(BOARD, board)
+    )
 
 
 class BoardViewer:

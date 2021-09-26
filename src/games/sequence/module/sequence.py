@@ -88,7 +88,7 @@ class Sequence:
         self.current_player = 0
         self.can_discard = True
         self.board = [[Color() for _ in range(len(l))] for l in BOARD]
-        self.board_size = sum(len(l) for l in self.board)
+        self.board_size = sum(len(l) for l in self.board) - 4
         self.count = 0
         for i, j in CORNERS:
             self.board[i][j] = ByPassColor("X")
@@ -141,8 +141,9 @@ class Sequence:
             self.log((Event.WIN, self.current_player, self.color))
             return True
         if self.count == self.board_size:
-            for (e, player, color, _) in self.logs:
+            for e, *data in self.logs:
                 if e is Event.SEQUENCE:
+                    player, color, _ = data
                     self.log((Event.WIN, player, color))
                     break
             else:
@@ -202,10 +203,10 @@ class Sequence:
             return self._next()
 
         card, pos = action
+        self._discard(card)
         # Check DISCARD
         if pos is None:
             self.log((Event.DISCARD, self.current_player, card))
-            self._discard(card)
             self.can_discard = False # Discard only one card per turn
             return False # Game not finished, still the current_player turn
         
@@ -220,7 +221,6 @@ class Sequence:
 
         # Normal play, or a JACK
         self.log((Event.PLAY, self.current_player, card, self.color, pos))
-        self._discard(card)
         self.board[i][j] = self.color.clone()
         self.count += 1
 
