@@ -240,6 +240,7 @@ class Sequence:
             while last & self.board[cur_i][cur_j]:
                 if last == self.board[cur_i][cur_j]:
                     break
+                last = self.board[cur_i][cur_j]
                 data[idx].append((cur_i, cur_j))
                 cur_i += inc_i
                 cur_j += inc_j
@@ -256,6 +257,7 @@ class Sequence:
             while last & self.board[cur_i][cur_j]:
                 if last == self.board[cur_i][cur_j]:
                     break
+                last = self.board[cur_i][cur_j]
                 data[idx].append((cur_i, cur_j))
                 cur_i -= inc_i
                 cur_j -= inc_j
