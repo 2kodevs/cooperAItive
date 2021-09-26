@@ -4,14 +4,14 @@ import random
 
 class BasePlayer:
     def __init__(self, name):
-        self.name = name
-        self.board = None
-        self.cards = None
-        self.color = None
-        self.history = None
-        self.position = None
-        self.cand_discard = None
-        self.number_of_cards= None
+        self.name = name            # player name
+        self.board = None           # Game board (read only) NOTE: Type is BoardViewer
+        self.cards = None           # Player card (read only) NOTE: self.cards() returns an iterator
+        self.color = None           # Player color
+        self.history = None         # Game history
+        self.position = None        # Player number
+        self.cand_discard = None    # Indicates if the player can change a dead card
+        self.number_of_cards= None  # The number of cards per player
 
     def log(self, data):
         self.history.append(data)

@@ -39,21 +39,20 @@ class Sequence:
     Instance that contains the logic of a single match.
     """
     def __init__(self):
-        self.deck = None
-        self.logs = None
-        self.board = None
-        self.count = None
-        self.score = None
-        self.colors = None
-        self.sealed = None
-        self.players = None
-        self.board_size = None
-        self.win_strike = None
-        self.sequence_id = None
-        self.can_discard = None
-        self.discard_pile = None
-        self.current_player = None
-        self.cards_per_player = None
+        self.deck = None                # Game deck
+        self.logs = None                # Game history
+        self.board = None               # Game board
+        self.count = None               # Number of positions used of the board
+        self.score = None               # Score per color (i.e Number of consecutive sequences)
+        self.colors = None              # Players color
+        self.players = None             # Players list
+        self.board_size = None          # Amount of positions of the board
+        self.win_strike = None          # Number of consecutive sequences needed to win the game
+        self.sequence_id = None         # Incremental id for identifiying each sequence
+        self.can_discard = None         # Indicate if the current player can discard a card
+        self.discard_pile = None        # Players discarted cards
+        self.current_player = None      # Id of the current player
+        self.cards_per_player = None    # Number of cards per player
 
     def log(self, data):
         self.logs.append(data)
