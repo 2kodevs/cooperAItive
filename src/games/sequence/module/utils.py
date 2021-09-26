@@ -42,7 +42,7 @@ class Color:
     
     def __bool__(self):
         # return is the color is not None
-        return not self.color is None 
+        return self.color is not None 
 
     def __str__(self):
         if self.color is None:
