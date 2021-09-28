@@ -1,9 +1,11 @@
 from .hand_out import handout
+from .utils import *
 
 
 HANDS = [
     handout,
 ]
+
 
 def get_hand(value, elements=HANDS):
     value = value.lower()
