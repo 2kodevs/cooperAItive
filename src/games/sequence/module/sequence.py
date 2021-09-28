@@ -33,6 +33,9 @@ class Event(Enum):
     # params: (playerId, color)
     WIN = 6
 
+    # Report deck refill
+    REFILL_DECK = 7
+
 
 class Sequence:
     """
@@ -176,6 +179,7 @@ class Sequence:
         player.remove(card)
         self.discard_pile.append(card)
         if not self.deck:
+            self.log((Event.REFILL_DECK,))
             self.deck = self.discard_pile[:]
             self.discard_pile = []
             shuffle(self.deck)
