@@ -5,14 +5,15 @@ import random
 
 class BasePlayer:
     def __init__(self, name):
-        self.name = name            # player name
-        self.board = None           # Game board (read only) NOTE: Type is BoardViewer
-        self.cards = None           # Player card (read only) NOTE: self.cards() returns an iterator
-        self.color = None           # Player color
-        self.history = None         # Game history
-        self.position = None        # Player number
-        self.can_discard = None    # Indicates if the player can change a dead card
-        self.number_of_cards= None  # The number of cards per player
+        self.name = name               # player name
+        self.board = None              # Game board (read only) NOTE: Type is BoardViewer
+        self.cards = None              # Player card (read only) NOTE: self.cards() returns an iterator
+        self.color = None              # Player color
+        self.history = None            # Game history
+        self.position = None           # Player number
+        self.can_discard = None        # Indicates if the player can change a dead card
+        self.number_of_cards = None    # The number of cards per player
+        self.number_of_players = None  # The number of players in the game
 
     def log(self, data):
         self.history.append(data)
@@ -52,11 +53,12 @@ class BasePlayer:
             return Sequence.valid_moves(self.board, self.cards(), self.can_discard)
         return valids
 
-    def reset(self, position, board, card_view, color, number_of_cards):
+    def reset(self, position, board, card_view, color, number_of_cards, number_of_players):
         self.position = position
         self.cards = card_view
         self.color = color
         self.number_of_cards = number_of_cards
+        self.number_of_players = number_of_players
         self.history = []
         self.can_discard = True
         self.board = board
