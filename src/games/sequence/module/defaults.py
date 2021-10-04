@@ -12,6 +12,11 @@ class Card(Enum):
     SPADES = 2    # ♠
     CLUBS = 3     # ♣
     ESPECIAL = 4  # Board corners
+    
+    def __lt__(self, other):
+        if not isinstance(other, Card):
+            raise TypeError(f"'<' not supported between instances of 'Card' and '{type(other).__name__}'")
+        return self.value < other.value
 
 
 REMOVE = [Card.CLUBS, Card.SPADES] # //TODO: Select the correct card types
@@ -81,6 +86,15 @@ CARDS_POSITIONS = {
     (Card.CLUBS, 4):    [(6, 5), (8, 7)],
     (Card.CLUBS, 5):    [(6, 6), (8, 8)],
     (Card.CLUBS, 6):    [(6, 7), (8, 9)],
+}
+
+
+ALL_CARDS_MAPPING = {
+    **CARDS_POSITIONS,
+    (Card.HEART, 11):   [(0, 0), (0, 9)],
+    (Card.DIAMOND, 11): [(9, 0), (9, 9)],
+    (Card.SPADES, 11):  [(10, 0), (10, 1)],
+    (Card.CLUBS, 11):   [(10, 2), (10, 3)],
 }
 
 
