@@ -7,11 +7,12 @@ class BasePlayer:
     def __init__(self, name):
         self.name = name               # player name
         self.board = None              # Game board (read only) NOTE: Type is BoardViewer
-        self.cards = None              # Player card (read only) NOTE: self.cards() returns an iterator
-        self.color = None              # Player color
+        self._cards = None              # Player card (read only) NOTE: self._cards() returns an iterator
         self.history = None            # Game history
         self.position = None           # Player number
+        self.win_strike = None         # Number of sequences needed to win
         self.can_discard = None        # Indicates if the player can change a dead card
+        self.players_colors = None     # Colors of all the players
         self.number_of_cards = None    # The number of cards per player
         self.number_of_players = None  # The number of players in the game
 
@@ -22,7 +23,7 @@ class BasePlayer:
         choice = self.choice()
         if choice is not None:
             card, position = choice
-            assert card in list(self.cards())
+            assert card in list(self._cards())
             self.can_discard = (position is not None)
             return card, position
         else:
@@ -50,18 +51,19 @@ class BasePlayer:
                     Position: (Tuple<int, int>)  Selected board position to play the card
         """
         if valids is None:
-            return Sequence.valid_moves(self.board, self.cards(), self.can_discard)
+            return Sequence.valid_moves(self.board, self._cards(), self.can_discard)
         return valids
 
-    def reset(self, position, board, card_view, color, number_of_cards, number_of_players):
+    def reset(self, position, board, card_view, players_colors, number_of_cards, number_of_players, win):
         self.position = position
-        self.cards = card_view
-        self.color = color
+        self._cards = card_view
+        self.players_colors = players_colors
         self.number_of_cards = number_of_cards
         self.number_of_players = number_of_players
         self.history = []
         self.can_discard = True
         self.board = board
+        self.win_strike = win
 
     @property
     def me(self):
@@ -70,6 +72,14 @@ class BasePlayer:
     @property
     def team(self):
         return self.color
+
+    @property
+    def color(self):
+        return self.players_colors[self.position]
+
+    @property
+    def cards(self):
+        return self._cards()
 
     @staticmethod
     def from_sequence(sequence: Sequence):

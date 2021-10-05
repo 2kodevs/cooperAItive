@@ -22,7 +22,7 @@ def generate_cards():
     return cards
 
 
-def split_cards(cards, number_of_player, pieces_per_player):
+def split_cards(cards, number_of_player, cards_per_player):
     iterator = iter(cards)
-    hands = [PlayerView(list(take(iterator, pieces_per_player))) for _ in range(number_of_player)]
+    hands = [PlayerView(list(take(iterator, cards_per_player))) for _ in range(number_of_player)]
     return hands, list(iterator)
