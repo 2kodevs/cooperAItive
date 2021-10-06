@@ -15,11 +15,11 @@ def monte_carlo(
 ) -> Tuple[State, Action]:
     # basic game information
     discard_pile = get_discard_pile(player.history)
-    hand = fixed_hand(player.cards, discard_pile, player.me)
+    hand = fixed_hand(list(player.cards), discard_pile, player.me)
     score = {c:0 for c in player.players_colors}
     for e, *data in player.history:
         if e is Event.SEQUENCE:
-            color, size = data
+            _, color, size = data
             score[color] += 1 + (size > 5)
 
     # simulations
@@ -36,20 +36,20 @@ def monte_carlo(
             )
             # Update the game
             for (i, j), color in player.board:
-                seq.board[i][j] = color
+                seq._board[i][j] = color
                 seq.count += bool(color)
-            seq.discard_pile = discard_pile[:]
-            for log in player.history:
+            for log in player.history[1:]:
                 seq.log(log)
+            seq.discard_pile = discard_pile[:]
             seq.can_discard = player.can_discard
             seq.current_player = player.position
             seq.score = score.copy()
+            seq.sequence_id = sum(score.values())
 
-            # Run the rollout
-            rollout(seq, encoder, player.team)
+            rollout(seq, encoder)
 
     # Select the player action
-    state = encoder(player)
+    state = encoder(player, discard_pile)
     return (state, *selector(state))
             
     
@@ -62,10 +62,10 @@ def rollout_maker(
     ):
         s_comma_a = []
         v = None
-        end_value = {c.color:(sequence.color == c.color) for c in sequence.colors}
+        end_value = {c:(sequence.color == c) for c in sequence.colors}
 
         while v is None:
-            state = encoder(sequence, get_discard_pile(sequence.logs))
+            state = encoder(sequence, sequence.discard_pile)
             valids = sequence._valid_moves()
             try:
                 # Check if state is explored

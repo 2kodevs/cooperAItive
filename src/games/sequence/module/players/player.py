@@ -65,6 +65,9 @@ class BasePlayer:
         self.board = board
         self.win_strike = win
 
+    def valid_moves(self):
+        return Sequence.valid_moves(self.board, self.cards, self.can_discard) 
+
     @property
     def me(self):
         return self.position

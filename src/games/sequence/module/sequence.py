@@ -62,11 +62,11 @@ class Sequence:
 
     @property
     def cards(self):
-        return self.players[self.current_player].view()
+        return self.players[self.current_player].view()()
 
     @property
     def color(self):
-        return self.colors[self.current_player].clone().color
+        return self.colors[self.current_player]
 
     @property
     def board(self):
@@ -85,8 +85,8 @@ class Sequence:
 
     def reset(self, hand, number_of_players, players_colors, cards_per_player, win_strike=2):
         self.win_strike = win_strike
+        self.colors = players_colors
         self.cards_per_player = cards_per_player
-        self.colors = [Color(c) for c in players_colors]
         self.players, self.deck = hand(number_of_players, self.cards_per_player)
 
         self.logs = []
@@ -115,7 +115,7 @@ class Sequence:
     def check_valid(self, action):
         if action is None:
             # All the cards should be dead
-            for card in self.cards():
+            for card in self.cards:
                 if not self._is_dead_card(card):
                     return False
             return True
@@ -141,7 +141,7 @@ class Sequence:
         return False
 
     def _valid_moves(self):
-       return Sequence.valid_moves(self.board, self.cards(), self.can_discard)
+       return Sequence.valid_moves(self.board, self.cards, self.can_discard)
 
     def _is_over(self):
         if max(self.score.values()) >= self.win_strike:
@@ -168,9 +168,9 @@ class Sequence:
         # increase the sequence number
         self.sequence_id += 1
         # update players score
-        self.score[self.color.color] += 1 + (size > 5)
+        self.score[self.color] += 1 + (size > 5)
         # Report the sequence
-        self.log((Event.SEQUENCE, self.current_player, self.color.color, size))
+        self.log((Event.SEQUENCE, self.current_player, self.color, size))
 
     def _next(self):
         over = self._is_over()
@@ -224,12 +224,12 @@ class Sequence:
         if self._board[i][j]:
             self._board[i][j] = Color()
             self.count -= 1
-            self.log((Event.REMOVE, card, pos))
+            self.log((Event.REMOVE, self.current_player, card, pos))
             return self._next()
 
         # Normal play, or a JACK
         self.log((Event.PLAY, self.current_player, card, self.color, pos))
-        self._board[i][j] = self.color.clone()
+        self._board[i][j] = Color(self.color)
         self.count += 1
 
         # check for sequences
@@ -243,7 +243,7 @@ class Sequence:
         ]
         # check a half of the line
         for inc_i, inc_j, idx in moves:
-            last = self.color.clone()
+            last = Color(self.color)
             cur_i, cur_j = i, j
             while last & self._board[cur_i][cur_j]:
                 if last == self._board[cur_i][cur_j]:
@@ -258,7 +258,7 @@ class Sequence:
 
         # check the other line half
         for inc_i, inc_j, idx in moves:
-            last = self.color.clone()
+            last = Color(self.color)
             cur_i, cur_j = i - inc_i, j - inc_j
             if not ((0 <= cur_i < 10) and (0 <= cur_j < 10)):
                 continue
@@ -328,7 +328,8 @@ class SequenceManager:
                 self.seq.players[i].view(), 
                 players_colors[:], 
                 cards_per_player, 
-                len(players)
+                len(players),
+                win_strike,
             )
         self.feed_logs()
 

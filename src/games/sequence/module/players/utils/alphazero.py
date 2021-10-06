@@ -29,7 +29,7 @@ def encode_cards(cards: List[Card]) -> int:
     mask = 0
     data = {c:0 for c in cards}
     for c in cards:
-        mask |= 1 << table_bit(ALL_CARDS_MAPPING[c][data[c]])
+        mask |= 1 << table_bit(*ALL_CARDS_MAPPING[c][data[c]])
         data[c] += 1
     return mask
 

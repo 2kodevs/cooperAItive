@@ -1,5 +1,5 @@
-from ..players import PlayerView
-from ..defaults import Card
+from ..player_view import PlayerView
+from ...defaults import Card
 from random import shuffle
 
 

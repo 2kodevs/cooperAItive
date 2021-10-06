@@ -1,10 +1,13 @@
 from .player_view import PlayerView
 from .player import BasePlayer
 from .random import Random
+from .monte_carlo import MonteCarlo
+from .hands import *
 
 
 PLAYERS = [
     Random,
+    MonteCarlo,
 ]
 
 
