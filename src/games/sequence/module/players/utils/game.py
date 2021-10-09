@@ -15,7 +15,7 @@ def get_discard_pile(history: History) -> List[Card]:
     return pile
     
 
-def fixed_hand(cards, pile, id):
+def order_hand(cards, pile, id, number_of_cards):
     taken = [*cards, *pile]
     taken.sort()
     full_deck = generate_cards()
@@ -25,24 +25,30 @@ def fixed_hand(cards, pile, id):
     deck_iterator = iter(full_deck)
     taken_iterator = iter(taken)
     try:
-        cur_card = next(deck_iterator)
+        deck.append(next(deck_iterator))
         while True:
             cur_target = next(taken_iterator)
-            while cur_card < cur_target:
-                deck.append(cur_card)
-                cur_card = next(deck_iterator)
-            if cur_card == cur_target:
-                cur_card = next(deck_iterator) 
+            while deck[-1] < cur_target:
+                deck.append(next(deck_iterator))
+            if deck[-1] == cur_target:
+                deck.pop()
+                deck.append(next(deck_iterator))
     except StopIteration:
         deck.extend(deck_iterator)
     
+    shuffle(deck)
+
+    player_first_card = number_of_cards * id
+    all_cards = [*deck[:player_first_card], *cards, *deck[player_first_card:]]
+
+    return all_cards
+
+
+def fixed_hand(cards, pile, id, number_of_cards):
+    order = order_hand(cards, pile, id, number_of_cards)
+
     def hand(number_of_players, number_of_cards):
-        shuffle(deck)
-
-        player_first_card = number_of_cards * id
-        all_cards = [*deck[:player_first_card], *cards, *deck[player_first_card:]]
-
-        return split_cards(all_cards, number_of_players, number_of_cards)
+        return split_cards(order, number_of_players, number_of_cards)
 
     return hand
     

@@ -17,3 +17,13 @@ class PlayerView:
             for x in self.cards:
                 yield x
         return view_cards
+
+    def __iter__(self):
+        return iter(self.cards)
+
+    def __repr__(self):
+        return str(self.cards)
+
+    def __str__(self):
+        return self.__repr__()
+        

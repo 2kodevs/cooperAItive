@@ -4,7 +4,7 @@ from .utils.mc import monte_carlo, rollout_maker, selector_maker
 
 
 class MonteCarlo(BasePlayer):
-    def __init__(self, name, handouts=10, rollouts=100):
+    def __init__(self, name, handouts=10, rollouts=50):
         super().__init__(f'MonteCarlo::{name}')
         self.handouts = int(handouts)
         self.rollouts = int(rollouts)

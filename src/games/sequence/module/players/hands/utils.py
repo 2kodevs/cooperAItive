@@ -4,12 +4,8 @@ from random import shuffle
 
 
 def take(iterator, size):
-    for x in iterator:
-        yield x
-        size -= 1
-        if not size:
-            break
-
+    for _ in range(size):
+        yield next(iterator)
 
 def generate_cards():
     # Generate the cards

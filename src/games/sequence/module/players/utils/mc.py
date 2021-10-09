@@ -15,7 +15,6 @@ def monte_carlo(
 ) -> Tuple[State, Action]:
     # basic game information
     discard_pile = get_discard_pile(player.history)
-    hand = fixed_hand(list(player.cards), discard_pile, player.me)
     score = {c:0 for c in player.players_colors}
     for e, *data in player.history:
         if e is Event.SEQUENCE:
@@ -24,6 +23,7 @@ def monte_carlo(
 
     # simulations
     for _ in range(handouts):
+        hand = fixed_hand(list(player.cards), discard_pile, player.me, player.number_of_cards)
         for _ in range(rollouts):
             # New Sequence Game
             seq = Sequence()
