@@ -84,8 +84,9 @@ def rollout_maker(
     ) -> None:
         s_comma_a = []
         v = None
-        end_value = {c.color:(sequence.color == c.color) for c in sequence.colors}
-
+        end_value = {c:[-1, 1][sequence.color == c] for c in sequence.colors}
+        end_value[None] = 0
+        
         while v is None:
             state = encoder(sequence, get_discard_pile(sequence.logs))
             valids = sequence._valid_moves()
