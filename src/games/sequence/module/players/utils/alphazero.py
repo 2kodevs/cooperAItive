@@ -40,12 +40,17 @@ def adjust_shifting(pos: Position) -> int:
 
 def encode_valids(valids: List[Action]) -> int:
     if valids[0] is None:
-        return 1 << 192
+        return 1 << 198
     mask = 0
+    discards = 0
     for (_, num), pos in valids:
-        cur_bit = 1 << (table_bit(*pos) - adjust_shifting(pos))
-        if num is JACK: mask |= cur_bit << 96
-        else : mask |= cur_bit
+        if pos is None:
+            mask |= 1 << (192 + discards)
+            discards += 1
+        else:
+            cur_bit = 1 << (table_bit(*pos) - adjust_shifting(pos))
+            if num is JACK: mask |= cur_bit << 96
+            else : mask |= cur_bit
     return mask
 
 
@@ -86,7 +91,7 @@ def rollout_maker(
         v = None
         end_value = {c:[-1, 1][sequence.color == c] for c in sequence.colors}
         end_value[None] = 0
-        
+
         while v is None:
             state = encoder(sequence, get_discard_pile(sequence.logs))
             valids = sequence._valid_moves()
