@@ -33,6 +33,9 @@ class Event(Enum):
     # params: (playerId, color)
     WIN = 6
 
+    # Report deck refill
+    REFILL_DECK = 7
+
 
 class Sequence:
     """
@@ -41,7 +44,7 @@ class Sequence:
     def __init__(self):
         self.deck = None                # Game deck
         self.logs = None                # Game history
-        self.board = None               # Game board
+        self._board = None               # Game board
         self.count = None               # Number of positions used of the board
         self.score = None               # Score per color (i.e Number of consecutive sequences)
         self.colors = None              # Players color
@@ -59,11 +62,15 @@ class Sequence:
 
     @property
     def cards(self):
-        return self.players[self.current_player].view()
+        return self.players[self.current_player].view()()
 
     @property
     def color(self):
-        return self.colors[self.current_player].clone()
+        return self.colors[self.current_player]
+
+    @property
+    def board(self):
+        return BoardViewer(self._board)
 
     @property
     def winner(self):
@@ -71,15 +78,15 @@ class Sequence:
         return self.logs[-1][2]
 
     def empty(self, i, j):
-        return not self.board[i][j]
+        return not self._board[i][j]
 
     def is_winner(self, playerId):
         return self.colors[playerId] == self.winner
 
     def reset(self, hand, number_of_players, players_colors, cards_per_player, win_strike=2):
         self.win_strike = win_strike
+        self.colors = players_colors
         self.cards_per_player = cards_per_player
-        self.colors = [Color(c) for c in players_colors]
         self.players, self.deck = hand(number_of_players, self.cards_per_player)
 
         self.logs = []
@@ -87,11 +94,11 @@ class Sequence:
         self.discard_pile = []
         self.current_player = 0
         self.can_discard = True
-        self.board = [[Color() for _ in range(len(l))] for l in BOARD]
-        self.board_size = sum(len(l) for l in self.board) - 4
+        self._board = [[Color() for _ in range(len(l))] for l in BOARD]
+        self.board_size = sum(len(l) for l in self._board) - 4
         self.count = 0
         for i, j in CORNERS:
-            self.board[i][j] = ByPassColor("X")
+            self._board[i][j] = ByPassColor("X")
         self.score = {i:0 for i in set(players_colors)}
 
         self.log((Event.NEW_GAME,))
@@ -108,7 +115,7 @@ class Sequence:
     def check_valid(self, action):
         if action is None:
             # All the cards should be dead
-            for card in self.cards():
+            for card in self.cards:
                 if not self._is_dead_card(card):
                     return False
             return True
@@ -134,7 +141,7 @@ class Sequence:
         return False
 
     def _valid_moves(self):
-       return Sequence.valid_moves(BoardViewer(self.board), self.cards(), self.can_discard)
+       return Sequence.valid_moves(self.board, self.cards, self.can_discard)
 
     def _is_over(self):
         if max(self.score.values()) >= self.win_strike:
@@ -157,11 +164,11 @@ class Sequence:
             return
         # set the sequence number in each board position
         for i, j in data[:size]:
-            self.board[i][j].set_sequence(self.sequence_id)
+            self._board[i][j].set_sequence(self.sequence_id)
         # increase the sequence number
         self.sequence_id += 1
         # update players score
-        self.score[self.color.color] += 1 + (size > 5)
+        self.score[self.color] += 1 + (size > 5)
         # Report the sequence
         self.log((Event.SEQUENCE, self.current_player, self.color, size))
 
@@ -176,6 +183,7 @@ class Sequence:
         player.remove(card)
         self.discard_pile.append(card)
         if not self.deck:
+            self.log((Event.REFILL_DECK,))
             self.deck = self.discard_pile[:]
             self.discard_pile = []
             shuffle(self.deck)
@@ -213,15 +221,15 @@ class Sequence:
         i, j = pos
 
         # check REMOVE action
-        if self.board[i][j]:
-            self.board[i][j] = Color()
+        if self._board[i][j]:
+            self._board[i][j] = Color()
             self.count -= 1
-            self.log((Event.REMOVE, card, pos))
+            self.log((Event.REMOVE, self.current_player, card, pos))
             return self._next()
 
         # Normal play, or a JACK
         self.log((Event.PLAY, self.current_player, card, self.color, pos))
-        self.board[i][j] = self.color.clone()
+        self._board[i][j] = Color(self.color)
         self.count += 1
 
         # check for sequences
@@ -235,12 +243,12 @@ class Sequence:
         ]
         # check a half of the line
         for inc_i, inc_j, idx in moves:
-            last = self.color.clone()
+            last = Color(self.color)
             cur_i, cur_j = i, j
-            while last & self.board[cur_i][cur_j]:
-                if last == self.board[cur_i][cur_j]:
+            while last & self._board[cur_i][cur_j]:
+                if last == self._board[cur_i][cur_j]:
                     break
-                last = self.board[cur_i][cur_j]
+                last = self._board[cur_i][cur_j]
                 data[idx].append((cur_i, cur_j))
                 cur_i += inc_i
                 cur_j += inc_j
@@ -250,14 +258,14 @@ class Sequence:
 
         # check the other line half
         for inc_i, inc_j, idx in moves:
-            last = self.color.clone()
+            last = Color(self.color)
             cur_i, cur_j = i - inc_i, j - inc_j
             if not ((0 <= cur_i < 10) and (0 <= cur_j < 10)):
                 continue
-            while last & self.board[cur_i][cur_j]:
-                if last == self.board[cur_i][cur_j]:
+            while last & self._board[cur_i][cur_j]:
+                if last == self._board[cur_i][cur_j]:
                     break
-                last = self.board[cur_i][cur_j]
+                last = self._board[cur_i][cur_j]
                 data[idx].append((cur_i, cur_j))
                 cur_i -= inc_i
                 cur_j -= inc_j
@@ -314,7 +322,15 @@ class SequenceManager:
         self.seq.reset(hand, len(players), players_colors, cards_per_player, win_strike)
 
         for i, player in enumerate(players):
-            player.reset(i, BoardViewer(self.seq.board), self.seq.players[i].view(), Color(players_colors[i]), cards_per_player)
+            player.reset(
+                i, 
+                self.seq.board, 
+                self.seq.players[i].view(), 
+                players_colors[:], 
+                cards_per_player, 
+                len(players),
+                win_strike,
+            )
         self.feed_logs()
 
     def step(self, fixed_action=False, action=None):

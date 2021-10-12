@@ -1,4 +1,3 @@
-from .hands import HANDS, get_hand
-from .players import BasePlayer, PLAYERS, get_player
+from .players import BasePlayer, PLAYERS, get_player, HANDS, get_hand
 from .sequence import Sequence, SequenceManager
 from .defaults import Card, CARD_SIMBOLS
