@@ -1,5 +1,5 @@
-import torch, sys, json
-from module import AlphaZeroTrainer, AlphaZeroModel
+import sys, json
+from module import AlphaZeroTrainer
 
 def main():
     # Load configuration
@@ -19,6 +19,9 @@ def main():
         config['data_path'],
         config['save_path'],
         config['lr'],
+        config['cput'],
+        config['residual_layers'],
+        config['num_filters'],
         config['tau_threshold'],
     )
 

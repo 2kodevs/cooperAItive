@@ -16,7 +16,7 @@ class Net(nn.Module):
     """
     Neural Network for Alpha Zero implementation of Dominoes
     """
-    def __init__(self, input_shape=STATE_SHAPE, policy_shape=111, lr=0.02, device='cpu'):
+    def __init__(self, residual_layers, filters, input_shape=STATE_SHAPE, policy_shape=111, lr=0.001):
         """
         param input_shape: (int, int, int)
             Dimensions of the input.
@@ -29,121 +29,34 @@ class Net(nn.Module):
         """
         super(Net, self).__init__()
         self.save_path = 'checkpoints/'
-
-        device = torch.device(device)
-        self.device = device
+        self.residual_layers = residual_layers
+        self.filters = filters
 
         self.conv_in = nn.Sequential(
-            nn.Conv2d(input_shape[0], NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-            nn.BatchNorm2d(NUM_FILTERS),
+            nn.Conv2d(input_shape[0], filters, kernel_size=KERNEL_SIZE, padding=1),
+            nn.BatchNorm2d(filters),
             nn.LeakyReLU(),
-        ).to(device)
+        )
 
         # layers with residual
-        self.conv_1 = nn.Sequential(
-            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-            nn.BatchNorm2d(NUM_FILTERS),
+        blocks = []
+        for _ in range(residual_layers):
+            block = nn.Sequential(
+                nn.Conv2d(filters, filters, kernel_size=KERNEL_SIZE, padding=1),
+                nn.BatchNorm2d(filters),
             nn.LeakyReLU(),
-            ).to(device)
-        self.conv_2 = nn.Sequential(
-            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-            nn.BatchNorm2d(NUM_FILTERS),
-            nn.LeakyReLU(),
-            ).to(device)
-        self.conv_3 = nn.Sequential(
-            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-            nn.BatchNorm2d(NUM_FILTERS),
-            nn.LeakyReLU(),
-            ).to(device)
-        self.conv_4 = nn.Sequential(
-            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-            nn.BatchNorm2d(NUM_FILTERS),
-            nn.LeakyReLU(),
-            ).to(device)
-        self.conv_5 = nn.Sequential(
-            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-            nn.BatchNorm2d(NUM_FILTERS),
-            nn.LeakyReLU(),
-            ).to(device)
-        self.conv_6 = nn.Sequential(
-            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-            nn.BatchNorm2d(NUM_FILTERS),
-            nn.LeakyReLU(),
-            ).to(device)
-        self.conv_7 = nn.Sequential(
-            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-            nn.BatchNorm2d(NUM_FILTERS),
-            nn.LeakyReLU(),
-            ).to(device)
-        self.conv_8 = nn.Sequential(
-            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-            nn.BatchNorm2d(NUM_FILTERS),
-            nn.LeakyReLU(),
-            ).to(device)
-        # self.conv_9 = nn.Sequential(
-        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-        #     nn.BatchNorm2d(NUM_FILTERS),
-        #     nn.LeakyReLU(),
-        #     ).to(device)
-        # self.conv_10 = nn.Sequential(
-        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-        #     nn.BatchNorm2d(NUM_FILTERS),
-        #     nn.LeakyReLU(),
-        #     ).to(device)
-        # self.conv_11 = nn.Sequential(
-        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-        #     nn.BatchNorm2d(NUM_FILTERS),
-        #     nn.LeakyReLU(),
-        #     ).to(device)
-        # self.conv_12 = nn.Sequential(
-        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-        #     nn.BatchNorm2d(NUM_FILTERS),
-        #     nn.LeakyReLU(),
-        #     ).to(device)
-        # self.conv_13 = nn.Sequential(
-        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-        #     nn.BatchNorm2d(NUM_FILTERS),
-        #     nn.LeakyReLU(),
-        #     ).to(device)
-        # self.conv_14 = nn.Sequential(
-        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-        #     nn.BatchNorm2d(NUM_FILTERS),
-        #     nn.LeakyReLU(),
-        #     ).to(device)
-        # self.conv_15 = nn.Sequential(
-        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-        #     nn.BatchNorm2d(NUM_FILTERS),
-        #     nn.LeakyReLU(),
-        #     ).to(device)
-        # self.conv_16 = nn.Sequential(
-        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-        #     nn.BatchNorm2d(NUM_FILTERS),
-        #     nn.LeakyReLU(),
-        #     ).to(device)
-        # self.conv_17 = nn.Sequential(
-        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-        #     nn.BatchNorm2d(NUM_FILTERS),
-        #     nn.LeakyReLU(),
-        #     ).to(device)
-        # self.conv_18 = nn.Sequential(
-        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-        #     nn.BatchNorm2d(NUM_FILTERS),
-        #     nn.LeakyReLU(),
-        #     ).to(device)
-        # self.conv_19 = nn.Sequential(
-        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-        #     nn.BatchNorm2d(NUM_FILTERS),
-        #     nn.LeakyReLU(),
-        #     ).to(device)
+            )
+            blocks.append(block)
+        self.blocks = nn.ModuleList(blocks)
 
         # value head
         self.conv_val = nn.Sequential(
-            nn.Conv2d(NUM_FILTERS, 1, kernel_size=1),
+            nn.Conv2d(filters, 1, kernel_size=1),
             nn.BatchNorm2d(1),
             nn.LeakyReLU(),
-        ).to(device)
+        )
 
-        body_out_shape = (NUM_FILTERS, ) + input_shape[1:]
+        body_out_shape = (filters, ) + input_shape[1:]
         conv_val_size = self._get_conv_val_size(body_out_shape)
 
         self.value = nn.Sequential(
@@ -151,54 +64,40 @@ class Net(nn.Module):
             nn.LeakyReLU(),
             nn.Linear(256, 1),
             nn.Tanh(),
-        ).to(device)
+        )
 
         # policy head
         self.conv_policy = nn.Sequential(
-            nn.Conv2d(NUM_FILTERS, input_shape[0], kernel_size=1),
+            nn.Conv2d(filters, input_shape[0], kernel_size=1),
             nn.BatchNorm2d(input_shape[0]),
             nn.LeakyReLU(),
-        ).to(device)
+        )
         conv_policy_size = self._get_conv_policy_size(body_out_shape)
         self.policy = nn.Sequential(
             nn.Linear(conv_policy_size, policy_shape)
-        ).to(device)
+        )
 
         #optimizer
         self.optimizer = optim.SGD(self.parameters(), lr=lr, momentum=0.9, weight_decay=1e-4)
 
     def _get_conv_val_size(self, shape):
-        o = self.conv_val(torch.zeros(1, *shape).to(self.device))
+        o = self.conv_val(torch.zeros(1, *shape))
         return int(np.prod(o.size()))
 
     def _get_conv_policy_size(self, shape):
-        o = self.conv_policy(torch.zeros(1, *shape).to(self.device))
+        o = self.conv_policy(torch.zeros(1, *shape))
+        return int(np.prod(o.size()))
+
+    def _get_conv_belief_size(self, shape):
+        o = self.conv_belief(torch.zeros(1, *shape))
         return int(np.prod(o.size()))
 
     def forward(self, x):
         batch_size = x.size()[0]
 
         v = self.conv_in(x)
-        
-        v = self.conv_1(v)
-        v = self.conv_2(v)
-        v = self.conv_3(v)
-        v = self.conv_4(v)
-        v = self.conv_5(v)
-        v = self.conv_6(v)
-        v = self.conv_7(v)
-        v = self.conv_8(v)
-        # v = self.conv_9(v)
-        # v = self.conv_10(v)
-        # v = self.conv_11(v)
-        # v = self.conv_12(v)
-        # v = self.conv_13(v)
-        # v = self.conv_14(v)
-        # v = self.conv_15(v)
-        # v = self.conv_16(v)
-        # v = self.conv_17(v)
-        # v = self.conv_18(v)
-        # v = self.conv_19(v)
+        for b in self.blocks:
+            v = b(v)
         
         val = self.conv_val(v)
         val = self.value(val.view(batch_size, -1))
@@ -343,6 +242,8 @@ class Net(nn.Module):
                 'error_log': error_log,
                 'config': config,
                 'epoch': epoch,
+                'residual_layers': self.residual_layers,
+                'filters': self.filters,
             }, full_path)
         if verbose:
             print(f'Model saved with name: {net_name[:-5]}')
@@ -360,7 +261,8 @@ class Net(nn.Module):
             ret.append(net_checkpoint['model'])
             model = ret[1]
         else:
-            model = Net()
+            layers, filters = net_checkpoint['residual_layers'], net_checkpoint['filters']
+            model = Net(layers, filters)
             model.load_state_dict(net_checkpoint['model_state_dict'])
             self.optimizer.load_state_dict(net_checkpoint['optimizer_state_dict'])
 

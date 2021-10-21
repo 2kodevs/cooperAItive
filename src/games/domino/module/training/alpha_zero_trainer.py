@@ -28,6 +28,8 @@ class AlphaZeroTrainer(Trainer):
         save_path: str,
         lr: int,
         cput: int,
+        residual_layers: int,
+        num_filters: int,
         tau_threshold: int = 8,
     ):
         """
@@ -51,6 +53,10 @@ class AlphaZeroTrainer(Trainer):
             Learning rate
         param cput: int
             Exploration constant
+        param residual_layers: int
+            Number of residual convolutional layers
+        param num_filters: int
+            Number of channels of residual convolutional layers
         param tau_threshold: int
             Threshold for temperature behavior to become equivalent to argmax
         """
@@ -195,6 +201,7 @@ class AlphaZeroTrainer(Trainer):
         config = self.build_config(sample, tag, epoch)
         if self.loss > loss[0]:
             self.loss = loss[0]
+            config = self.build_config(sample, tag, epoch)
             self.net.save(self.error_log, config, epoch, self.save_path, True, tag + '-min', verbose=True)
         else:
             self.net.save(self.error_log, config, epoch, self.save_path, False, tag, verbose=True)
@@ -324,13 +331,14 @@ class AlphaZeroTrainer(Trainer):
             "data_path": self.data_path, 
             "save_path": self.save_path,
             "lr": self.lr,
-            "cput:": self.cput,
+            "cput": self.cput,
 
             "min_loss": self.loss,
             "epochs": self.epochs - cur_epoch,
             "sample": sample,
             "tag": tag,
         }
+
 
     def load_config(self, config, epochs: int = 0):
         self.batch_size = config["batch_size"]
@@ -363,11 +371,11 @@ class AlphaZeroTrainer(Trainer):
     def adjust_learning_rate(self, epoch, optimizer):
         lr = self.lr
 
-        if epoch == 500:
-            self.lr = lr / 1000
-        elif epoch == 300:
-            self.lr = lr / 100
+        if epoch == 150:
+            self.lr = lr / 10
         elif epoch == 100:
+            self.lr = lr / 10
+        elif epoch == 50:
             self.lr = lr / 10
 
         if epoch in [100, 300, 500]:
