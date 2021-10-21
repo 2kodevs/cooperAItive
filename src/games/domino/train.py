@@ -6,9 +6,6 @@ def main():
     with open(sys.argv[1], "r") as reader:
         config = json.load(reader)
 
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    net = AlphaZeroModel.Net(device=device)
-
     trainer = AlphaZeroTrainer(
         config['batch_size'],
         config['handouts'],
@@ -33,6 +30,7 @@ def main():
         config['sample'],
         config['tag'],
         config['num_process'],
+        config['num_gpus'],
         config['verbose'],
         config['save_data']
     )
