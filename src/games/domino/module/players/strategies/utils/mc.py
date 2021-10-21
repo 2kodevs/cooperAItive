@@ -15,10 +15,17 @@ def monte_carlo(
     selector: Selector,
     handouts: int,
     rollouts: int,
+    NN: Any,
 ) -> Tuple[State, Action] :
     # basic game information
     pieces, missing = game_data_collector(player.pieces, player.me, player.history)
     remaining = remaining_pieces(pieces, player.max_number)
+
+    #//TODO: Create state and mask to call NN and get beliefs
+    if NN is not None:
+       # _, _, [B] = NN.predict([state], [mask])
+       # use B to filter, B is a list of 55 probabilities
+       pass
 
     # simulations
     for _ in range(handouts):

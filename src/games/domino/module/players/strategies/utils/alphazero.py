@@ -99,7 +99,7 @@ def rollout_maker(
                 if domino.step(valids[best_index]):
                     v = end_value[domino.winner]
             except KeyError:
-                [P], [v] = NN.predict([state], [mask])
+                [P], [v], _ = NN.predict([state], [mask])
                 v = v.cpu().detach().numpy()
                 size = len(P)
                 npq = np.zeros((size, 3), dtype=object)

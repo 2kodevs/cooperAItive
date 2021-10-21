@@ -29,6 +29,7 @@ class AlphaZero(BasePlayer):
             selector,
             self.handouts,
             self.rollouts,
+            self.NN,
         )
 
         return [action]
