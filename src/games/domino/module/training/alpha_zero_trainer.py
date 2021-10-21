@@ -335,29 +335,29 @@ class AlphaZeroTrainer(Trainer):
 
 
     def load_checkpoint(self, load_model, tag, writer, epochs, verbose):
-            if load_model:
-                config, model, error_log, e = self.net.load_checkpoint(self.save_path, tag, True, load_model)
-                if self.net.device == "cuda" and torch.cuda.is_available():
-                    model.device = "cuda:0"
-                    if torch.cuda.device_count() > 1:
-                        model = torch.nn.DataParallel(model)
-                    model.to(model.device)
-                self.net = model
-            else:
-                config, error_log, e = self.net.load_checkpoint(self.save_path, tag, True)
-            
-            if verbose:
-                print(json.dumps(config, indent=4))
+        if load_model:
+            config, model, error_log, e = self.net.load_checkpoint(self.save_path, tag, True, load_model)
+            if self.net.device == "cuda" and torch.cuda.is_available():
+                model.device = "cuda:0"
+                if torch.cuda.device_count() > 1:
+                    model = torch.nn.DataParallel(model)
+                model.to(model.device)
+            self.net = model
+        else:
+            config, error_log, e = self.net.load_checkpoint(self.save_path, tag, True)
+        
+        if verbose:
+            print(json.dumps(config, indent=4))
 
-            self.remove_last_run(tag)
-            self.error_log = error_log
-            for ep, loss in enumerate(error_log):
-                self.write_loss(writer, ep, *loss)
-            writer.flush()
+        self.remove_last_run(tag)
+        self.error_log = error_log
+        for ep, loss in enumerate(error_log):
+            self.write_loss(writer, ep, *loss)
+        writer.flush()
 
-            last_epoch = e + 1
-            self.epochs += e
-            sample, tag = self.load_config(config, epochs)
+        last_epoch = e + 1
+        self.epochs += e
+        sample, tag = self.load_config(config, epochs)
         return last_epoch, sample, tag
 
 
