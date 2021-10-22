@@ -92,9 +92,6 @@ class AlphaZeroTrainer(Trainer):
         except RuntimeError:
             pass
 
-        #ray.init(num_cpus=4, num_gpus=1)
-
-
     def self_play_fractional(self, num_gpus):
         @ray.remote(num_gpus=num_gpus, max_calls=1)
         def _self_play_fractional(args):
@@ -275,8 +272,7 @@ class AlphaZeroTrainer(Trainer):
                 while len(data) < batch_size:
                     args = [(self.handouts, self.rollouts, self.alpha)]
                     num_games += batch_size // num_gpus
-                    t = ray.get([self.self_play_fractional(num_gpus).remote(args) for _ in range(int(1 / num_gpus))])
-                    print(t)
+                    ray.get([self.self_play_fractional(num_gpus).remote(args) for _ in range(int(1 / num_gpus))])
             else:
                 while len(data) < batch_size:
                     data.extend(self.self_play((self.handouts, self.rollouts, self.alpha)))
@@ -325,6 +321,9 @@ class AlphaZeroTrainer(Trainer):
         """
         Training Pipeline
         """
+        if num_gpus < 1:
+            ray.init(num_cpus=4, num_gpus=num_gpus)
+
         writer = SummaryWriter(comment=tag)
         last_epoch = 1
         self.loss = 1e30
