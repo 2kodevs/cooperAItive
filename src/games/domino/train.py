@@ -1,13 +1,10 @@
-import torch, sys, json
-from module import AlphaZeroTrainer, AlphaZeroModel
+import sys, json
+from module import AlphaZeroTrainer
 
 def main():
     # Load configuration
     with open(sys.argv[1], "r") as reader:
         config = json.load(reader)
-
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    net = AlphaZeroModel.Net(device=device)
 
     trainer = AlphaZeroTrainer(
         config['batch_size'],
@@ -19,6 +16,9 @@ def main():
         config['data_path'],
         config['save_path'],
         config['lr'],
+        config['cput'],
+        config['residual_layers'],
+        config['num_filters'],
         config['tau_threshold'],
     )
 
@@ -30,6 +30,7 @@ def main():
         config['sample'],
         config['tag'],
         config['num_process'],
+        config['num_gpus'],
         config['verbose'],
         config['save_data']
     )

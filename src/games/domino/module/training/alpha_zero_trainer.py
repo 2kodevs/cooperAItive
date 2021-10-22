@@ -1,4 +1,4 @@
-from torch.multiprocessing import Pool
+from torch.multiprocessing import Pool, set_start_method
 from torch.utils.tensorboard import SummaryWriter
 from ..players import AlphaZeroModel, alphazero_utils as utils, mc_utils, BasePlayer, hand_out
 from .trainer import Trainer
@@ -10,7 +10,7 @@ import os
 import json
 import torch
 import shutil
-
+import ray
 
 class AlphaZeroTrainer(Trainer):
     """
@@ -28,6 +28,8 @@ class AlphaZeroTrainer(Trainer):
         save_path: str,
         lr: int,
         cput: int,
+        residual_layers: int,
+        num_filters: int,
         tau_threshold: int = 8,
     ):
         """
@@ -51,6 +53,10 @@ class AlphaZeroTrainer(Trainer):
             Learning rate
         param cput: int
             Exploration constant
+        param residual_layers: int
+            Number of residual convolutional layers
+        param num_filters: int
+            Number of channels of residual convolutional layers
         param tau_threshold: int
             Threshold for temperature behavior to become equivalent to argmax
         """
@@ -67,13 +73,32 @@ class AlphaZeroTrainer(Trainer):
         self.tau_threshold = tau_threshold
         self.error_log = []
 
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.device = device
-        self.net = AlphaZeroModel.Net(lr=lr, device=torch.device(device))
+        self.net = AlphaZeroModel.Net(residual_layers, num_filters, lr=lr)
+        device = 'cpu'
+        if torch.cuda.is_available():
+            device = "cuda:0"
+            if torch.cuda.device_count() > 1:
+                self.net = torch.nn.DataParallel(self.net)
+
+        device = torch.device(device)
+        self.net.to(device)
+        self.net.device = device
 
         if not os.path.exists(self.data_path):
             os.makedirs(self.data_path)
         
+        try:
+            set_start_method('spawn')
+        except RuntimeError:
+            pass
+
+    def self_play_fractional(self, num_gpus):
+        @ray.remote(num_gpus=num_gpus, max_calls=1)
+        def _self_play_fractional(args):
+            return self.self_play(args)
+
+        return _self_play_fractional
+
     def self_play(
         self,
         args,
@@ -114,18 +139,28 @@ class AlphaZeroTrainer(Trainer):
                 selector,
                 handouts,
                 rollouts,
+                self.net,
             )
             _, mask = utils.get_valids_data(domino)
+
+            #creating partner's hand entry
+            partner = domino.current_player ^ 2
+            partner_hand = domino.players[partner].pieces
+            pieces_mask = 0
+            for p in partner_hand:
+                pieces_mask += utils.piece_bit(*p, 9)
+            partner_hand = utils.state_to_list(pieces_mask, 55)
+
             game_over = domino.step(action)
-            data.append((state, pi.tolist(), cur_player, mask))
+            data.append((state, pi.tolist(), cur_player, mask, partner_hand))
 
         training_data = []
-        for state, pi, player, mask in data:
+        for state, pi, player, mask, partner_hand in data:
             end_value = [0, 0, 0]
             end_value[player.team] = 1
             end_value[1 - player.team] = -1
             result = end_value[domino.winner] 
-            training_data.append((state, pi, result, mask))
+            training_data.append((state, pi, result, partner_hand, mask))
         return training_data
 
     def policy_iteration(
@@ -135,6 +170,7 @@ class AlphaZeroTrainer(Trainer):
         sample: int,
         tag: str,
         num_process=1,
+        num_gpus=1,
         verbose=False,
         save_data=False
     ):
@@ -162,7 +198,7 @@ class AlphaZeroTrainer(Trainer):
         """
         if verbose:
             print('Getting training data...')
-        data = self._get_data(simulate, num_process, verbose, self.batch_size)
+        data = self._get_data(simulate, num_process, num_gpus, verbose, self.batch_size)
         
         if save_data:
             num_files = len([name for name in os.listdir(self.data_path) if os.path.isfile(f'{self.data_path}/{name}')])
@@ -195,8 +231,8 @@ class AlphaZeroTrainer(Trainer):
         config = self.build_config(sample, tag, epoch)
         if self.loss > loss[0]:
             self.loss = loss[0]
+            config = self.build_config(sample, tag, epoch)
             self.net.save(self.error_log, config, epoch, self.save_path, True, tag + '-min', verbose=True)
-        else:
             self.net.save(self.error_log, config, epoch, self.save_path, False, tag, verbose=True)
 
         if verbose:
@@ -210,6 +246,7 @@ class AlphaZeroTrainer(Trainer):
         self,
         simulate: bool,
         num_process: int,
+        num_gpus: int,
         verbose: bool,
         batch_size: int
     ):
@@ -231,6 +268,11 @@ class AlphaZeroTrainer(Trainer):
                     pool.join()
                     for d in new_data:
                         data.extend(d)
+            elif num_gpus < 1:
+                while len(data) < batch_size:
+                    args = [(self.handouts, self.rollouts, self.alpha)]
+                    num_games += batch_size // num_gpus
+                    ray.get([self.self_play_fractional(num_gpus).remote(args) for _ in range(int(1 / num_gpus))])
             else:
                 while len(data) < batch_size:
                     data.extend(self.self_play((self.handouts, self.rollouts, self.alpha)))
@@ -259,7 +301,7 @@ class AlphaZeroTrainer(Trainer):
             if len(data) < batch_size:
                 if verbose:
                     print('Insuficient data. Proceding to generate data with self play')
-                data.extend(self._get_data(True, num_process, verbose, batch_size - len(data)))
+                data.extend(self._get_data(True, num_process, num_gpus, verbose, batch_size - len(data)))
 
         return data
 
@@ -272,39 +314,26 @@ class AlphaZeroTrainer(Trainer):
         sample: int,
         tag='latest',
         num_process=1,
+        num_gpus=1,
         verbose=False,
         save_data=False
     ):
         """
         Training Pipeline
         """
+        if num_gpus < 1:
+            ray.init(num_cpus=4, num_gpus=num_gpus)
+
         writer = SummaryWriter(comment=tag)
         last_epoch = 1
         self.loss = 1e30
         self.epochs = epochs
 
         if load_checkpoint:
-            if load_model:
-                config, model, error_log, e = self.net.load_checkpoint(self.save_path, tag, True, load_model)
-                self.net = model
-            else:
-                config, error_log, e = self.net.load_checkpoint(self.save_path, tag, True)
-            
-            if verbose:
-                print(json.dumps(config, indent=4))
-
-            self.remove_last_run(tag)
-            self.error_log = error_log
-            for ep, loss in enumerate(error_log):
-                self.write_loss(writer, ep, *loss)
-            writer.flush()
-
-            last_epoch = e + 1
-            self.epochs += e
-            sample, tag = self.load_config(config, epochs)
+            last_epoch, sample, tag = self.load_checkpoint(load_model, tag, writer, epochs, verbose)
         
         for e in range(last_epoch, self.epochs + 1):
-            loss = self.policy_iteration(e, simulate, sample, tag, num_process, verbose, save_data)
+            loss = self.policy_iteration(e, simulate, sample, tag, num_process, num_gpus, verbose, save_data)
             simulate = True
             save_data = True
             self.write_loss(writer, e - 1, *loss)
@@ -312,6 +341,33 @@ class AlphaZeroTrainer(Trainer):
         config = self.build_config(sample, tag, self.epochs)
         self.net.save(self.error_log, config, self.epochs, self.save_path, True, tag + '-completed', verbose=True)
         writer.flush()
+
+    def load_checkpoint(self, load_model, tag, writer, epochs, verbose):
+        if load_model:
+            config, model, error_log, e = self.net.load_checkpoint(self.save_path, tag, True, load_model)
+            if self.net.device == "cuda" and torch.cuda.is_available():
+                model.device = "cuda:0"
+                if torch.cuda.device_count() > 1:
+                    model = torch.nn.DataParallel(model)
+                model.to(model.device)
+            self.net = model
+        else:
+            config, error_log, e = self.net.load_checkpoint(self.save_path, tag, True)
+        
+        if verbose:
+            print(json.dumps(config, indent=4))
+
+        self.remove_last_run(tag)
+        self.error_log = error_log
+        for ep, loss in enumerate(error_log):
+            self.write_loss(writer, ep, *loss)
+        writer.flush()
+
+        last_epoch = e + 1
+        self.epochs += e
+        sample, tag = self.load_config(config, epochs)
+        return last_epoch, sample, tag
+
 
     def build_config(self, sample, tag, cur_epoch):
         return {
@@ -324,7 +380,7 @@ class AlphaZeroTrainer(Trainer):
             "data_path": self.data_path, 
             "save_path": self.save_path,
             "lr": self.lr,
-            "cput:": self.cput,
+            "cput": self.cput,
 
             "min_loss": self.loss,
             "epochs": self.epochs - cur_epoch,
@@ -363,14 +419,13 @@ class AlphaZeroTrainer(Trainer):
     def adjust_learning_rate(self, epoch, optimizer):
         lr = self.lr
 
-        if epoch == 500:
-            self.lr = lr / 1000
-        elif epoch == 300:
-            self.lr = lr / 100
+        if epoch == 150:
+            self.lr = lr / 10
         elif epoch == 100:
             self.lr = lr / 10
+        elif epoch == 50:
+            self.lr = lr / 10
 
-        if epoch in [100, 300, 500]:
             for param_group in optimizer.param_groups:
                 param_group["lr"] = lr
 

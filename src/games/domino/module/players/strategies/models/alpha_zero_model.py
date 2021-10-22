@@ -9,14 +9,13 @@ from ..utils import state_to_list
 
 #STATE= [(56bits, 4bits, 2bits) x 41]
 STATE_SHAPE = (1, 41, 62)
-NUM_FILTERS = 70
 KERNEL_SIZE = 3
 
 class Net(nn.Module):
     """
     Neural Network for Alpha Zero implementation of Dominoes
     """
-    def __init__(self, input_shape=STATE_SHAPE, policy_shape=111, lr=0.02, device='cpu'):
+    def __init__(self, residual_layers, filters, input_shape=STATE_SHAPE, policy_shape=111, belief_shape=55, lr=0.001):
         """
         param input_shape: (int, int, int)
             Dimensions of the input.
@@ -29,121 +28,34 @@ class Net(nn.Module):
         """
         super(Net, self).__init__()
         self.save_path = 'checkpoints/'
-
-        device = torch.device(device)
-        self.device = device
+        self.residual_layers = residual_layers
+        self.filters = filters
 
         self.conv_in = nn.Sequential(
-            nn.Conv2d(input_shape[0], NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-            nn.BatchNorm2d(NUM_FILTERS),
+            nn.Conv2d(input_shape[0], filters, kernel_size=KERNEL_SIZE, padding=1),
+            nn.BatchNorm2d(filters),
             nn.LeakyReLU(),
-        ).to(device)
+        )
 
         # layers with residual
-        self.conv_1 = nn.Sequential(
-            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-            nn.BatchNorm2d(NUM_FILTERS),
-            nn.LeakyReLU(),
-            ).to(device)
-        self.conv_2 = nn.Sequential(
-            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-            nn.BatchNorm2d(NUM_FILTERS),
-            nn.LeakyReLU(),
-            ).to(device)
-        self.conv_3 = nn.Sequential(
-            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-            nn.BatchNorm2d(NUM_FILTERS),
-            nn.LeakyReLU(),
-            ).to(device)
-        self.conv_4 = nn.Sequential(
-            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-            nn.BatchNorm2d(NUM_FILTERS),
-            nn.LeakyReLU(),
-            ).to(device)
-        self.conv_5 = nn.Sequential(
-            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-            nn.BatchNorm2d(NUM_FILTERS),
-            nn.LeakyReLU(),
-            ).to(device)
-        self.conv_6 = nn.Sequential(
-            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-            nn.BatchNorm2d(NUM_FILTERS),
-            nn.LeakyReLU(),
-            ).to(device)
-        self.conv_7 = nn.Sequential(
-            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-            nn.BatchNorm2d(NUM_FILTERS),
-            nn.LeakyReLU(),
-            ).to(device)
-        self.conv_8 = nn.Sequential(
-            nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-            nn.BatchNorm2d(NUM_FILTERS),
-            nn.LeakyReLU(),
-            ).to(device)
-        # self.conv_9 = nn.Sequential(
-        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-        #     nn.BatchNorm2d(NUM_FILTERS),
-        #     nn.LeakyReLU(),
-        #     ).to(device)
-        # self.conv_10 = nn.Sequential(
-        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-        #     nn.BatchNorm2d(NUM_FILTERS),
-        #     nn.LeakyReLU(),
-        #     ).to(device)
-        # self.conv_11 = nn.Sequential(
-        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-        #     nn.BatchNorm2d(NUM_FILTERS),
-        #     nn.LeakyReLU(),
-        #     ).to(device)
-        # self.conv_12 = nn.Sequential(
-        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-        #     nn.BatchNorm2d(NUM_FILTERS),
-        #     nn.LeakyReLU(),
-        #     ).to(device)
-        # self.conv_13 = nn.Sequential(
-        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-        #     nn.BatchNorm2d(NUM_FILTERS),
-        #     nn.LeakyReLU(),
-        #     ).to(device)
-        # self.conv_14 = nn.Sequential(
-        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-        #     nn.BatchNorm2d(NUM_FILTERS),
-        #     nn.LeakyReLU(),
-        #     ).to(device)
-        # self.conv_15 = nn.Sequential(
-        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-        #     nn.BatchNorm2d(NUM_FILTERS),
-        #     nn.LeakyReLU(),
-        #     ).to(device)
-        # self.conv_16 = nn.Sequential(
-        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-        #     nn.BatchNorm2d(NUM_FILTERS),
-        #     nn.LeakyReLU(),
-        #     ).to(device)
-        # self.conv_17 = nn.Sequential(
-        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-        #     nn.BatchNorm2d(NUM_FILTERS),
-        #     nn.LeakyReLU(),
-        #     ).to(device)
-        # self.conv_18 = nn.Sequential(
-        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-        #     nn.BatchNorm2d(NUM_FILTERS),
-        #     nn.LeakyReLU(),
-        #     ).to(device)
-        # self.conv_19 = nn.Sequential(
-        #     nn.Conv2d(NUM_FILTERS, NUM_FILTERS, kernel_size=KERNEL_SIZE, padding=1),
-        #     nn.BatchNorm2d(NUM_FILTERS),
-        #     nn.LeakyReLU(),
-        #     ).to(device)
+        blocks = []
+        for _ in range(residual_layers):
+            block = nn.Sequential(
+                nn.Conv2d(filters, filters, kernel_size=KERNEL_SIZE, padding=1),
+                nn.BatchNorm2d(filters),
+                nn.LeakyReLU(),
+            )
+            blocks.append(block)
+        self.blocks = nn.ModuleList(blocks)
 
         # value head
         self.conv_val = nn.Sequential(
-            nn.Conv2d(NUM_FILTERS, 1, kernel_size=1),
+            nn.Conv2d(filters, 1, kernel_size=1),
             nn.BatchNorm2d(1),
             nn.LeakyReLU(),
-        ).to(device)
+        )
 
-        body_out_shape = (NUM_FILTERS, ) + input_shape[1:]
+        body_out_shape = (filters, ) + input_shape[1:]
         conv_val_size = self._get_conv_val_size(body_out_shape)
 
         self.value = nn.Sequential(
@@ -151,62 +63,62 @@ class Net(nn.Module):
             nn.LeakyReLU(),
             nn.Linear(256, 1),
             nn.Tanh(),
-        ).to(device)
+        )
 
         # policy head
         self.conv_policy = nn.Sequential(
-            nn.Conv2d(NUM_FILTERS, input_shape[0], kernel_size=1),
+            nn.Conv2d(filters, input_shape[0], kernel_size=1),
             nn.BatchNorm2d(input_shape[0]),
             nn.LeakyReLU(),
-        ).to(device)
+        )
         conv_policy_size = self._get_conv_policy_size(body_out_shape)
         self.policy = nn.Sequential(
             nn.Linear(conv_policy_size, policy_shape)
-        ).to(device)
+        )
+
+        # belief head
+        self.conv_belief = nn.Sequential(
+            nn.Conv2d(filters, input_shape[0], kernel_size=1),
+            nn.BatchNorm2d(input_shape[0]),
+            nn.LeakyReLU(),
+        )
+        conv_belief_size = self._get_conv_belief_size(body_out_shape)
+        self.belief = nn.Sequential(
+            nn.Linear(conv_belief_size, belief_shape)
+        )
 
         #optimizer
         self.optimizer = optim.SGD(self.parameters(), lr=lr, momentum=0.9, weight_decay=1e-4)
 
     def _get_conv_val_size(self, shape):
-        o = self.conv_val(torch.zeros(1, *shape).to(self.device))
+        o = self.conv_val(torch.zeros(1, *shape))
         return int(np.prod(o.size()))
 
     def _get_conv_policy_size(self, shape):
-        o = self.conv_policy(torch.zeros(1, *shape).to(self.device))
+        o = self.conv_policy(torch.zeros(1, *shape))
+        return int(np.prod(o.size()))
+
+    def _get_conv_belief_size(self, shape):
+        o = self.conv_belief(torch.zeros(1, *shape))
         return int(np.prod(o.size()))
 
     def forward(self, x):
         batch_size = x.size()[0]
 
         v = self.conv_in(x)
-        
-        v = self.conv_1(v)
-        v = self.conv_2(v)
-        v = self.conv_3(v)
-        v = self.conv_4(v)
-        v = self.conv_5(v)
-        v = self.conv_6(v)
-        v = self.conv_7(v)
-        v = self.conv_8(v)
-        # v = self.conv_9(v)
-        # v = self.conv_10(v)
-        # v = self.conv_11(v)
-        # v = self.conv_12(v)
-        # v = self.conv_13(v)
-        # v = self.conv_14(v)
-        # v = self.conv_15(v)
-        # v = self.conv_16(v)
-        # v = self.conv_17(v)
-        # v = self.conv_18(v)
-        # v = self.conv_19(v)
-        
+        for b in self.blocks:
+            v = b(v)
+       
         val = self.conv_val(v)
         val = self.value(val.view(batch_size, -1))
 
         pol = self.conv_policy(v)
         pol = self.policy(pol.view(batch_size, -1))
 
-        return pol, val
+        bel = self.conv_belief(v)
+        bel = self.belief(bel.view(batch_size, -1))
+
+        return pol, val, bel
 
     def predict(self, s, valids_actions):
         """
@@ -223,9 +135,10 @@ class Net(nn.Module):
         self.eval()
         batch = self.state_lists_to_batch(s)
         masks = [self.valids_actions_to_tensor(va) for va in valids_actions]
-        pol, val = self(batch)
+        pol, val, bel = self(batch)
         pol = [self.get_policy_value(p, mask, False) for p, mask in zip(pol, masks)]
-        return pol, val
+        bel = [self.get_belief_values(b, False) for b in bel]
+        return pol, val, bel
 
     def get_policy_value(self, logits, mask, log_softmax):
         """
@@ -243,6 +156,23 @@ class Net(nn.Module):
         """
         selection = torch.masked_select(logits, mask)
         dist = F.log_softmax(selection, dim=-1)
+        if log_softmax:
+            return dist
+        return torch.exp(dist)
+
+    def get_belief_values(self, logits, log_softmax):
+        """
+        Get agent private info probabilities distribution.
+
+        param logits:
+            list of belief_shape bits. Raw belief head
+        param log_softmax
+            Set True to use log_softmax as activation function. Set False to use softmax 
+
+        return
+            Move probabilities
+        """
+        dist = F.log_softmax(logits, dim=-1)
         if log_softmax:
             return dist
         return torch.exp(dist)
@@ -280,34 +210,44 @@ class Net(nn.Module):
         return:
             Training loss
         """
-        # data: [(state, p_target, v_target, valids_actions)]
-        batch, p_targets, v_targets, valids_actions = [], [], [], []
-        for (state, p, v, actions) in data:
+        # data: [(state, p_target, v_target, b_target, valids_actions)]
+        batch, p_targets, v_targets, b_targets, valids_actions = [], [], [], [], []
+        for (state, p, v, b, actions) in data:
             # state and available_actions are encoded
             batch.append(state)
             p_targets.append(p)
             v_targets.append(v)
             valids_actions.append(actions)
+            b_targets.append(b)
         batch = self.state_lists_to_batch(batch)
 
         self.train()
         self.optimizer.zero_grad()
 
         p_targets = [torch.tensor(p_target, dtype=torch.float32).to(self.device) for p_target in p_targets]     
-        v_targets = torch.tensor(v_targets, dtype=torch.float32).to(self.device)#[torch.tensor(v_target, dtype=torch.float32).to(self.device) for v_target in v_targets]
-        p_preds_t, v_preds = self(batch)
+        v_targets = torch.tensor(v_targets, dtype=torch.float32).to(self.device)
+        b_targets = [torch.tensor(b_target, dtype=torch.float32).to(self.device) for b_target in b_targets]    
+
+        p_preds_t, v_preds, b_preds_t = self(batch)
+        b_preds = [self.get_belief_values(b, True) for b in b_preds_t]
         p_preds = []
 
         for i, a in enumerate(valids_actions):
             mask = self.valids_actions_to_tensor(a)
             p_preds.append(self.get_policy_value(p_preds_t[i], mask, True))
 
+
         loss_value = F.mse_loss(v_preds.squeeze(-1), v_targets)
+
         loss_policy = torch.zeros(1).to(self.device)
         for pred, target in zip(p_preds, p_targets):
             loss_policy += -torch.sum(pred * target)
 
-        loss = loss_policy + loss_value
+        loss_belief = torch.zeros(1).to(self.device)
+        for pred, target in zip(b_preds, b_targets):
+            loss_belief += -torch.sum(pred * target)
+
+        loss = loss_policy + loss_value + loss_belief
         loss.backward()
         self.optimizer.step()
 
@@ -343,6 +283,8 @@ class Net(nn.Module):
                 'error_log': error_log,
                 'config': config,
                 'epoch': epoch,
+                'residual_layers': self.residual_layers,
+                'filters': self.filters,
             }, full_path)
         if verbose:
             print(f'Model saved with name: {net_name[:-5]}')
@@ -360,7 +302,8 @@ class Net(nn.Module):
             ret.append(net_checkpoint['model'])
             model = ret[1]
         else:
-            model = Net()
+            layers, filters = net_checkpoint['residual_layers'], net_checkpoint['filters']
+            model = Net(layers, filters)
             model.load_state_dict(net_checkpoint['model_state_dict'])
             self.optimizer.load_state_dict(net_checkpoint['optimizer_state_dict'])
 
