@@ -1,11 +1,7 @@
 from .player import BasePlayer
 from .utils.alphazero import encode, rollout_maker, selector_maker
 from .utils.mc import monte_carlo
-# from .models import AlphaZeroNet
-
-
-AlphaZeroNet = object() # //TODO: Import AlphaZeroNet
-
+from .models import AlphaZeroNet
 
 class AlphaZero(BasePlayer):
     def __init__(self, name, handouts, rollouts, NN):
@@ -25,7 +21,7 @@ class AlphaZero(BasePlayer):
 
     def filter(self, valids):
         data = {}
-        selector = selector_maker(data, self.valid_moves(), self.turn, False, 6)
+        selector = selector_maker(data, self.valid_moves(), self.turn, False, 50) #//TODO: Change tau_threshold
         rollout = rollout_maker(data, self.NN)
 
         _, action, *_ = monte_carlo(

@@ -110,7 +110,7 @@ def rollout_maker(
                 if sequence.step(valids[best_index]):
                     v = end_value[sequence.winner]
             except KeyError:
-                [P], [v] = NN.predict([state], [mask])
+                [P], [v], _ = NN.predict([state], [mask])
                 v = v.cpu().detach().numpy()
                 size = len(P)
                 npq = np.zeros((size, 3), dtype=object)
@@ -131,7 +131,7 @@ def selector_maker(
     turn: int,
     root: bool,
     tau_threshold: int,
-    alpha: float = 0.4,
+    alpha: float = 1.5,
     epsilon: float = 0.25,
 ) -> Selector:
     def selector(state: State) -> Tuple[Action, List[Any]]:
@@ -167,4 +167,7 @@ def selector_maker(
 __all__ = [
     "encode", 
     "state_to_list", 
+    "table_bit",
+    "selector_maker",
+    "encode_valids",
 ]
