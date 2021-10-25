@@ -1,0 +1,27 @@
+{   
+    "batch_size": 2000,
+    "handouts": 50,
+    "rollouts": 10,
+    "alpha": 1.0,
+    "tau_threshold": 11,
+    "number_of_players": 4,
+    "cards_per_player": 6,
+    "players_colors": "0101",
+    "data_path": "module/training/data", 
+    "save_path": "module/training",
+    "lr": 0.001,
+    "cput": 3,
+    "residual_layers": 8,
+    "num_filters": 70,
+
+    "epochs": 200,
+    "simulate": true,
+    "load_checkpoint": false,
+    "load_model": false,
+    "sample": 35,
+    "tag": "70c-8l-50h-10r-1.0",
+    "num_process": 1,
+    "num_gpus": 1,
+    "verbose": true,
+    "save_data": true
+}
