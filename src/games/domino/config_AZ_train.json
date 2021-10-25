@@ -10,14 +10,18 @@
     "save_path": "module/training",
     "lr": 0.001,
     "cput": 3,
+    "residual_layers": 8,
+    "num_filters": 70,
 
-    "epochs": 0,
+
+    "epochs": 200,
     "simulate": true,
-    "load_checkpoint": true,
+    "load_checkpoint": false,
     "load_model": false,
     "sample": 35,
     "tag": "70c-8l-50h-10r-1.0",
     "num_process": 1,
+    "num_gpus": 1,
     "verbose": true,
     "save_data": true
 }
