@@ -30,6 +30,7 @@ class Net(nn.Module):
         self.save_path = 'checkpoints/'
         self.residual_layers = residual_layers
         self.filters = filters
+        self.policy_shape = policy_shape
 
         self.conv_in = nn.Sequential(
             nn.Conv2d(input_shape[0], filters, kernel_size=KERNEL_SIZE, padding=1),
@@ -197,7 +198,7 @@ class Net(nn.Module):
         return batch.to(self.device)
 
     def valids_actions_to_tensor(self, valids_actions):
-        mask = state_to_list(valids_actions, 111)
+        mask = state_to_list(valids_actions, self.policy_shape)
         return torch.tensor(mask, dtype=torch.bool).to(self.device)
 
     def train_batch(self, data):
