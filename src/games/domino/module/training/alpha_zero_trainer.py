@@ -1,6 +1,6 @@
 from torch.multiprocessing import Pool, set_start_method
 from torch.utils.tensorboard import SummaryWriter
-from ..players import AlphaZeroModel, alphazero_utils as utils, mc_utils, BasePlayer, hand_out
+from ..players import AlphaZeroNet, alphazero_utils as utils, mc_utils, BasePlayer, hand_out
 from .trainer import Trainer
 from ..domino import Domino
 
@@ -14,7 +14,7 @@ import ray
 
 class AlphaZeroTrainer(Trainer):
     """
-    Trainer manager for Alpha Zero model
+    Trainer manager for Alpha Zero Domino model
     """
     def __init__(
         self,
@@ -73,7 +73,7 @@ class AlphaZeroTrainer(Trainer):
         self.tau_threshold = tau_threshold
         self.error_log = []
 
-        self.net = AlphaZeroModel.Net(residual_layers, num_filters, lr=lr)
+        self.net = AlphaZeroNet(residual_layers, num_filters, lr=lr)
         device = 'cpu'
         if torch.cuda.is_available():
             device = "cuda:0"
