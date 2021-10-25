@@ -171,8 +171,17 @@ def selector_maker(
     return selector
 
 
+def remaining_mask(remaining, max_number):
+    data = [(piece_bit(*p, max_number), p) for p in remaining]
+    data.sort()
+    mask = sum(x for x, _ in data)
+    ordered_rem = [x for _, x in data]
+    return ordered_rem, mask
+
+
 __all__ = [
     "encoder_generator", 
     "state_to_list", 
     "get_valids_data",
+    "remaining_mask",
 ]

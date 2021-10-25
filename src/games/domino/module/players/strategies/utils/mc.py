@@ -1,9 +1,11 @@
+import numpy
+from numpy.lib.twodim_base import tri
 from ...player import BasePlayer
 from ...player_view import PlayerView
 from ....domino import Domino
 from .types import *
 from .game import game_hand_builder, game_data_collector, remaining_pieces
-from .alphazero import get_valids_data
+from .alphazero import get_valids_data, remaining_mask
 from random import randint, choice
 from .types import State, Action
 
@@ -20,17 +22,45 @@ def monte_carlo(
     # basic game information
     pieces, missing = game_data_collector(player.pieces, player.me, player.history)
     remaining = remaining_pieces(pieces, player.max_number)
+    ordered_remaining, mask = remaining_mask(remaining, player.max_number)
 
-    #//TODO: Create state and mask to call NN and get beliefs
+    state = encoder(player.pieces, player.history, player.me)
+
+    # prepare data for partner belief
+    B = None
     if NN is not None:
-       # _, _, [B] = NN.predict([state], [mask])
-       # use B to filter, B is a list of 55 probabilities
-       pass
+        _, _, [B] = NN.predict([state], mask)
+    r = 10 - len(pieces[player.partner])
+    step = 0       # Dicreasement factor
+    current = 0    # Number of handouts passed
+    adjustment = 0 # Actual dicreasement
+    if r: step = (handouts + r - 1) // r # rounding up
 
     # simulations
     for _ in range(handouts):
-        fixed_hands = game_hand_builder(pieces, missing, remaining, player.pieces_per_player)
-        hand = lambda x, y: [PlayerView(h) for h in fixed_hands]
+        tries = (B is not None) * 5
+        while tries:
+            try:
+                partner = numpy.random.choice(ordered_remaining, p=B, size=step-adjustment, replace=False)
+                partner_new_numbers = set()
+                for x in partner: partner_new_numbers.union(x)
+                assert len(partner_new_numbers.intersection(missing[player.partner])) == 0
+                new_pieces = [p[:] for p in pieces]
+                new_pieces[player.partner].extend(partner)
+                new_rem = list(set().union(remaining).difference(partner))
+                fixed_hands = game_hand_builder(new_pieces, missing, new_rem, player.pieces_per_player)
+                hand = lambda x, y: [PlayerView(h) for h in fixed_hands]
+            except AssertionError:
+                tries -= 1
+        else:
+            fixed_hands = game_hand_builder(pieces, missing, remaining, player.pieces_per_player)
+            hand = lambda x, y: [PlayerView(h) for h in fixed_hands]
+        current += 1
+        if current == step:
+            current = 0
+            adjustment += 1
+            adjustment = min(adjustment, step)
+        
         for _ in range(rollouts):
             # New Domino Game
             domino = Domino()
@@ -48,7 +78,6 @@ def monte_carlo(
             rollout(domino, encoder, player.team)
 
     # Select the player action
-    state = encoder(player.pieces, player.history, player.me)
     return (state, *selector(state))
             
 
