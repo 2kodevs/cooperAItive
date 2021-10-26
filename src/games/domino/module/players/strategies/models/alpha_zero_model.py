@@ -120,7 +120,7 @@ class Net(nn.Module):
 
         return pol, val, bel
 
-    def predict(self, s, valids_actions):
+    def predict(self, s, mask):
         """
         Infer node data given an state
 
@@ -134,10 +134,11 @@ class Net(nn.Module):
         """
         self.eval()
         batch = self.state_lists_to_batch(s)
-        masks = [self.valids_actions_to_tensor(va) for va in valids_actions]
+        valid_actions_masks = [self.valids_actions_to_tensor(va) for va in mask]
+        remaining_pieces_masks = [self.remaining_pieces_to_tensor(rp) for rp in mask]
         pol, val, bel = self(batch)
-        pol = [self.get_policy_value(p, mask, False) for p, mask in zip(pol, masks)]
-        bel = [self.get_belief_values(b, False) for b in bel]
+        pol = [self.get_policy_value(p, mask, False) for p, mask in zip(pol, valid_actions_masks)]
+        bel = [self.get_belief_values(b, mask, False) for b, mask in zip(bel, remaining_pieces_masks)]
         return pol, val, bel
 
     def get_policy_value(self, logits, mask, log_softmax):
@@ -160,7 +161,7 @@ class Net(nn.Module):
             return dist
         return torch.exp(dist)
 
-    def get_belief_values(self, logits, log_softmax):
+    def get_belief_values(self, logits, mask, log_softmax):
         """
         Get agent private info probabilities distribution.
 
@@ -172,7 +173,8 @@ class Net(nn.Module):
         return
             Move probabilities
         """
-        dist = F.log_softmax(logits, dim=-1)
+        selection = torch.masked_select(logits, mask)
+        dist = F.log_softmax(selection, dim=-1)
         if log_softmax:
             return dist
         return torch.exp(dist)
@@ -198,6 +200,10 @@ class Net(nn.Module):
 
     def valids_actions_to_tensor(self, valids_actions):
         mask = state_to_list(valids_actions, 111)
+        return torch.tensor(mask, dtype=torch.bool).to(self.device)
+
+    def remaining_pieces_to_tensor(self, remaining_pieces):
+        mask = state_to_list(remaining_pieces, 55)
         return torch.tensor(mask, dtype=torch.bool).to(self.device)
 
     def train_batch(self, data):

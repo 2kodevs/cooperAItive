@@ -31,9 +31,9 @@ def monte_carlo(
     if NN is not None:
         _, _, [B] = NN.predict([state], mask)
     r = 10 - len(pieces[player.partner])
-    step = 0       # Dicreasement factor
+    step = 0       # Decreasement factor
     current = 0    # Number of handouts passed
-    adjustment = 0 # Actual dicreasement
+    adjustment = 0 # Actual Decreasement
     if r: step = (handouts + r - 1) // r # rounding up
 
     # simulations
