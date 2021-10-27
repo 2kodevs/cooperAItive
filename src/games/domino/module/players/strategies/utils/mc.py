@@ -44,7 +44,10 @@ def monte_carlo(
             try:
                 indexes = numpy.random.choice(len(B), p=B, size=r-adjustment, replace=False)
                 partner = list(map(lambda i: ordered_remaining[i], indexes))
-                partner_set = set(partner)
+                partner_set = set()
+                for x, y in partner: 
+                    partner_set.add(x)
+                    partner_set.add(y)
                 assert len(partner_set.intersection(missing[player.partner])) == 0
                 new_pieces = [p[:] for p in pieces]
                 new_pieces[player.partner].extend(partner)
