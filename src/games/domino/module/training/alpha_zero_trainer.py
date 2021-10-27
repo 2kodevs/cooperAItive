@@ -146,21 +146,20 @@ class AlphaZeroTrainer(Trainer):
             #creating partner's hand entry
             partner = domino.current_player ^ 2
             partner_hand = domino.players[partner].pieces
-            pieces_mask = 0
+            partner_pieces_mask = 0
             for p in partner_hand:
-                pieces_mask += utils.piece_bit(*p, 9)
-            partner_hand = utils.state_to_list(pieces_mask, 55)
+                partner_pieces_mask += utils.piece_bit(*p, 9)
 
             game_over = domino.step(action)
-            data.append((state, pi.tolist(), cur_player, mask, partner_hand))
+            data.append((state, pi.tolist(), cur_player, mask, partner_pieces_mask))
 
         training_data = []
-        for state, pi, player, mask, partner_hand in data:
+        for state, pi, player, valids_mask, partner_pieces_mask in data:
             end_value = [0, 0, 0]
             end_value[player.team] = 1
             end_value[1 - player.team] = -1
             result = end_value[domino.winner] 
-            training_data.append((state, pi, result, partner_hand, mask))
+            training_data.append((state, pi, result, partner_pieces_mask, valids_mask))
         return training_data
 
     def policy_iteration(

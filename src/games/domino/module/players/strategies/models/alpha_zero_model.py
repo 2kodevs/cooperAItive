@@ -126,8 +126,8 @@ class Net(nn.Module):
 
         param s: 
             list of encoded states of the game
-        param available_actions
-            list of encoded valids actions from a position of the game
+        param mask
+            list of encoded valids actions from a position of the game or pieces for Belief filters
 
         return
             (Move probabilities P vector, value V vector)
@@ -217,14 +217,15 @@ class Net(nn.Module):
             Training loss
         """
         # data: [(state, p_target, v_target, b_target, valids_actions)]
-        batch, p_targets, v_targets, b_targets, valids_actions = [], [], [], [], []
+        batch, p_targets, v_targets, b_targets, partner_pieces_masks, valids_actions = [], [], [], [], [], []
         for (state, p, v, b, actions) in data:
             # state and available_actions are encoded
             batch.append(state)
             p_targets.append(p)
             v_targets.append(v)
             valids_actions.append(actions)
-            b_targets.append(b)
+            b_targets.append(state_to_list(b, 55))
+            partner_pieces_masks.append(b)
         batch = self.state_lists_to_batch(batch)
 
         self.train()
@@ -235,13 +236,15 @@ class Net(nn.Module):
         b_targets = [torch.tensor(b_target, dtype=torch.float32).to(self.device) for b_target in b_targets]    
 
         p_preds_t, v_preds, b_preds_t = self(batch)
-        b_preds = [self.get_belief_values(b, True) for b in b_preds_t]
-        p_preds = []
+        p_preds, b_preds = [], []
 
         for i, a in enumerate(valids_actions):
             mask = self.valids_actions_to_tensor(a)
             p_preds.append(self.get_policy_value(p_preds_t[i], mask, True))
 
+        for i, p in enumerate(partner_pieces_masks):
+            mask = self.remaining_pieces_to_tensor(p)
+            b_preds.append(self.get_belief_values(b_preds_t[i], mask, True))
 
         loss_value = F.mse_loss(v_preds.squeeze(-1), v_targets)
 
