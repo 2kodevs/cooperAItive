@@ -29,7 +29,8 @@ def monte_carlo(
     # prepare data for partner belief
     B = None
     if NN is not None:
-        _, _, [B] = NN.predict([state], mask)
+        _, _, [B] = NN.predict([state], [mask])
+        B = B.cpu().detach().numpy()
     r = 10 - len(pieces[player.partner])
     step = 0       # Decreasement factor
     current = 0    # Number of handouts passed
@@ -41,15 +42,16 @@ def monte_carlo(
         tries = (B is not None) * 5
         while tries:
             try:
-                partner = numpy.random.choice(ordered_remaining, p=B, size=step-adjustment, replace=False)
-                partner_new_numbers = set()
-                for x in partner: partner_new_numbers.union(x)
-                assert len(partner_new_numbers.intersection(missing[player.partner])) == 0
+                indexes = numpy.random.choice(len(B), p=B, size=r-adjustment, replace=False)
+                partner = list(map(lambda i: ordered_remaining[i], indexes))
+                partner_set = set(partner)
+                assert len(partner_set.intersection(missing[player.partner])) == 0
                 new_pieces = [p[:] for p in pieces]
                 new_pieces[player.partner].extend(partner)
-                new_rem = list(set().union(remaining).difference(partner))
+                new_rem = list(set(remaining).difference(partner))
                 fixed_hands = game_hand_builder(new_pieces, missing, new_rem, player.pieces_per_player)
                 hand = lambda x, y: [PlayerView(h) for h in fixed_hands]
+                break
             except AssertionError:
                 tries -= 1
         else:
