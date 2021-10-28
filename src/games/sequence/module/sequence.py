@@ -44,7 +44,7 @@ class Sequence:
     def __init__(self):
         self.deck = None                # Game deck
         self.logs = None                # Game history
-        self._board = None               # Game board
+        self._board = None              # Game board
         self.count = None               # Number of positions used of the board
         self.score = None               # Score per color (i.e Number of consecutive sequences)
         self.colors = None              # Players color
@@ -69,6 +69,10 @@ class Sequence:
         return self.colors[self.current_player]
 
     @property
+    def partners(self):
+        return self._partner(self.current_player)
+
+    @property
     def board(self):
         return BoardViewer(self._board)
 
@@ -76,6 +80,12 @@ class Sequence:
     def winner(self):
         assert self.logs[-1][0] == Event.WIN
         return self.logs[-1][2]
+
+    def _partners(self, player):
+        color = self.color[player] 
+        for i, c in enumerate(self.colors):
+            if i != player and c == color:
+                yield i
 
     def empty(self, i, j):
         return not self._board[i][j]
