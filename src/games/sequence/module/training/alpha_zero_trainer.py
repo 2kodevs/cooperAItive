@@ -152,7 +152,7 @@ class AlphaZeroTrainer(Trainer):
             mask = utils.encode_valids(valids)
 
             #creating partner's hand entry
-            partner = sequence.current_player ^ 2
+            [partner, *_] = list(sequence.partners) # Should return just one player, *_ added for safety in games with teams size greater than 2
             partner_hand = sequence.players[partner].cards
             pieces_mask = 0
             for p in partner_hand:
