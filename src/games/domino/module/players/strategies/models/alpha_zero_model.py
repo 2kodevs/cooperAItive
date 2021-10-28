@@ -231,7 +231,7 @@ class Net(nn.Module):
             # create random distribution
             pieces = state_to_list(partner_pieces_mask, 55)
             total = sum(pieces)
-            pieces = list(map(lambda x: x / total, pieces))
+            pieces = list(map(lambda x: x / total if x > 0 else 0.0001, pieces))
             b_targets.append(pieces)
         batch = self.state_lists_to_batch(batch)
 
@@ -240,7 +240,9 @@ class Net(nn.Module):
 
         p_targets = [torch.tensor(p_target, dtype=torch.float32).to(self.device) for p_target in p_targets]     
         v_targets = torch.tensor(v_targets, dtype=torch.float32).to(self.device)
-        b_targets = [torch.tensor(b_target, dtype=torch.float32).to(self.device) for b_target in b_targets]    
+        #b_targets = [torch.tensor(b_target, dtype=torch.float32).to(self.device) for b_target in b_targets]    
+        b_targets = torch.tensor(b_targets).to(self.device)
+        b_targets = torch.log(b_targets)
 
         p_preds_t, v_preds, b_preds_t = self(batch)
         p_preds, b_preds = [], []
@@ -251,7 +253,8 @@ class Net(nn.Module):
 
         for i, _ in enumerate(partner_pieces_masks):
             mask = torch.tensor([True for _ in range(55)], dtype=torch.bool).to(self.device)
-            b_preds.append(self.get_belief_values(b_preds_t[i], mask, False))
+            b_preds.append(self.get_belief_values(b_preds_t[i], mask, True))
+        b_preds = torch.stack(b_preds)
 
         print(v_preds[0])
         # MSE
@@ -262,21 +265,23 @@ class Net(nn.Module):
         loss_policy = torch.zeros(1).to(self.device)
         for pred, target in zip(p_preds, p_targets):
             loss_policy += -torch.sum(pred * target)
-        loss_policy = loss_policy / loss_policy.size()[0]
+        loss_policy = loss_policy / len(p_preds)
 
-        # cross entropy
+        #cross entropy
         # loss_belief = torch.zeros(1).to(self.device)
         # for pred, target in zip(b_preds, b_targets):
         #     loss_belief += -torch.sum(pred * target)
+        # loss_belief = loss_belief / len(b_preds)
 
         # Kullback-Leibler divergence Loss
-        loss_belief = F.kl_div(b_preds.squeeze(-1), b_targets)
+        loss_belief = F.kl_div(b_preds, b_targets, reduction='batchmean', log_target=True)
 
         loss = loss_policy + loss_value + loss_belief
         loss.backward()
         self.optimizer.step()
 
         # Return loss values to track total loss mean for epoch
+        #print((loss.item(), loss_policy.item(), loss_value.item(), loss_belief.item()))
         return (loss.item(), loss_policy.item(), loss_value.item(), loss_belief.item())
 
     def save(self, error_log, config, epoch, path, save_model, tag='latest', verbose=False):
