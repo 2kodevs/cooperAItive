@@ -273,7 +273,7 @@ class Net(nn.Module):
         self.optimizer.step()
 
         # Return loss values to track total loss mean for epoch
-        return (loss.item(), loss_policy.item(), loss_value.item())
+        return (loss.item(), loss_policy.item(), loss_value.item(), loss_belief.item())
 
     def save(self, error_log, config, epoch, path, save_model, tag='latest', verbose=False):
         net_name = [f'AlphaZero_Dom_{tag}.ckpt', f'AlphaZero_Dom_model_{tag}.ckpt'][save_model]

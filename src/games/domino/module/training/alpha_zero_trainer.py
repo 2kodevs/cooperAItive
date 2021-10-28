@@ -212,7 +212,7 @@ class AlphaZeroTrainer(Trainer):
             start = time.time()
 
         self.adjust_learning_rate(epoch, self.net.optimizer)
-        total_loss, policy_loss, value_loss = 0,0,0
+        total_loss, policy_loss, value_loss, belief_loss = 0,0,0,0
         batch_size = len(data)
         total = 0
 
@@ -223,8 +223,9 @@ class AlphaZeroTrainer(Trainer):
             total_loss += loss[0]
             policy_loss += loss[1]
             value_loss += loss[2]
+            belief_loss += loss[3]
         
-        loss = (total_loss / total, policy_loss / total, value_loss / total)
+        loss = (total_loss / total, policy_loss / total, value_loss / total, belief_loss / total)
         self.error_log.append(loss)
 
         config = self.build_config(sample, tag, epoch)
@@ -407,11 +408,12 @@ class AlphaZeroTrainer(Trainer):
 
         return sample, tag
 
-    def write_loss(self, writer, e, total, policy, value):
+    def write_loss(self, writer, e, total, policy, value, belief):
         loss = {
             'Total loss': total,
             'Policy loss': policy,
             'Value loss': value,
+            'Belief loss': belief,
             }
         writer.add_scalars('Loss', loss, e + 1)
 
