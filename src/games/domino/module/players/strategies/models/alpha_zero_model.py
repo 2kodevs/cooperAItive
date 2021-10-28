@@ -253,7 +253,11 @@ class Net(nn.Module):
             mask = torch.tensor([True for _ in range(55)], dtype=torch.bool).to(self.device)
             b_preds.append(self.get_belief_values(b_preds_t[i], mask, False))
 
-        loss_value = F.mse_loss(v_preds.squeeze(-1), v_targets)
+        print(v_preds[0])
+        # MSE
+        #loss_value = F.mse_loss(v_preds.squeeze(-1), v_targets)
+        # Huber Loss
+        loss_value = F.huber_loss(v_preds.squeeze(-1), v_targets)
 
         loss_policy = torch.zeros(1).to(self.device)
         for pred, target in zip(p_preds, p_targets):
