@@ -147,7 +147,7 @@ class Net(nn.Module):
 
         param logits:
             list of 111 bits. Raw policy head
-        param available_actions
+        param mask
             list of 111 bits. Mask of available actions
         param log_softmax
             Set True to use log_softmax as activation function. Set False to use softmax 
@@ -167,6 +167,8 @@ class Net(nn.Module):
 
         param logits:
             list of belief_shape bits. Raw belief head
+        param mask
+            list of 55 bits. Mask of pieces for Belief filter
         param log_softmax
             Set True to use log_softmax as activation function. Set False to use softmax 
 
@@ -218,14 +220,19 @@ class Net(nn.Module):
         """
         # data: [(state, p_target, v_target, b_target, valids_actions)]
         batch, p_targets, v_targets, b_targets, partner_pieces_masks, valids_actions = [], [], [], [], [], []
-        for (state, p, v, b, actions) in data:
+        for (state, p, v, partner_pieces_mask, actions) in data:
             # state and available_actions are encoded
             batch.append(state)
             p_targets.append(p)
             v_targets.append(v)
             valids_actions.append(actions)
-            b_targets.append(state_to_list(b, 55))
-            partner_pieces_masks.append(b)
+            partner_pieces_masks.append(partner_pieces_mask)
+
+            # create random distribution
+            pieces = state_to_list(partner_pieces_mask, 55)
+            total = sum(pieces)
+            pieces = list(map(lambda x: x / total, pieces))
+            b_targets.append(pieces)
         batch = self.state_lists_to_batch(batch)
 
         self.train()
@@ -242,19 +249,24 @@ class Net(nn.Module):
             mask = self.valids_actions_to_tensor(a)
             p_preds.append(self.get_policy_value(p_preds_t[i], mask, True))
 
-        for i, p in enumerate(partner_pieces_masks):
-            mask = self.remaining_pieces_to_tensor(p)
-            b_preds.append(self.get_belief_values(b_preds_t[i], mask, True))
+        for i, _ in enumerate(partner_pieces_masks):
+            mask = torch.tensor([True for _ in range(55)], dtype=torch.bool).to(self.device)
+            b_preds.append(self.get_belief_values(b_preds_t[i], mask, False))
 
         loss_value = F.mse_loss(v_preds.squeeze(-1), v_targets)
 
         loss_policy = torch.zeros(1).to(self.device)
         for pred, target in zip(p_preds, p_targets):
             loss_policy += -torch.sum(pred * target)
+        loss_policy = loss_policy / loss_policy.size()[0]
 
-        loss_belief = torch.zeros(1).to(self.device)
-        for pred, target in zip(b_preds, b_targets):
-            loss_belief += -torch.sum(pred * target)
+        # cross entropy
+        # loss_belief = torch.zeros(1).to(self.device)
+        # for pred, target in zip(b_preds, b_targets):
+        #     loss_belief += -torch.sum(pred * target)
+
+        # Kullback-Leibler divergence Loss
+        loss_belief = F.kl_div(b_preds.squeeze(-1), b_targets)
 
         loss = loss_policy + loss_value + loss_belief
         loss.backward()
