@@ -218,7 +218,7 @@ class AlphaZeroTrainer(Trainer):
 
         for _ in range(batch_size // sample):
             batch = random.sample(data, sample)
-            total += sample
+            total += 1
             loss = self.net.train_batch(batch)
             total_loss += loss[0]
             policy_loss += loss[1]
@@ -237,7 +237,7 @@ class AlphaZeroTrainer(Trainer):
 
         if verbose:
             print(f'-- Training took {str(int(time.time() - start))} seconds --')
-            print(f'policy head loss: {loss[1]} -- value head loss: {loss[2]} -- TOTAL LOSS: {loss[0]}')
+            print(f'policy head loss: {loss[1]} -- value head loss: {loss[2]} -- belief head loss: {loss[3]} -- TOTAL LOSS: {loss[0]}')
             print('')
 
         return loss
