@@ -35,13 +35,19 @@ class Human(BasePlayer):
 
     def filter(self, valids):
         print("Current table:\n")
-        print(get_board_rep(self.board))
+
+        board = get_board_rep(self.board).split("\n")        
+        first_line = '     '.join(x for x in "0123456789")
+        board_text = '\n'.join([f'   {first_line}', *[f'{i}  {row}' for i, row in zip("0123456789", board)]])
+        print(board_text)
+        
         input(
             f"\nThe cards of the player {self.me} are going to be shown."
             "\nPress enter when you are ready to see them."
         )
         cards = list(self.cards)
         valids = self.valid_moves()
+        print('   '.join(str(x) for x in range(self.number_of_cards)))
         print(', '.join(get_rep(card) for card in cards))
 
         while True:
