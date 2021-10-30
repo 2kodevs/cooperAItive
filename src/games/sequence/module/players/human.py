@@ -11,18 +11,18 @@ class Human(BasePlayer):
         if e is Event.PLAY:
             id, card, color, pos = details
             if id != self.me:
-                print(f'Player number {id} with color {get_color(color)} played {card} at {pos}')
+                print(f'Player number {id} with color {get_color(color)} played {get_rep(card)} at {pos}')
         elif e is Event.REMOVE:
             id, card, pos = details
             if id != self.me:
-                print(f"Player number {id} used card {card} to remove the piece at {pos}")
+                print(f"Player number {id} used card {get_rep(card)} to remove the piece at {pos}")
         elif e is Event.SEQUENCE:
             id, color, size  = details
             print(f"Player number {id} scored a sequence of color {get_color(color)} and size {size}")
         elif e is Event.DISCARD:
             id, card = details
             if id != self.me:
-                print(f"Player number {id} discarded {card}")
+                print(f"Player number {id} discarded {get_rep(card)}")
         elif e is Event.PASS:
             id = details[0]
             print(f"Player number {id} " + ["", "(a.k.a you :-P) "][id == self.me] + "pass")
