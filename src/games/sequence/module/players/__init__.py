@@ -2,12 +2,16 @@ from .player_view import PlayerView
 from .player import BasePlayer
 from .random import Random
 from .monte_carlo import MonteCarlo
+from .alphazero import AlphaZero
+from .human import Human
 from .hands import *
 
 
 PLAYERS = [
     Random,
     MonteCarlo,
+    AlphaZero,
+    Human,
 ]
 
 
