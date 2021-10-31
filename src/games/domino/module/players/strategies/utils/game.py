@@ -150,8 +150,13 @@ def calc_colab(domino: Domino, player):
     all_pieces = sum([x + y for x, y in domino.players[player].pieces])
     passs = 0
     rep = 0
+    partner_pieces = domino.players[partner].pieces
+    partner_moves, prev_moves = 0, 0
 
     heads = None
+    def valid(piece):
+        return heads[0] in piece or heads[1] in piece
+
     prev_data = defaultdict(lambda: 0)
     for e, details in domino.history:
         if e is Event.PASS:
@@ -159,11 +164,19 @@ def calc_colab(domino: Domino, player):
         elif e is Event.MOVE:
             playerId, piece, head = details
             if playerId == prev:
+                prev_moves += 1
                 if heads is None:
                     prev_data[piece[0]] = 1
                     prev_data[piece[1]] = 1
                 else:
                     prev_data[piece[piece[0] == heads[head]]] += 1
+            elif playerId == partner:
+                partner_moves += 1
+                if heads is None:
+                    f = 1
+                else:
+                    f += len([p for p in partner_pieces if valid(p)])
+                    partner_pieces.remove(piece)
             if heads is None:
                 heads = piece
             else:
@@ -172,15 +185,18 @@ def calc_colab(domino: Domino, player):
             tranque = 1
         elif e is Event.FINAL:
             pegue = details[0] == partner
-            
-    f = len(prev_data)
-    rep = sum(prev_data.values()) - f
+ 
+    partner_turns = partner_moves + passs
+    f /= 2 * partner_turns
+    rep = sum(prev_data.values()) - len(prev_data)
+    passs /= partner_turns
+    rep /= prev_moves
     end_value = [0, 0, 0]
     end_value[player & 1] = 1 
     end_value[1 - (player & 1)] = -1 
     v = end_value[domino.winner]
 
-    return f + pegue + tranque*p*points/all_pieces - (passs + rep) + v
+    return (f + pegue + tranque*p*points/all_pieces - (passs + rep) + v) / 6
 
 
 __all__ = [
