@@ -1,6 +1,6 @@
 from ...player_view import PlayerView
 from typing import List, Any, Tuple, Callable, Dict
-from ....domino import Domino
+from ....domino import Domino, Event
 
 State = int
 Head = int

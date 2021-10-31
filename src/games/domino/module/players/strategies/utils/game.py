@@ -1,4 +1,7 @@
 import random
+from collections import defaultdict
+
+from .types import Domino, Event
 
 
 class EdmondsKarp:
@@ -135,7 +138,52 @@ def game_hand_builder(pieces, missing, remaining, number_of_pieces=7):
     return pieces
 
 
-def calc_colab(history):
-    return 0
+def calc_colab(domino: Domino, player):
+    prev = (player + 3) % 4
 
-__all__ = ["game_data_collector", "game_hand_builder", "calc_colab", "remaining_pieces"]
+    f = 0
+    pegue = 0
+    tranque = 0
+    p = domino.winner == (player & 1)
+    points = sum([x + y for x, y in domino.players[player].remaining])
+    all_pieces = 550
+    passs = 0
+    rep = 0
+
+    heads = None
+    prev_data = defaultdict(lambda: 0)
+    for e, details in domino.history:
+        if e is Event.PASS:
+            passs += details[0] == player
+        elif e is Event.MOVE:
+            playerId, piece, head = details
+            if playerId == prev:
+                if heads is None:
+                    prev_data[piece[0]] = 1
+                    prev_data[piece[1]] = 1
+                else:
+                    prev_data[piece[piece[0] == heads[head]]] += 1
+            if heads is None:
+                heads = piece
+            else:
+                heads[head] = piece[piece[0] == heads[head]]
+        elif e is Event.OVER:
+            tranque = 1
+        elif e is Event.FINAL:
+            pegue = details[0] == (player ^ 2)
+    f = len(prev_data)
+    rep = sum(prev_data.values()) - f
+    end_value = [0, 0, 0]
+    end_value[player & 1] = 1 
+    end_value[1 - (player & 1)] = -1 
+    v = end_value[domino.winner]
+
+    return f + pegue + tranque*p*points/all_pieces - (passs + rep) + v
+
+
+__all__ = [
+    "game_data_collector", 
+    "game_hand_builder", 
+    "remaining_pieces",
+    "calc_colab",
+]

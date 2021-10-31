@@ -155,8 +155,7 @@ class AlphaZeroTrainer(Trainer):
             end_value[player.team] = 1
             end_value[1 - player.team] = -1
             result = end_value[domino.winner] 
-            #//TODO: Update e1Ru1o, call correct method
-            cooperativeness = self.coop * game_utils.calc_colab(domino.logs)
+            cooperativeness = self.coop * game_utils.calc_colab(domino, player.me)
             training_data.append((state, pi, result, cooperativeness, valids_mask))
         return training_data
 

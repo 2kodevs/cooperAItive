@@ -1,7 +1,7 @@
+from .game import calc_colab
 from .types import State, Action, Piece, Encoder, List, History, Any, Dict
 from ....domino import Domino
 from math import sqrt
-from game import calc_colab
 
 import numpy as np
 
@@ -111,11 +111,10 @@ def rollout_maker(
                 npq[:, 1] = P.cpu().detach().numpy()
                 data[state] = npq
                 break
-            
+
         for state, index, player in s_comma_a:
             v = value(player)
-            # //TODO: compute real colab for {player}
-            c = Coop * calc_colab(domino.logs) 
+            c = Coop * calc_colab(domino, player)
             N, Q, C = data[state][index, 0], data[state][index, 2], data[state][index, 3]
             data[state][index, 0] += 1
             data[state][index, 2] = (N*Q + v) / (N + 1)

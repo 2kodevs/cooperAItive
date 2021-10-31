@@ -6,15 +6,15 @@ class Event(Enum):
     NEW_GAME = 0
 
     # Player don't have any valid piece
-    # params: (position)
+    # params: (player)
     PASS = 1
 
     # Player makes a move
-    # params: (position, piece, head)
+    # params: (player, piece, head)
     MOVE = 2
 
     # Last piece of a player is put
-    # params: (position)
+    # params: (player)
     FINAL = 3
 
     # None player has a valid piece
