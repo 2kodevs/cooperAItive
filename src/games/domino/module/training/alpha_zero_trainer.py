@@ -139,16 +139,8 @@ class AlphaZeroTrainer(Trainer):
                 selector,
                 handouts,
                 rollouts,
-                self.net,
             )
             _, mask = utils.get_valids_data(domino)
-
-            #creating partner's hand entry
-            partner = domino.current_player ^ 2
-            partner_hand = domino.players[partner].pieces
-            partner_pieces_mask = 0
-            for p in partner_hand:
-                partner_pieces_mask += utils.piece_bit(*p, 9)
 
             game_over = domino.step(action)
             data.append((state, pi.tolist(), cur_player, mask))
@@ -430,11 +422,11 @@ class AlphaZeroTrainer(Trainer):
     def adjust_learning_rate(self, epoch, optimizer):
         lr = self.lr
 
-        if epoch == 150:
+        if epoch == 800:
+            self.lr = lr / 10
+        elif epoch == 400:
             self.lr = lr / 10
         elif epoch == 100:
-            self.lr = lr / 10
-        elif epoch == 50:
             self.lr = lr / 10
 
             for param_group in optimizer.param_groups:
