@@ -103,7 +103,9 @@ def rollout_maker(
             except KeyError:
                 [P], [v], [c] = NN.predict([state], [mask])
                 v = v.cpu().detach().numpy()
-                c = c.cpu().detach().numpy()
+                #//TODO: Remove line below and discomment next line when colab is well integrated
+                c = 0
+                #c = c.cpu().detach().numpy()
                 size = len(P)
                 npq = np.zeros((size, 4), dtype=object)
                 npq[:, 1] = P.cpu().detach().numpy()
