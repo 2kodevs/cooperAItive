@@ -76,7 +76,6 @@ def rollout_maker(
                     value = lambda x: 0 if winner == -1 else [-1, 1][winner == (x & 1)]
                     break
             except KeyError:
-                value = lambda _: 0 
                 size = len(valids)
                 data[state] = [[0] * size, [0] * size]
         
