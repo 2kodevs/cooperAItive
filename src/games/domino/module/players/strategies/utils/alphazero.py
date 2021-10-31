@@ -89,7 +89,7 @@ def rollout_maker(
                 N, P, Q, C = data[state][:, 0], data[state][:, 1], data[state][:, 2], data[state][:, 3]
                 all_N = sqrt(N.sum())
                 U = Cput * P * all_N / (1 + N)
-                values = Q + U + C
+                values = Q + U + C 
 
                 args_max = np.argwhere(values == np.max(values)).flatten()
                 best_index = np.random.choice(args_max)
@@ -101,6 +101,7 @@ def rollout_maker(
             except KeyError:
                 [P], [v], [c] = NN.predict([state], [mask])
                 v = v.cpu().detach().numpy()
+                c = c.cpu().detach().numpy()
                 size = len(P)
                 npq = np.zeros((size, 4), dtype=object)
                 npq[:, 1] = P.cpu().detach().numpy()
