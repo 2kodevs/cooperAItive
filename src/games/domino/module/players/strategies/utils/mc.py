@@ -59,6 +59,7 @@ def rollout_maker(
             current_player = domino.current_player
             pieces = domino.players[current_player].remaining
             history = domino.logs
+            value = None
 
             state = encoder(pieces, history, current_player)
             valids, _ = get_valids_data(domino)
@@ -71,14 +72,14 @@ def rollout_maker(
                 s_comma_a.append((state, index, domino.current_player))
 
                 if domino.step(valids[index]):
+                    winner = domino.winner
+                    value = lambda x: 0 if winner == -1 else [-1, 1][winner == (x & 1)]
                     break
             except KeyError:
-                v = 0
+                value = lambda _: 0 
                 size = len(valids)
                 data[state] = [[0] * size, [0] * size]
         
-        winner = domino.winner
-        value = lambda x: 0 if winner == -1 else [-1, 1][winner == (x & 1)]
         for state, index, player in s_comma_a:
             v = value(player)
             N, Q = data[state]

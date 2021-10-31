@@ -78,6 +78,7 @@ def rollout_maker(
             current_player = domino.current_player
             pieces = domino.players[current_player].remaining
             history = domino.logs
+            value = None
 
             state = encoder(pieces, history, current_player)
             valids, mask = get_valids_data(domino)
@@ -93,10 +94,13 @@ def rollout_maker(
                 s_comma_a.append((state, best_index, domino.current_player))
 
                 if domino.step(valids[best_index]):
+                    winner = domino.winner
+                    value = lambda x: 0 if winner == -1 else [-1, 1][winner == (x & 1)]
                     break
             except KeyError:
                 [P], [v], [c] = NN.predict([state], [mask])
                 v = v.cpu().detach().numpy()
+                value = lambda x: v if (x & 1) == (domino.current_player & 1) else -v
                 #//TODO: Remove line below and discomment next line when colab is well integrated
                 c = 0
                 #c = c.cpu().detach().numpy()
@@ -104,9 +108,8 @@ def rollout_maker(
                 npq = np.zeros((size, 4), dtype=object)
                 npq[:, 1] = P.cpu().detach().numpy()
                 data[state] = npq
-
-            winner = domino.winner
-            value = lambda x: 0 if winner == -1 else [-1, 1][winner == (x & 1)]
+                break
+            
             for state, index, player in s_comma_a:
                 v = value(player)
                 c = 0 # //TODO: compute real colab for {player}
