@@ -146,7 +146,7 @@ def calc_colab(domino: Domino, player):
     tranque = 0
     p = domino.winner == (player & 1)
     points = sum([x + y for x, y in domino.players[player].remaining])
-    all_pieces = 550
+    all_pieces = sum([x + y for x, y in domino.players[player].pieces])
     passs = 0
     rep = 0
 
