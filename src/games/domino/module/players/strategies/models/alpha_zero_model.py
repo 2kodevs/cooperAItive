@@ -213,11 +213,9 @@ class Net(nn.Module):
         loss_policy = loss_policy / len(p_preds)
 
         # MSE
-        #//TODO: Discomment line below and add loss_colab to loss when colab is well integrated
-        #loss_colab = F.mse_loss(c_preds.squeeze(-1), c_targets)
-        loss_colab = torch.zeros(1)
+        loss_colab = F.mse_loss(c_preds.squeeze(-1), c_targets)
 
-        loss = loss_policy + loss_value 
+        loss = loss_policy + loss_value + loss_colab
         loss.backward()
         self.optimizer.step()
 
