@@ -150,13 +150,14 @@ class AlphaZeroTrainer(Trainer):
             data.append((state, pi.tolist(), cur_player, mask))
 
         training_data = []
+        cooperativeness = [self.coop * game_utils.calc_colab(domino, player) for player in range(4)]
+        
         for state, pi, player, valids_mask in data:
             end_value = [0, 0, 0]
             end_value[player.team] = 1
             end_value[1 - player.team] = -1
             result = end_value[domino.winner] 
-            cooperativeness = self.coop * game_utils.calc_colab(domino, player.me)
-            training_data.append((state, pi, result, cooperativeness, valids_mask))
+            training_data.append((state, pi, result, cooperativeness[player], valids_mask))
         return training_data
 
     def policy_iteration(
