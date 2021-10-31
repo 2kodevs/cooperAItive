@@ -41,7 +41,7 @@ class Net(nn.Module):
         blocks = []
         for _ in range(residual_layers):
             block = nn.Sequential(
-                nn.Conv2d(filters, filters, kernel_size=KERNEL_SIZE, padding=1),
+                nn.Conv2d(filters, filters, kernel_size=KERNEL_SIZE, padding=1, bias=False),
                 nn.BatchNorm2d(filters),
                 nn.LeakyReLU(),
             )
@@ -50,7 +50,9 @@ class Net(nn.Module):
 
         # value head
         self.value = nn.Sequential(
-            nn.Linear(filters, 1),
+            nn.Linear(filters, 256),
+            nn.LeakyReLU(),
+            nn.Linear(256, 1),
             nn.Tanh(),
         )
 
@@ -61,45 +63,30 @@ class Net(nn.Module):
 
         # colab head
         self.colab = nn.Sequential(
-            nn.Linear(filters, 1)
+            nn.Linear(filters, 256),
+            nn.LeakyReLU(),
+            nn.Linear(256, 4),
+            nn.Tanh(),
         )
+
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
 
         #optimizer
         self.optimizer = optim.SGD(self.parameters(), lr=lr, momentum=0.9, weight_decay=1e-4)
 
     def forward(self, x):
-        batch_size = x.size()[0]
-
         v = self.conv_in(x)
+        v = F.avg_pool2d(v, v.size(2))
+
         for b in self.blocks:
             v = b(v)
-       
 
-        pool = nn.AdaptiveAvgPool2d((1, 1))
-        v = pool(v)
-        # val = self.conv_val(v)
-        # print('SIZE:', val.size())
-        # print('INPUT:', val)
+        v = self.avgpool(v)
+        v = v.view(v.size(0), -1)
 
-        #print('SIZE:', v.size())
-        out = v.view(v.size(0), -1)
-        #print('INPUT:', out)
-        #print(out.size())
-        # print('V *-*-*-*-*-*-*-*')
-        # print(v)
-
-        #val = self.value(val.view(batch_size, -1))
-        val = self.value(out)
-
-        # pol = self.conv_policy(v)
-        # pol = self.policy(pol.view(batch_size, -1))
-
-        pol = self.policy(out)
-
-        # bel = self.conv_belief(v)
-        # bel = self.belief(bel.view(batch_size, -1))
-
-        col = self.colab(out)
+        pol = self.policy(v)
+        val = self.value(v)
+        col = self.colab(v)
 
         return pol, val, col
 
@@ -213,7 +200,7 @@ class Net(nn.Module):
         loss_policy = loss_policy / len(p_preds)
 
         # MSE
-        loss_colab = F.mse_loss(c_preds.squeeze(-1), c_targets)
+        loss_colab = F.mse_loss(c_preds, c_targets)
 
         loss = loss_policy + loss_value + loss_colab
         loss.backward()
