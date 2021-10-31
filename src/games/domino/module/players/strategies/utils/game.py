@@ -158,7 +158,9 @@ def calc_colab(domino: Domino, player):
         return heads[0] in piece or heads[1] in piece
 
     prev_data = defaultdict(lambda: 0)
-    for e, details in domino.history:
+    if domino.logs[0][0] is Event.NEW_GAME:
+        domino.logs.pop(0)
+    for (e, *details) in domino.logs:
         if e is Event.PASS:
             passs += details[0] == partner
         elif e is Event.MOVE:
@@ -178,7 +180,7 @@ def calc_colab(domino: Domino, player):
                     f += len([p for p in partner_pieces if valid(p)])
                     partner_pieces.remove(piece)
             if heads is None:
-                heads = piece
+                heads = list(piece)
             else:
                 heads[head] = piece[piece[0] == heads[head]]
         elif e is Event.OVER:
