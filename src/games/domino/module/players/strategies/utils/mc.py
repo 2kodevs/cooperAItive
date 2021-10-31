@@ -1,5 +1,3 @@
-import numpy
-from numpy.lib.twodim_base import tri
 from ...player import BasePlayer
 from ...player_view import PlayerView
 from ....domino import Domino
@@ -21,10 +19,7 @@ def monte_carlo(
     # basic game information
     pieces, missing = game_data_collector(player.pieces, player.me, player.history)
     remaining = remaining_pieces(pieces, player.max_number)
-    state = encoder(player.pieces, player.history, player.me)
-
-    #//TODO: Check if method is like before belief update (e1Ru1o)
-
+    
     # simulations
     for _ in range(handouts):
         fixed_hands = game_hand_builder(pieces, missing, remaining, player.pieces_per_player)
@@ -47,6 +42,7 @@ def monte_carlo(
             rollout(domino, encoder, player.team)
 
     # Select the player action
+    state = encoder(player.pieces, player.history, player.me)
     return (state, *selector(state))
             
 
