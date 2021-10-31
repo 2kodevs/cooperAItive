@@ -1,6 +1,6 @@
 from torch.multiprocessing import Pool, set_start_method
 from torch.utils.tensorboard import SummaryWriter
-from ..players import AlphaZeroModel, alphazero_utils as utils, mc_utils, BasePlayer, hand_out
+from ..players import AlphaZeroModel, alphazero_utils as utils, mc_utils, game_utils, BasePlayer, hand_out
 from .trainer import Trainer
 from ..domino import Domino
 
@@ -28,6 +28,7 @@ class AlphaZeroTrainer(Trainer):
         save_path: str,
         lr: int,
         cput: int,
+        coop: int,
         residual_layers: int,
         num_filters: int,
         tau_threshold: int = 8,
@@ -53,6 +54,8 @@ class AlphaZeroTrainer(Trainer):
             Learning rate
         param cput: int
             Exploration constant
+        param coop: int
+            Colaborative constant
         param residual_layers: int
             Number of residual convolutional layers
         param num_filters: int
@@ -70,6 +73,7 @@ class AlphaZeroTrainer(Trainer):
         self.save_path = save_path
         self.lr = lr
         self.cput = cput
+        self.coop = coop
         self.tau_threshold = tau_threshold
         self.error_log = []
 
@@ -128,7 +132,7 @@ class AlphaZeroTrainer(Trainer):
             cur_player = BasePlayer.from_domino(domino)
             selector = utils.selector_maker(stats, cur_player.valid_moves(), cur_player.pieces_per_player - len(cur_player.pieces), root, self.tau_threshold, alpha)
             encoder = utils.encoder_generator(self.max_number)
-            rollout = utils.rollout_maker(stats, self.net, self.cput)
+            rollout = utils.rollout_maker(stats, self.net, self.coop, self.cput)
 
             root = False
 
@@ -145,9 +149,6 @@ class AlphaZeroTrainer(Trainer):
             game_over = domino.step(action)
             data.append((state, pi.tolist(), cur_player, mask))
 
-        #//TODO: Update e1Ru1o, dummy function, erase this
-        measure_colab = lambda state, game: 0
-
         training_data = []
         for state, pi, player, valids_mask in data:
             end_value = [0, 0, 0]
@@ -155,7 +156,7 @@ class AlphaZeroTrainer(Trainer):
             end_value[1 - player.team] = -1
             result = end_value[domino.winner] 
             #//TODO: Update e1Ru1o, call correct method
-            cooperativeness = measure_colab(state, domino)
+            cooperativeness = self.coop * game_utils.calc_colab(domino.logs)
             training_data.append((state, pi, result, cooperativeness, valids_mask))
         return training_data
 
@@ -383,6 +384,7 @@ class AlphaZeroTrainer(Trainer):
             "save_path": self.save_path,
             "lr": self.lr,
             "cput": self.cput,
+            "coop": self.coop,
 
             "min_loss": self.loss,
             "epochs": self.epochs - cur_epoch,
@@ -401,6 +403,7 @@ class AlphaZeroTrainer(Trainer):
         self.save_path = config["save_path"]
         self.lr = config["lr"]
         self.cput = config["cput"]
+        self.coop = config["coop"]
         self.loss = config["min_loss"]
         self.epochs += config["epochs"]
         if epochs:

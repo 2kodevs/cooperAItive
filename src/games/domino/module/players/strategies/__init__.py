@@ -18,7 +18,7 @@ from .alphazero import AlphaZero
 from .monte_carlo import MonteCarlo
 from .human import Human
 
-from .utils import alphazero as alphazero_utils, mc as mc_utils
+from .utils import alphazero as alphazero_utils, mc as mc_utils, game as game_utils
 from .models import alpha_zero_model as AlphaZeroModel, AlphaZeroNet
 
 # Add players to this list

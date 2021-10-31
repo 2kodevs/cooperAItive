@@ -1,6 +1,7 @@
 from .types import State, Action, Piece, Encoder, List, History, Any, Dict
 from ....domino import Domino
 from math import sqrt
+from game import calc_colab
 
 import numpy as np
 
@@ -66,7 +67,8 @@ def state_to_list(
 def rollout_maker(
     data: Dict,
     NN: Any,
-    Cput: int = 1,
+    Coop: int,
+    Cput: int,
 ): 
     def maker(
         domino: Domino,
@@ -112,7 +114,8 @@ def rollout_maker(
             
         for state, index, player in s_comma_a:
             v = value(player)
-            c = 0 # //TODO: compute real colab for {player}
+            # //TODO: compute real colab for {player}
+            c = Coop * calc_colab(domino.logs) 
             N, Q, C = data[state][index, 0], data[state][index, 2], data[state][index, 3]
             data[state][index, 0] += 1
             data[state][index, 2] = (N*Q + v) / (N + 1)
@@ -177,7 +180,7 @@ def selector_maker(
         
     return selector
 
-#//TODO: Should be removed?
+#//TODO: Should be removed? (e1Ru1o)
 def remaining_mask(remaining, max_number):
     data = [(piece_bit(*p, max_number), p) for p in remaining]
     data.sort()
