@@ -239,7 +239,7 @@ class AlphaZeroTrainer(Trainer):
 
         if verbose:
             print(f'-- Training took {str(int(time.time() - start))} seconds --')
-            print(f'policy head loss: {loss[1]} -- value head loss: {loss[2]} -- belief head loss: {loss[3]} -- TOTAL LOSS: {loss[0]}')
+            print(f'policy head loss: {loss[1]} -- value head loss: {loss[2]} -- colab head loss: {loss[3]} -- TOTAL LOSS: {loss[0]}')
             print('')
 
         return loss
@@ -410,12 +410,12 @@ class AlphaZeroTrainer(Trainer):
 
         return sample, tag
 
-    def write_loss(self, writer, e, total, policy, value, belief):
+    def write_loss(self, writer, e, total, policy, value, colab):
         loss = {
             'Total loss': total,
             'Policy loss': policy,
             'Value loss': value,
-            'Colab loss': belief,
+            'Colab loss': colab,
             }
         writer.add_scalars('Loss', loss, e + 1)
 
