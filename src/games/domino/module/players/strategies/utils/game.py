@@ -139,7 +139,8 @@ def game_hand_builder(pieces, missing, remaining, number_of_pieces=7):
 
 
 def calc_colab(domino: Domino, player):
-    prev = (player + 3) % 4
+    partner = player ^ 2
+    prev = (partner + 3) % 4
 
     f = 0
     pegue = 0
@@ -154,7 +155,7 @@ def calc_colab(domino: Domino, player):
     prev_data = defaultdict(lambda: 0)
     for e, details in domino.history:
         if e is Event.PASS:
-            passs += details[0] == player
+            passs += details[0] == partner
         elif e is Event.MOVE:
             playerId, piece, head = details
             if playerId == prev:
@@ -170,7 +171,8 @@ def calc_colab(domino: Domino, player):
         elif e is Event.OVER:
             tranque = 1
         elif e is Event.FINAL:
-            pegue = details[0] == (player ^ 2)
+            pegue = details[0] == partner
+            
     f = len(prev_data)
     rep = sum(prev_data.values()) - f
     end_value = [0, 0, 0]
