@@ -73,12 +73,12 @@ def rollout_maker(
         encoder: Encoder,
     ):
         s_comma_a = []
+        value = None
     
         while True:
             current_player = domino.current_player
             pieces = domino.players[current_player].remaining
             history = domino.logs
-            value = None
 
             state = encoder(pieces, history, current_player)
             valids, mask = get_valids_data(domino)
@@ -110,13 +110,13 @@ def rollout_maker(
                 data[state] = npq
                 break
             
-            for state, index, player in s_comma_a:
-                v = value(player)
-                c = 0 # //TODO: compute real colab for {player}
-                N, Q, C = data[state][index, 0], data[state][index, 2], data[state][index, 3]
-                data[state][index, 0] += 1
-                data[state][index, 2] = (N*Q + v) / (N + 1)
-                data[state][index, 3] = (N*C + c) / (N + 1)
+        for state, index, player in s_comma_a:
+            v = value(player)
+            c = 0 # //TODO: compute real colab for {player}
+            N, Q, C = data[state][index, 0], data[state][index, 2], data[state][index, 3]
+            data[state][index, 0] += 1
+            data[state][index, 2] = (N*Q + v) / (N + 1)
+            data[state][index, 3] = (N*C + c) / (N + 1)
 
     return maker
     
