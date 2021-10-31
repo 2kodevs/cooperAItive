@@ -75,7 +75,7 @@ def rollout_maker(
         encoder: Encoder,
     ):
         s_comma_a = []
-        value = None
+        value, c = None, None
     
         while True:
             current_player = domino.current_player
@@ -98,6 +98,7 @@ def rollout_maker(
                 if domino.step(valids[best_index]):
                     winner = domino.winner
                     value = lambda x: 0 if winner == -1 else [-1, 1][winner == (x & 1)]
+                    c = Coop * calc_colab(domino, current_player)
                     break
             except KeyError:
                 [P], [v], [c] = NN.predict([state], [mask])
@@ -114,7 +115,6 @@ def rollout_maker(
 
         for state, index, player in s_comma_a:
             v = value(player)
-            c = Coop * calc_colab(domino, player)
             N, Q, C = data[state][index, 0], data[state][index, 2], data[state][index, 3]
             data[state][index, 0] += 1
             data[state][index, 2] = (N*Q + v) / (N + 1)
