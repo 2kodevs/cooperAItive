@@ -4,6 +4,7 @@ from math import sqrt
 
 import numpy as np
 
+
 def gauss(num): 
     return (num * (num + 1)) // 2
 
@@ -70,15 +71,10 @@ def rollout_maker(
     def maker(
         domino: Domino,
         encoder: Encoder,
-        player_id: int,
     ):
         s_comma_a = []
-        v, c = None, None
-        end_value = [0, 0, 0]
-        end_value[player_id] = 1
-        end_value[1 - player_id] = -1
-
-        while v is None:
+    
+        while True:
             current_player = domino.current_player
             pieces = domino.players[current_player].remaining
             history = domino.logs
@@ -94,12 +90,10 @@ def rollout_maker(
                 args_max = np.argwhere(values == np.max(values)).flatten()
                 best_index = np.random.choice(args_max)
 
-                s_comma_a.append((state, best_index))
+                s_comma_a.append((state, best_index, domino.current_player))
 
                 if domino.step(valids[best_index]):
-                    v = end_value[domino.winner]
-                    #//TODO: Get real colab value here (e1Ru1o)
-                    c = 0
+                    break
             except KeyError:
                 [P], [v], [c] = NN.predict([state], [mask])
                 v = v.cpu().detach().numpy()
@@ -111,11 +105,15 @@ def rollout_maker(
                 npq[:, 1] = P.cpu().detach().numpy()
                 data[state] = npq
 
-        for state, index in s_comma_a:
-            N, Q, C = data[state][index, 0], data[state][index, 2], data[state][index, 3]
-            data[state][index, 0] += 1
-            data[state][index, 2] = (N*Q + v) / (N + 1)
-            data[state][index, 3] = (N*C + c) / (N + 1)
+            winner = domino.winner
+            value = lambda x: 0 if winner == -1 else [-1, 1][winner == (x & 1)]
+            for state, index, player in s_comma_a:
+                v = value(player)
+                c = 0 # //TODO: compute real colab for {player}
+                N, Q, C = data[state][index, 0], data[state][index, 2], data[state][index, 3]
+                data[state][index, 0] += 1
+                data[state][index, 2] = (N*Q + v) / (N + 1)
+                data[state][index, 3] = (N*C + c) / (N + 1)
 
     return maker
     

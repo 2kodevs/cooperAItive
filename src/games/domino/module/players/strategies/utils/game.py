@@ -135,4 +135,7 @@ def game_hand_builder(pieces, missing, remaining, number_of_pieces=7):
     return pieces
 
 
+def calc_colab(history):
+    pass
+
 __all__ = ["game_data_collector", "game_hand_builder", "remaining_pieces"]
