@@ -98,6 +98,8 @@ def rollout_maker(
 
                 if domino.step(valids[best_index]):
                     v = end_value[domino.winner]
+                    #//TODO: Get real colab value here (e1Ru1o)
+                    c = 0
             except KeyError:
                 [P], [v], [c] = NN.predict([state], [mask])
                 v = v.cpu().detach().numpy()
