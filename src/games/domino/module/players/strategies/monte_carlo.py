@@ -22,7 +22,6 @@ class MonteCarlo(BasePlayer):
             selector,
             self.handouts,
             self.rollouts,
-            None,
         )
 
         return [action]

@@ -1,6 +1,6 @@
 {   
-    "batch_size": 2000,
-    "handouts": 50,
+    "batch_size": 126,
+    "handouts": 10,
     "rollouts": 10,
     "alpha": 1.0,
     "tau_threshold": 11,
@@ -8,16 +8,19 @@
     "pieces_per_player": 10,
     "data_path": "module/training/data", 
     "save_path": "module/training",
-    "lr": 0.001,
+    "lr": 1e-3,
     "cput": 3,
+    "residual_layers": 5,
+    "num_filters": 128,
 
-    "epochs": 0,
+    "epochs": 1000,
     "simulate": true,
-    "load_checkpoint": true,
+    "load_checkpoint": false,
     "load_model": false,
     "sample": 35,
-    "tag": "70c-8l-50h-10r-1.0",
+    "tag": "128c-5l-10h-10r-2.0-test",
     "num_process": 1,
+    "num_gpus": 1,
     "verbose": true,
     "save_data": true
 }

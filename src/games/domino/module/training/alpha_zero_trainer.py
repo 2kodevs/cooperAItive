@@ -151,15 +151,20 @@ class AlphaZeroTrainer(Trainer):
                 partner_pieces_mask += utils.piece_bit(*p, 9)
 
             game_over = domino.step(action)
-            data.append((state, pi.tolist(), cur_player, mask, partner_pieces_mask))
+            data.append((state, pi.tolist(), cur_player, mask))
+
+        #//TODO: Update e1Ru1o, dummy function, erase this
+        measure_colab = lambda state, game: 0
 
         training_data = []
-        for state, pi, player, valids_mask, partner_pieces_mask in data:
+        for state, pi, player, valids_mask in data:
             end_value = [0, 0, 0]
             end_value[player.team] = 1
             end_value[1 - player.team] = -1
             result = end_value[domino.winner] 
-            training_data.append((state, pi, result, partner_pieces_mask, valids_mask))
+            #//TODO: Update e1Ru1o, call correct method
+            cooperativeness = measure_colab(state, domino)
+            training_data.append((state, pi, result, cooperativeness, valids_mask))
         return training_data
 
     def policy_iteration(
@@ -212,20 +217,25 @@ class AlphaZeroTrainer(Trainer):
             start = time.time()
 
         self.adjust_learning_rate(epoch, self.net.optimizer)
-        total_loss, policy_loss, value_loss, belief_loss = 0,0,0,0
+        total_loss, policy_loss, value_loss, colab_loss = 0,0,0,0
         batch_size = len(data)
         total = 0
 
-        for _ in range(batch_size // sample):
+        #//TODO: Parameterize number of batch iterations (minibatches)
+        for _ in range(batch_size * 100 // sample):
             batch = random.sample(data, sample)
             total += 1
+            
+            if verbose:
+                print('Iteration:', total, '/', batch_size * 100 // sample)
+
             loss = self.net.train_batch(batch)
             total_loss += loss[0]
             policy_loss += loss[1]
             value_loss += loss[2]
-            belief_loss += loss[3]
+            colab_loss += loss[3]
         
-        loss = (total_loss / total, policy_loss / total, value_loss / total, belief_loss / total)
+        loss = (total_loss / total, policy_loss / total, value_loss / total, colab_loss / total)
         self.error_log.append(loss)
 
         config = self.build_config(sample, tag, epoch)
@@ -413,7 +423,7 @@ class AlphaZeroTrainer(Trainer):
             'Total loss': total,
             'Policy loss': policy,
             'Value loss': value,
-            'Belief loss': belief,
+            'Colab loss': belief,
             }
         writer.add_scalars('Loss', loss, e + 1)
 

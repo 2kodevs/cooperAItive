@@ -73,7 +73,7 @@ def rollout_maker(
         player_id: int,
     ):
         s_comma_a = []
-        v = None
+        v, c = None, None
         end_value = [0, 0, 0]
         end_value[player_id] = 1
         end_value[1 - player_id] = -1
@@ -86,10 +86,10 @@ def rollout_maker(
             state = encoder(pieces, history, current_player)
             valids, mask = get_valids_data(domino)
             try:
-                N, P, Q = data[state][:, 0], data[state][:, 1], data[state][:, 2]
+                N, P, Q, C = data[state][:, 0], data[state][:, 1], data[state][:, 2], data[state][:, 3]
                 all_N = sqrt(N.sum())
                 U = Cput * P * all_N / (1 + N)
-                values = Q + U
+                values = Q + U + C
 
                 args_max = np.argwhere(values == np.max(values)).flatten()
                 best_index = np.random.choice(args_max)
@@ -99,17 +99,18 @@ def rollout_maker(
                 if domino.step(valids[best_index]):
                     v = end_value[domino.winner]
             except KeyError:
-                [P], [v], _ = NN.predict([state], [mask])
+                [P], [v], [c] = NN.predict([state], [mask])
                 v = v.cpu().detach().numpy()
                 size = len(P)
-                npq = np.zeros((size, 3), dtype=object)
+                npq = np.zeros((size, 4), dtype=object)
                 npq[:, 1] = P.cpu().detach().numpy()
                 data[state] = npq
 
         for state, index in s_comma_a:
-            n, q = data[state][index, 0], data[state][index, 2]
+            N, Q, C = data[state][index, 0], data[state][index, 2], data[state][index, 3]
             data[state][index, 0] += 1
-            data[state][index, 2] = (n*q + v) / (n + 1)
+            data[state][index, 2] = (N*Q + v) / (N + 1)
+            data[state][index, 3] = (N*C + c) / (N + 1)
 
     return maker
     
@@ -170,7 +171,7 @@ def selector_maker(
         
     return selector
 
-
+#//TODO: Should be removed?
 def remaining_mask(remaining, max_number):
     data = [(piece_bit(*p, max_number), p) for p in remaining]
     data.sort()
