@@ -150,7 +150,7 @@ class AlphaZeroTrainer(Trainer):
             data.append((state, pi.tolist(), cur_player, mask))
 
         training_data = []
-        cooperativeness = [self.coop * game_utils.calc_colab(domino, player) for player in range(4)]
+        cooperativeness = [game_utils.calc_colab(domino, player) for player in range(4)]
 
         for state, pi, player, valids_mask in data:
             end_value = [0, 0, 0]
