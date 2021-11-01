@@ -198,7 +198,6 @@ def calc_colab(domino: Domino, player):
     end_value[1 - (player & 1)] = -1 
     v = end_value[domino.winner]
 
-    print((f + pegue + tranque*p*points/all_pieces - (passs + rep) + v) / 3)
     return (f + pegue + tranque*p*points/all_pieces - (passs + rep) + v) / 3
 
 

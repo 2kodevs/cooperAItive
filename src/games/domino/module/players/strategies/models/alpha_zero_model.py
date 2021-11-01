@@ -165,7 +165,7 @@ class Net(nn.Module):
         return:
             Training loss
         """
-        # data: [(state, p_target, v_target, b_target, valids_actions)]
+        # data: [(state, p_target, v_target, c_target, valids_actions)]
         batch, p_targets, v_targets, c_targets, valids_actions = [], [], [], [], []
         for (state, p, v, c, actions) in data:
             # state and available_actions are encoded
