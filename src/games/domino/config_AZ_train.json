@@ -1,6 +1,6 @@
 {   
-    "batch_size": 126,
-    "handouts": 10,
+    "batch_size": 304,
+    "handouts": 50,
     "rollouts": 10,
     "alpha": 1.0,
     "tau_threshold": 11,
@@ -10,6 +10,7 @@
     "save_path": "module/training",
     "lr": 1e-3,
     "cput": 3,
+    "coop": 2,
     "residual_layers": 5,
     "num_filters": 128,
 
@@ -18,7 +19,7 @@
     "load_checkpoint": false,
     "load_model": false,
     "sample": 35,
-    "tag": "128c-5l-10h-10r-2.0-test",
+    "tag": "128c-5l-50h-10r-5.0-test",
     "num_process": 1,
     "num_gpus": 1,
     "verbose": true,

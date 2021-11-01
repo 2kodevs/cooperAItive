@@ -190,9 +190,9 @@ def calc_colab(domino: Domino, player):
  
     partner_turns = partner_moves + passs
     f /= 2 * max(partner_turns, 1)
-    passs /= max(partner_turns, 1)
+    passs /= max(partner_turns / 2, 1)
     rep = sum(prev_data.values()) - len(prev_data)
-    rep /= max(prev_moves, 1)
+    rep /= max(prev_moves / 2, 1)
     end_value = [0, 0, 0]
     end_value[player & 1] = 1 
     end_value[1 - (player & 1)] = -1 
