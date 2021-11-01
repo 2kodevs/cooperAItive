@@ -150,7 +150,7 @@ def calc_colab(domino: Domino, player):
     all_pieces = sum([x + y for x, y in domino.players[player].pieces])
     passs = 0
     rep = 0
-    partner_pieces = domino.players[partner].pieces
+    partner_pieces = domino.players[partner].pieces[:]
     partner_moves, prev_moves = 0, 0
 
     heads = None
