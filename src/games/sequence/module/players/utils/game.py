@@ -63,24 +63,26 @@ def calc_colab(sequence: Sequence, player: int):
     for e, *details in history:
         if e is Event.PLAY:
             playerId, _, color, (x, y) = details
-            same_color_lines = lines_collector(board, color, x, y)
-            other_color_lines = [
-                lines_collector(board, color, x, y) 
-                for color in colors if color != sequence.colors[playerId]
-            ]
+            for other_color in colors:
+                if other_color != sequence.colors[playerId]:
+                    board[x][y] = Color(other_color)
+                    other_color_lines = lines_collector(board, other_color, x, y) 
+                    # //TODO: do something with the lines
             board[x][y] = Color(color)
+            same_color_lines = lines_collector(board, color, x, y)
             # //TODO: do something with the lines
         elif e is Event.REMOVE:
             playerId, _, (x, y) = details
-            if board[x][y].color == sequence.colors[playerId]:
+            color = board[x][y].color
+            if color == sequence.colors[playerId]:
                 score -= 5 # //TODO: Add high penalization
                 continue
+            for other_color in colors:
+                if other_color != sequence.colors[playerId]:
+                    board[x][y] = Color(other_color)
+                    other_color_lines = lines_collector(board, other_color, x, y) 
+                    # //TODO: do something with the lines
             board[x][y] = Color()
-            other_color_lines = [
-                lines_collector(board, color, x, y) 
-                for color in colors if color != sequence.colors[playerId]
-            ]
-            # //TODO: do something with the lines.
         elif e is Event.SEQUENCE:
             playerId, color, size = details
             if player == playerId:
