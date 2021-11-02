@@ -219,8 +219,8 @@ class AlphaZeroTrainer(Trainer):
             batch = random.sample(data, sample)
             total += 1
             
-            if verbose:
-                print('Iteration:', total, '/', batch_size * 100 // sample)
+            # if verbose:
+            #     print('Iteration:', total, '/', batch_size * 100 // sample)
 
             loss = self.net.train_batch(batch)
             total_loss += loss[0]
@@ -236,7 +236,8 @@ class AlphaZeroTrainer(Trainer):
             self.loss = loss[0]
             config = self.build_config(sample, tag, epoch)
             self.net.save(self.error_log, config, epoch, self.save_path, True, tag + '-min', verbose=True)
-            self.net.save(self.error_log, config, epoch, self.save_path, False, tag, verbose=True)
+        self.net.save(self.error_log, config, epoch, self.save_path, False, tag, verbose=True)
+        self.net.save(self.error_log, config, epoch, self.save_path, True, tag, verbose=True)
 
         if verbose:
             print(f'-- Training took {str(int(time.time() - start))} seconds --')

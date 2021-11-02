@@ -1,6 +1,6 @@
 {   
     "batch_size": 304,
-    "handouts": 50,
+    "handouts": 100,
     "rollouts": 10,
     "alpha": 1.0,
     "tau_threshold": 11,
@@ -19,7 +19,7 @@
     "load_checkpoint": false,
     "load_model": false,
     "sample": 35,
-    "tag": "128c-5l-50h-10r-5.0-test",
+    "tag": "128c-5l-100h-10r-2.0",
     "num_process": 1,
     "num_gpus": 1,
     "verbose": true,
