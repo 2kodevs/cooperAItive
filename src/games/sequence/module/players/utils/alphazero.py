@@ -88,11 +88,9 @@ def rollout_maker(
         encoder: Encoder,
     ) -> None:
         s_comma_a = []
-        v = None
-        end_value = {c:[-1, 1][sequence.color == c] for c in sequence.colors}
-        end_value[None] = 0
+        value = None
 
-        while v is None:
+        while True:
             state = encoder(sequence, get_discard_pile(sequence.logs))
             valids = sequence._valid_moves()
             mask = encode_valids(valids)
@@ -105,19 +103,23 @@ def rollout_maker(
                 args_max = np.argwhere(values == np.max(values)).flatten()
                 best_index = np.random.choice(args_max)
 
-                s_comma_a.append((state, best_index))
+                s_comma_a.append((state, best_index, sequence.current_player))
 
                 if sequence.step(valids[best_index]):
-                    v = end_value[sequence.winner]
+                    value = lambda x: 0 if sequence.winner is None else [-1, 1][sequence.is_winner(x)]
+                    break
             except KeyError:
                 [P], [v] = NN.predict([state], [mask])
                 v = v.cpu().detach().numpy()
+                player_color = sequence.colors[sequence.current_player]
+                value = lambda x: v if player_color == sequence.colors[x] else -v
                 size = len(P)
                 npq = np.zeros((size, 3), dtype=object)
                 npq[:, 1] = P.cpu().detach().numpy()
                 data[state] = npq
 
-        for state, index in s_comma_a:
+        for state, index, player in s_comma_a:
+            v = value(player)
             n, q = data[state][index, 0], data[state][index, 2]
             data[state][index, 0] += 1
             data[state][index, 2] = (n*q + v) / (n + 1)
