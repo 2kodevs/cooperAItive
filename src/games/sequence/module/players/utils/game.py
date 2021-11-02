@@ -63,12 +63,12 @@ def calc_colab(sequence: Sequence, player: int):
     for e, *details in history:
         if e is Event.PLAY:
             playerId, _, color, (x, y) = details
-            board[x][y] = Color(color)
             same_color_lines = lines_collector(board, color, x, y)
             other_color_lines = [
                 lines_collector(board, color, x, y) 
                 for color in colors if color != sequence.colors[playerId]
             ]
+            board[x][y] = Color(color)
             # //TODO: do something with the lines
         elif e is Event.REMOVE:
             playerId, _, (x, y) = details
