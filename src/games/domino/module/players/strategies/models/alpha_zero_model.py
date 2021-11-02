@@ -281,4 +281,14 @@ class Net(nn.Module):
     @staticmethod
     def load(path):
         net_checkpoint = torch.load(path)
-        return net_checkpoint['model']
+        model = net_checkpoint['model']
+        device = net_checkpoint['device']
+
+        try:
+            model = model.to(device)
+            model.device = device
+        except AssertionError:
+            device = torch.device('cpu')
+            model.to(device)
+            model.device = device
+        return model
