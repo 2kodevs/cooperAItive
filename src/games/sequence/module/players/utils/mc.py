@@ -78,7 +78,7 @@ def rollout_maker(
                 s_comma_a.append((state, index, sequence.current_player))
 
                 if sequence.step(valids[index]):
-                    value = lambda x: 0 if sequence.winner is None else [1, -1][sequence.is_winner(x)]
+                    value = lambda x: 0 if sequence.winner is None else [-1, 1][sequence.is_winner(x)]
                     break
             except KeyError:
                 size = len(valids)
