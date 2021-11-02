@@ -154,7 +154,7 @@ class BoardViewer:
         raise AttributeError("BoardViewer doesn't have attributes")
         
 
-def lines_colector(board, color, i, j):
+def lines_collector(board, color, i, j):
     # check for sequences
     data = [[], [], [], []] # one per direction
     moves = [

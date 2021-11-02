@@ -1,7 +1,7 @@
 from random import shuffle
 from .types import History, Card, List, Sequence, Event
 from ..hands import split_cards, generate_cards
-from ...utils import BOARD, Color, lines_colector
+from ...utils import BOARD, Color, lines_collector
 
 
 def get_discard_pile(history: History) -> List[Card]:
@@ -64,9 +64,9 @@ def calc_colab(sequence: Sequence, player: int):
         if e is Event.PLAY:
             playerId, _, color, (x, y) = details
             board[x][y] = Color(color)
-            same_color_lines = lines_colector(board, color, x, y)
+            same_color_lines = lines_collector(board, color, x, y)
             other_color_lines = [
-                lines_colector(board, color, x, y) 
+                lines_collector(board, color, x, y) 
                 for color in colors if color != sequence.colors[playerId]
             ]
             # //TODO: do something with the lines
@@ -77,7 +77,7 @@ def calc_colab(sequence: Sequence, player: int):
                 continue
             board[x][y] = Color()
             other_color_lines = [
-                lines_colector(board, color, x, y) 
+                lines_collector(board, color, x, y) 
                 for color in colors if color != sequence.colors[playerId]
             ]
             # //TODO: do something with the lines.

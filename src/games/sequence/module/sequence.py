@@ -1,5 +1,5 @@
 from enum import Enum
-from .utils import Color, ByPassColor, BoardViewer, lines_colector
+from .utils import Color, ByPassColor, BoardViewer, lines_collector
 from .defaults import *
 from random import shuffle
 
@@ -233,7 +233,7 @@ class Sequence:
         self.count += 1
 
         # check for sequences
-        data = lines_colector(self._board, self.color, i, j)
+        data = lines_collector(self._board, self.color, i, j)
 
         for line in data:
             size = len(line)
