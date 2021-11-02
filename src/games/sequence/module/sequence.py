@@ -1,5 +1,5 @@
 from enum import Enum
-from .utils import Color, ByPassColor, BoardViewer
+from .utils import Color, ByPassColor, BoardViewer, lines_colector
 from .defaults import *
 from random import shuffle
 
@@ -233,44 +233,7 @@ class Sequence:
         self.count += 1
 
         # check for sequences
-        data = [[], [], [], []] # one per direction
-        moves = [
-            # (i, j, data)
-            (-1, -1, 0),
-            (0, -1, 1),
-            (1, -1, 2),
-            (1, 0, 3),
-        ]
-        # check a half of the line
-        for inc_i, inc_j, idx in moves:
-            last = Color(self.color)
-            cur_i, cur_j = i, j
-            while last & self._board[cur_i][cur_j]:
-                if last == self._board[cur_i][cur_j]:
-                    break
-                last = self._board[cur_i][cur_j]
-                data[idx].append((cur_i, cur_j))
-                cur_i += inc_i
-                cur_j += inc_j
-                if not ((0 <= cur_i < 10) and (0 <= cur_j < 10)):
-                    break
-            data[idx] = data[idx][::-1]
-
-        # check the other line half
-        for inc_i, inc_j, idx in moves:
-            last = Color(self.color)
-            cur_i, cur_j = i - inc_i, j - inc_j
-            if not ((0 <= cur_i < 10) and (0 <= cur_j < 10)):
-                continue
-            while last & self._board[cur_i][cur_j]:
-                if last == self._board[cur_i][cur_j]:
-                    break
-                last = self._board[cur_i][cur_j]
-                data[idx].append((cur_i, cur_j))
-                cur_i -= inc_i
-                cur_j -= inc_j
-                if not ((0 <= cur_i < 10) and (0 <= cur_j < 10)):
-                    break
+        data = lines_colector(self._board, self.color, i, j)
 
         for line in data:
             size = len(line)

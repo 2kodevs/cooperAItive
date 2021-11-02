@@ -153,3 +153,48 @@ class BoardViewer:
     def __getattribute__(self, name: str):
         raise AttributeError("BoardViewer doesn't have attributes")
         
+
+def lines_colector(board, color, i, j):
+    # check for sequences
+    data = [[], [], [], []] # one per direction
+    moves = [
+        # (i, j, data)
+        (-1, -1, 0),
+        (0, -1, 1),
+        (1, -1, 2),
+        (1, 0, 3),
+    ]
+
+    # check a half of the line
+    for inc_i, inc_j, idx in moves:
+        last = Color(color)
+        cur_i, cur_j = i, j
+        while last & board[cur_i][cur_j]:
+            if last == board[cur_i][cur_j]:
+                break
+            last = board[cur_i][cur_j]
+            data[idx].append((cur_i, cur_j))
+            cur_i += inc_i
+            cur_j += inc_j
+            if not ((0 <= cur_i < 10) and (0 <= cur_j < 10)):
+                break
+        data[idx] = data[idx][::-1]
+
+    # check the other line half
+    for inc_i, inc_j, idx in moves:
+        last = Color(color)
+        cur_i, cur_j = i - inc_i, j - inc_j
+        if not ((0 <= cur_i < 10) and (0 <= cur_j < 10)):
+            continue
+        while last & board[cur_i][cur_j]:
+            if last == board[cur_i][cur_j]:
+                break
+            last = board[cur_i][cur_j]
+            data[idx].append((cur_i, cur_j))
+            cur_i -= inc_i
+            cur_j -= inc_j
+            if not ((0 <= cur_i < 10) and (0 <= cur_j < 10)):
+                break
+
+    return data
+    

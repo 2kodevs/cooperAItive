@@ -1,7 +1,7 @@
 from random import shuffle
-from .types import History, Card, List
-from ...sequence import Event
+from .types import History, Card, List, Sequence, Event
 from ..hands import split_cards, generate_cards
+from ...utils import BOARD, Color, lines_colector
 
 
 def get_discard_pile(history: History) -> List[Card]:
@@ -52,3 +52,37 @@ def fixed_hand(cards, pile, id, number_of_cards):
 
     return hand
     
+
+def calc_colab(sequence: Sequence, player: int):
+    history = sequence.logs
+
+    board = [[Color() for _ in range(len(l))] for l in BOARD]
+    score = 0
+    colors = set(sequence.colors)
+
+    for e, *details in history:
+        if e is Event.PLAY:
+            playerId, _, color, (x, y) = details
+            board[x][y] = Color(color)
+            same_color_lines = lines_colector(board, color, x, y)
+            other_color_lines = [
+                lines_colector(board, color, x, y) 
+                for color in colors if color != sequence.colors[playerId]
+            ]
+            # //TODO: do something with the lines
+        elif e is Event.REMOVE:
+            playerId, _, (x, y) = details
+            if board[x][y].color == sequence.colors[playerId]:
+                score -= 5 # //TODO: Add high penalization
+                continue
+            board[x][y] = Color()
+            other_color_lines = [
+                lines_colector(board, color, x, y) 
+                for color in colors if color != sequence.colors[playerId]
+            ]
+            # //TODO: do something with the lines.
+        elif e is Event.SEQUENCE:
+            playerId, color, size = details
+            if player == playerId:
+                score += 1 + (size > 5) # //TODO: Add points for making a sequence
+    return score # //TODO: Normalize
