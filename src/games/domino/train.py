@@ -17,6 +17,7 @@ def main():
         config['save_path'],
         config['lr'],
         config['cput'],
+        config['coop'],
         config['residual_layers'],
         config['num_filters'],
         config['tau_threshold'],
