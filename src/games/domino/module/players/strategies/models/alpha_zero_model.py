@@ -17,14 +17,18 @@ class Net(nn.Module):
     """
     def __init__(self, residual_layers, filters, input_shape=STATE_SHAPE, policy_shape=111, lr=0.001):
         """
+        Initialize the network
+
+        param residual_layers: int 
+            Number of residual convolutionals layers
+        param filters: int
+            Number of filters in each convolutional layer
         param input_shape: (int, int, int)
             Dimensions of the input.
         param policy_shape: int
             Number of total actions in policy head
-        param residual_layers: int 
-            Number of residual convolutionals layers
-        param device:
-            cpu or cuda
+        param lr: float
+            Learning rate
         """
         super(Net, self).__init__()
         self.save_path = 'checkpoints/'
@@ -38,7 +42,7 @@ class Net(nn.Module):
             nn.LeakyReLU(),
         )
 
-        # layers with residual
+        # Residual blocks
         blocks = []
         for _ in range(residual_layers):
             block = nn.Sequential(
@@ -70,9 +74,10 @@ class Net(nn.Module):
             nn.Tanh(),
         )
 
+        # Average pooling
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
 
-        #optimizer
+        # optimizer
         self.optimizer = optim.SGD(self.parameters(), lr=lr, momentum=0.9, weight_decay=1e-4)
 
     def forward(self, x):
@@ -194,7 +199,7 @@ class Net(nn.Module):
         # MSE
         loss_value = F.mse_loss(v_preds.squeeze(-1), v_targets)
 
-        #cross entropy
+        # Cross entropy
         loss_policy = torch.zeros(1).to(self.device)
         for pred, target in zip(p_preds, p_targets):
             loss_policy += -torch.sum(pred * target)
