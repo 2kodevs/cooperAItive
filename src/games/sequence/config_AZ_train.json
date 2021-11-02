@@ -11,6 +11,7 @@
     "save_path": "module/training",
     "lr": 0.001,
     "cput": 3,
+    "coop": 2,
     "residual_layers": 8,
     "num_filters": 70,
 

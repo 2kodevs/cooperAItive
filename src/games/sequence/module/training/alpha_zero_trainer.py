@@ -1,7 +1,7 @@
 from typing import List, Any
 from torch.multiprocessing import Pool, set_start_method
 from torch.utils.tensorboard import SummaryWriter
-from ..players import AlphaZeroNet, alphazero_utils as utils, mc_utils, BasePlayer, handout
+from ..players import AlphaZeroNet, alphazero_utils as utils, mc_utils, game_utils, BasePlayer, handout
 from .trainer import Trainer
 from ..sequence import Sequence
 
@@ -30,9 +30,10 @@ class AlphaZeroTrainer(Trainer):
         save_path: str,
         lr: int,
         cput: int,
+        coop: int,
         residual_layers: int,
         num_filters: int,
-        tau_threshold: int = 8,
+        tau_threshold: int = 50,
     ):
         """
         param batch_size: int
@@ -57,6 +58,8 @@ class AlphaZeroTrainer(Trainer):
             Learning rate
         param cput: int
             Exploration constant
+        param coop: int
+            Colaborative constant
         param residual_layers: int
             Number of residual convolutional layers
         param num_filters: int
@@ -75,6 +78,7 @@ class AlphaZeroTrainer(Trainer):
         self.save_path = save_path
         self.lr = lr
         self.cput = cput
+        self.coop = coop
         self.tau_threshold = tau_threshold
         self.error_log = []
 
@@ -134,7 +138,7 @@ class AlphaZeroTrainer(Trainer):
             cur_player = BasePlayer.from_sequence(sequence)
             selector = utils.selector_maker(stats, cur_player.valid_moves(), turn, root, self.tau_threshold, alpha)
             encoder = utils.encode
-            rollout = utils.rollout_maker(stats, self.net, self.cput)
+            rollout = utils.rollout_maker(stats, self.net, self.coop, self.cput)
 
             root = False
 
@@ -145,32 +149,25 @@ class AlphaZeroTrainer(Trainer):
                 selector,
                 handouts,
                 rollouts,
-                self.net,
             )
-            #Get valids actions mask
+            # Get valids actions mask
             valids = sequence._valid_moves()
             mask = utils.encode_valids(valids)
 
-            #creating partner's hand entry
-            [partner, *_] = list(sequence.partners) # Should return just one player, *_ added for safety in games with teams size greater than 2
-            partner_hand = sequence.players[partner].cards
-            pieces_mask = 0
-            for p in partner_hand:
-                pieces_mask += utils.table_bit(*p)
-            partner_hand = utils.state_to_list(pieces_mask, 104)
-
             game_over = sequence.step(action)
             turn += 1
-            data.append((state, pi.tolist(), cur_player, mask, partner_hand))
+            data.append((state, pi.tolist(), cur_player, mask))
 
         training_data = []
-        for state, pi, player, mask, partner_hand in data:
+        cooperativeness = [game_utils.calc_colab(sequence, player) for player in range(self.number_of_players)]
+
+        for state, pi, player, mask in data:
             #//TODO: Change this for more than 2 teams
             end_value = [0, 0, 0]
             end_value[player.team] = 1
             end_value[1 - player.team] = -1
             result = end_value[sequence.winner] 
-            training_data.append((state, pi, result, partner_hand, mask))
+            training_data.append((state, pi, result, cooperativeness, mask))
         return training_data
 
     def policy_iteration(
@@ -223,19 +220,21 @@ class AlphaZeroTrainer(Trainer):
             start = time.time()
 
         self.adjust_learning_rate(epoch, self.net.optimizer)
-        total_loss, policy_loss, value_loss = 0,0,0
+        total_loss, policy_loss, value_loss, colab_loss = 0,0,0,0
         batch_size = len(data)
         total = 0
 
-        for _ in range(batch_size // sample):
+        #//TODO: Parameterize number of batch iterations (minibatches)
+        for _ in range(batch_size * 100 // sample):
             batch = random.sample(data, sample)
-            total += sample
+            total += 1
             loss = self.net.train_batch(batch)
             total_loss += loss[0]
             policy_loss += loss[1]
             value_loss += loss[2]
+            colab_loss += loss[3]
         
-        loss = (total_loss / total, policy_loss / total, value_loss / total)
+        loss = (total_loss / total, policy_loss / total, value_loss / total, colab_loss / total)
         self.error_log.append(loss)
 
         config = self.build_config(sample, tag, epoch)
@@ -244,6 +243,8 @@ class AlphaZeroTrainer(Trainer):
             config = self.build_config(sample, tag, epoch)
             self.net.save(self.error_log, config, epoch, self.save_path, True, tag + '-min', verbose=True)
             self.net.save(self.error_log, config, epoch, self.save_path, False, tag, verbose=True)
+        self.net.save(self.error_log, config, epoch, self.save_path, False, tag, verbose=True)
+        self.net.save(self.error_log, config, epoch, self.save_path, True, tag, verbose=True)
 
         if verbose:
             print(f'-- Training took {str(int(time.time() - start))} seconds --')
@@ -392,6 +393,7 @@ class AlphaZeroTrainer(Trainer):
             "save_path": self.save_path,
             "lr": self.lr,
             "cput": self.cput,
+            "coop": self.coop,
 
             "min_loss": self.loss,
             "epochs": self.epochs - cur_epoch,
@@ -411,6 +413,7 @@ class AlphaZeroTrainer(Trainer):
         self.save_path = config["save_path"]
         self.lr = config["lr"]
         self.cput = config["cput"]
+        self.coop = config["coop"]
         self.loss = config["min_loss"]
         self.epochs += config["epochs"]
         if epochs:
@@ -420,11 +423,12 @@ class AlphaZeroTrainer(Trainer):
 
         return sample, tag
 
-    def write_loss(self, writer, e, total, policy, value):
+    def write_loss(self, writer, e, total, policy, value, colab):
         loss = {
             'Total loss': total,
             'Policy loss': policy,
             'Value loss': value,
+            'Colab loss': colab,
             }
         writer.add_scalars('Loss', loss, e + 1)
 

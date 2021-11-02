@@ -1,6 +1,6 @@
 from random import shuffle
 from .types import History, Card, List
-from ...sequence import Event
+from ...sequence import Event, Sequence
 from ..hands import split_cards, generate_cards
 
 
@@ -52,3 +52,7 @@ def fixed_hand(cards, pile, id, number_of_cards):
 
     return hand
     
+def calc_colab(sequence: Sequence, player):
+    return 0
+
+__all__ = ['calc_colab']

@@ -4,7 +4,7 @@ from .utils.mc import monte_carlo
 from .models import AlphaZeroNet
 
 class AlphaZero(BasePlayer):
-    def __init__(self, name, handouts, rollouts, NN):
+    def __init__(self, name, handouts, rollouts, NN, coop = 1, cput = 1):
         super().__init__(f'AlphaZero::{name}')
         self.turn = 0
 
@@ -14,6 +14,8 @@ class AlphaZero(BasePlayer):
             self.NN = NN
         self.handouts = int(handouts)
         self.rollouts = int(rollouts)
+        self.coop = coop
+        self.cput = cput
 
     def step(self):
         self.turn += 1 # turns when a discard occur will be counted twice
@@ -22,7 +24,7 @@ class AlphaZero(BasePlayer):
     def filter(self, valids):
         data = {}
         selector = selector_maker(data, self.valid_moves(), self.turn, False, 50) #//TODO: Change tau_threshold
-        rollout = rollout_maker(data, self.NN)
+        rollout = rollout_maker(data, self.NN, self.coop, self.cput)
 
         _, action, *_ = monte_carlo(
             self, 

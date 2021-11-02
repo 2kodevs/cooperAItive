@@ -15,16 +15,22 @@ class Net(nn.Module):
     """
     Neural Network for Alpha Zero implementation of Sequence
     """
-    def __init__(self, residual_layers, filters, input_shape=STATE_SHAPE, policy_shape=199, belief_shape=104, lr=0.001):
+    def __init__(self, residual_layers, filters, input_shape=STATE_SHAPE, policy_shape=199, colab_shape=4, lr=0.001):
         """
+        Initialize the network
+
+        param residual_layers: int 
+            Number of residual convolutionals layers
+        param filters: int
+            Number of filters in each convolutional layer
         param input_shape: (int, int, int)
             Dimensions of the input.
         param policy_shape: int
             Number of total actions in policy head
-        param residual_layers: int 
-            Number of residual convolutionals layers
-        param device:
-            cpu or cuda
+        param colab_shape: int
+            Number of players in colab head
+        param lr: float
+            Learning rate
         """
         super(Net, self).__init__()
         self.save_path = 'checkpoints/'
@@ -38,11 +44,11 @@ class Net(nn.Module):
             nn.LeakyReLU(),
         )
 
-        # layers with residual
+        # Residual blocks
         blocks = []
         for _ in range(residual_layers):
             block = nn.Sequential(
-                nn.Conv2d(filters, filters, kernel_size=KERNEL_SIZE, padding=1),
+                nn.Conv2d(filters, filters, kernel_size=KERNEL_SIZE, padding=1, bias=False),
                 nn.BatchNorm2d(filters),
                 nn.LeakyReLU(),
             )
@@ -50,76 +56,47 @@ class Net(nn.Module):
         self.blocks = nn.ModuleList(blocks)
 
         # value head
-        self.conv_val = nn.Sequential(
-            nn.Conv2d(filters, 1, kernel_size=1),
-            nn.BatchNorm2d(1),
-            nn.LeakyReLU(),
-        )
-
-        body_out_shape = (filters, ) + input_shape[1:]
-        conv_val_size = self._get_conv_val_size(body_out_shape)
-
         self.value = nn.Sequential(
-            nn.Linear(conv_val_size, 256),
+            nn.Linear(filters, 256),
             nn.LeakyReLU(),
             nn.Linear(256, 1),
             nn.Tanh(),
         )
 
         # policy head
-        self.conv_policy = nn.Sequential(
-            nn.Conv2d(filters, input_shape[0], kernel_size=1),
-            nn.BatchNorm2d(input_shape[0]),
-            nn.LeakyReLU(),
-        )
-        conv_policy_size = self._get_conv_policy_size(body_out_shape)
         self.policy = nn.Sequential(
-            nn.Linear(conv_policy_size, policy_shape)
+            nn.Linear(filters, policy_shape)
         )
 
-        # belief head
-        self.conv_belief = nn.Sequential(
-            nn.Conv2d(filters, input_shape[0], kernel_size=1),
-            nn.BatchNorm2d(input_shape[0]),
+        # colab head
+        self.colab = nn.Sequential(
+            nn.Linear(filters, 256),
             nn.LeakyReLU(),
-        )
-        conv_belief_size = self._get_conv_belief_size(body_out_shape)
-        self.belief = nn.Sequential(
-            nn.Linear(conv_belief_size, belief_shape)
+            nn.Linear(256, colab_shape),
+            nn.Tanh(),
         )
 
-        #optimizer
+        # Average pooling
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+
+        # optimizer
         self.optimizer = optim.SGD(self.parameters(), lr=lr, momentum=0.9, weight_decay=1e-4)
 
-    def _get_conv_val_size(self, shape):
-        o = self.conv_val(torch.zeros(1, *shape))
-        return int(np.prod(o.size()))
-
-    def _get_conv_policy_size(self, shape):
-        o = self.conv_policy(torch.zeros(1, *shape))
-        return int(np.prod(o.size()))
-
-    def _get_conv_belief_size(self, shape):
-        o = self.conv_belief(torch.zeros(1, *shape))
-        return int(np.prod(o.size()))
-
     def forward(self, x):
-        batch_size = x.size()[0]
-
         v = self.conv_in(x)
+        v = F.avg_pool2d(v, v.size(2))
+
         for b in self.blocks:
             v = b(v)
-       
-        val = self.conv_val(v)
-        val = self.value(val.view(batch_size, -1))
 
-        pol = self.conv_policy(v)
-        pol = self.policy(pol.view(batch_size, -1))
+        v = self.avgpool(v)
+        v = v.view(v.size(0), -1)
 
-        bel = self.conv_belief(v)
-        bel = self.belief(bel.view(batch_size, -1))
+        pol = self.policy(v)
+        val = self.value(v)
+        col = self.colab(v)
 
-        return pol, val, bel
+        return pol, val, col
 
     def predict(self, s, valids_actions):
         """
@@ -127,7 +104,7 @@ class Net(nn.Module):
 
         param s: 
             list of encoded states of the game
-        param available_actions
+        param mask
             list of encoded valids actions from a position of the game
 
         return
@@ -135,15 +112,10 @@ class Net(nn.Module):
         """
         self.eval()
         batch = self.state_lists_to_batch(s)
-        pol, val, bel = self(batch)
-
-        if valids_actions is None:
-            return pol, val, bel
-            
-        masks = [self.valids_actions_to_tensor(va) for va in valids_actions]
-        pol = [self.get_policy_value(p, mask, False) for p, mask in zip(pol, masks)]
-        bel = [self.get_belief_values(b, False) for b in bel]
-        return pol, val, bel
+        valid_actions_masks = [self.valids_actions_to_tensor(va) for va in mask]
+        pol, val, col = self(batch)
+        pol = [self.get_policy_value(p, mask, False) for p, mask in zip(pol, valid_actions_masks)]
+        return pol, val, col
 
     def get_policy_value(self, logits, mask, log_softmax):
         """
@@ -151,7 +123,7 @@ class Net(nn.Module):
 
         param logits:
             list of 111 bits. Raw policy head
-        param available_actions
+        param mask
             list of 111 bits. Mask of available actions
         param log_softmax
             Set True to use log_softmax as activation function. Set False to use softmax 
@@ -161,23 +133,6 @@ class Net(nn.Module):
         """
         selection = torch.masked_select(logits, mask)
         dist = F.log_softmax(selection, dim=-1)
-        if log_softmax:
-            return dist
-        return torch.exp(dist)
-
-    def get_belief_values(self, logits, log_softmax):
-        """
-        Get agent private info probabilities distribution.
-
-        param logits:
-            list of belief_shape bits. Raw belief head
-        param log_softmax
-            Set True to use log_softmax as activation function. Set False to use softmax 
-
-        return
-            Move probabilities
-        """
-        dist = F.log_softmax(logits, dim=-1)
         if log_softmax:
             return dist
         return torch.exp(dist)
@@ -215,49 +170,48 @@ class Net(nn.Module):
         return:
             Training loss
         """
-        # data: [(state, p_target, v_target, b_target, valids_actions)]
-        batch, p_targets, v_targets, b_targets, valids_actions = [], [], [], [], []
-        for (state, p, v, b, actions) in data:
+        # data: [(state, p_target, v_target, c_target, valids_actions)]
+        batch, p_targets, v_targets, c_targets, valids_actions = [], [], [], [], []
+        for (state, p, v, c, actions) in data:
             # state and available_actions are encoded
             batch.append(state)
             p_targets.append(p)
             v_targets.append(v)
+            c_targets.append(c)
             valids_actions.append(actions)
-            b_targets.append(b)
-        batch = self.state_lists_to_batch(batch)
 
         self.train()
         self.optimizer.zero_grad()
 
         p_targets = [torch.tensor(p_target, dtype=torch.float32).to(self.device) for p_target in p_targets]     
         v_targets = torch.tensor(v_targets, dtype=torch.float32).to(self.device)
-        b_targets = [torch.tensor(b_target, dtype=torch.float32).to(self.device) for b_target in b_targets]    
+        c_targets = torch.tensor(c_targets, dtype=torch.float32).to(self.device)
 
-        p_preds_t, v_preds, b_preds_t = self(batch)
-        b_preds = [self.get_belief_values(b, True) for b in b_preds_t]
+        p_preds_t, v_preds, c_preds = self(batch)
         p_preds = []
 
         for i, a in enumerate(valids_actions):
             mask = self.valids_actions_to_tensor(a)
             p_preds.append(self.get_policy_value(p_preds_t[i], mask, True))
 
-
+        # MSE
         loss_value = F.mse_loss(v_preds.squeeze(-1), v_targets)
 
+        # Cross entropy
         loss_policy = torch.zeros(1).to(self.device)
         for pred, target in zip(p_preds, p_targets):
             loss_policy += -torch.sum(pred * target)
+        loss_policy = loss_policy / len(p_preds)
 
-        loss_belief = torch.zeros(1).to(self.device)
-        for pred, target in zip(b_preds, b_targets):
-            loss_belief += -torch.sum(pred * target)
+        # MSE
+        loss_colab = F.mse_loss(c_preds, c_targets)
 
-        loss = loss_policy + loss_value + loss_belief
+        loss = loss_policy + loss_value + loss_colab
         loss.backward()
         self.optimizer.step()
 
         # Return loss values to track total loss mean for epoch
-        return (loss.item(), loss_policy.item(), loss_value.item())
+        return (loss.item(), loss_policy.item(), loss_value.item(), loss_colab.item())
 
     def save(self, error_log, config, epoch, path, save_model, tag='latest', verbose=False):
         net_name = [f'AlphaZero_Dom_{tag}.ckpt', f'AlphaZero_Dom_model_{tag}.ckpt'][save_model]
@@ -330,4 +284,14 @@ class Net(nn.Module):
     @staticmethod
     def load(path):
         net_checkpoint = torch.load(path)
-        return net_checkpoint['model']
+        model = net_checkpoint['model']
+        device = net_checkpoint['device']
+
+        try:
+            model = model.to(device)
+            model.device = device
+        except AssertionError:
+            device = torch.device('cpu')
+            model.to(device)
+            model.device = device
+        return model

@@ -4,7 +4,7 @@ from .random import Random
 from .monte_carlo import MonteCarlo
 from .hands import *
 from .models import AlphaZeroNet
-from .utils import alphazero as alphazero_utils, mc as mc_utils
+from .utils import alphazero as alphazero_utils, mc as mc_utils, game as game_utils
 
 
 PLAYERS = [
