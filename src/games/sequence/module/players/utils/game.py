@@ -59,6 +59,7 @@ def calc_colab(sequence: Sequence, player: int):
     board = [[Color() for _ in range(len(l))] for l in BOARD]
     score = 0
     colors = set(sequence.colors)
+    seq_id = 0
 
     for e, *details in history:
         if e is Event.PLAY:
@@ -71,6 +72,14 @@ def calc_colab(sequence: Sequence, player: int):
             board[x][y] = Color(color)
             same_color_lines = lines_collector(board, color, x, y)
             # //TODO: do something with the lines
+            # Set set
+            for line in same_color_lines:
+                size = len(line)
+                seq = [0, 5, 9][(size >= 5) + (size >= 9)]
+                if seq:
+                    for i, j in line[:size]:
+                        board[i][j].set_sequence(seq_id)
+                    seq_id += 1
         elif e is Event.REMOVE:
             playerId, _, (x, y) = details
             color = board[x][y].color
@@ -87,4 +96,5 @@ def calc_colab(sequence: Sequence, player: int):
             playerId, color, size = details
             if player == playerId:
                 score += 1 + (size > 5) # //TODO: Add points for making a sequence
+            
     return score # //TODO: Normalize
