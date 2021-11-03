@@ -51,6 +51,18 @@ def fixed_hand(cards, pile, id, number_of_cards):
         return split_cards(order, number_of_players, number_of_cards)
 
     return hand
+
+
+def lines_score(lines):
+    size = [0] * 6
+    for line in lines:
+        sub0, sub1 = len(line[:5]), len(line[5:])
+        size[sub0] += 1
+        size[sub1] += 1
+    score = 0
+    for i, cant in enumerate(size):
+        score += i * i * cant
+    return score
     
 
 def calc_colab(sequence: Sequence, player: int):
@@ -60,19 +72,30 @@ def calc_colab(sequence: Sequence, player: int):
     score = 0
     colors = set(sequence.colors)
     seq_id = 0
+    player_movements = 0
 
     for e, *details in history:
         if e is Event.PLAY:
             playerId, _, color, (x, y) = details
-            for other_color in colors:
-                if other_color != sequence.colors[playerId]:
-                    board[x][y] = Color(other_color)
-                    other_color_lines = lines_collector(board, other_color, x, y) 
-                    # //TODO: do something with the lines
+
+            if playerId == player: 
+                player_movements += 1
+                # add score per damage
+                for other_color in colors:
+                    if other_color != sequence.colors[playerId]:
+                        board[x][y] = Color(other_color)
+                        other_color_lines = lines_collector(board, other_color, x, y) 
+                        score += lines_score(other_color_lines)
+
+            # Execute the movement
             board[x][y] = Color(color)
-            same_color_lines = lines_collector(board, color, x, y)
-            # //TODO: do something with the lines
-            # Set set
+
+            if playerId == player: 
+                # add team movement score
+                same_color_lines = lines_collector(board, color, x, y)
+                score += lines_score([same_color_lines])
+
+            # Set sequences
             for line in same_color_lines:
                 size = len(line)
                 seq = [0, 5, 9][(size >= 5) + (size >= 9)]
@@ -80,21 +103,17 @@ def calc_colab(sequence: Sequence, player: int):
                     for i, j in line[:size]:
                         board[i][j].set_sequence(seq_id)
                     seq_id += 1
+
         elif e is Event.REMOVE:
             playerId, _, (x, y) = details
-            color = board[x][y].color
-            if color == sequence.colors[playerId]:
-                score -= 5 # //TODO: Add high penalization
-                continue
-            for other_color in colors:
-                if other_color != sequence.colors[playerId]:
-                    board[x][y] = Color(other_color)
-                    other_color_lines = lines_collector(board, other_color, x, y) 
-                    # //TODO: do something with the lines
+            if playerId == player: 
+                player_movements += 1
+                # add score per damage
+                for other_color in colors:
+                    if other_color != sequence.colors[playerId]:
+                        board[x][y] = Color(other_color)
+                        other_color_lines = lines_collector(board, other_color, x, y) 
+                        score += lines_score(other_color_lines)                    
             board[x][y] = Color()
-        elif e is Event.SEQUENCE:
-            playerId, color, size = details
-            if player == playerId:
-                score += 1 + (size > 5) # //TODO: Add points for making a sequence
             
-    return score # //TODO: Normalize
+    return score / (200 * player_movements)
