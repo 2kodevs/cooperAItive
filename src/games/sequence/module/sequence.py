@@ -141,7 +141,7 @@ class Sequence:
         return False
 
     def _valid_moves(self):
-       return Sequence.valid_moves(self.board, self.cards, self.can_discard)
+       return Sequence.valid_moves(self.board, self.cards, self.can_discard, self.color)
 
     def _is_over(self):
         if max(self.score.values()) >= self.win_strike:
@@ -243,7 +243,7 @@ class Sequence:
         return self._next()
 
     @staticmethod
-    def valid_moves(board, cards, can_discard):
+    def valid_moves(board, cards, can_discard, pcolor):
         # List all valid moves in the form (card, position).
         valids = []
 
@@ -259,9 +259,14 @@ class Sequence:
             except KeyError:
                 ctype, number = card
                 assert number is JACK, f"Unexpected card number ({number})"
-                for (i, j), color in board:
-                    if (not color.fixed) and (bool(board[i, j]) == (ctype in REMOVE)):
-                        valids.append((card, (i, j)))
+                if ctype in REMOVE:
+                    for (i, j), piece in board:
+                        if piece and piece.color != pcolor and not piece.fixed:
+                            valids.append((card, (i, j)))
+                else:
+                    for (i, j), piece in board:
+                        if not (piece.bypass() or piece):
+                            valids.append((card, (i, j)))
         return valids if valids else [None]
 
 
