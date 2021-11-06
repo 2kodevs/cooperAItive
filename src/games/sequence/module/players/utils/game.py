@@ -72,20 +72,20 @@ def calc_colab(sequence: Sequence, player: int):
     score = 0
     colors = set(sequence.colors)
     seq_id = 0
-    player_movements = 0
+    score_updates = 0
 
     for e, *details in history:
         if e is Event.PLAY:
             playerId, _, color, (x, y) = details
 
             if playerId == player: 
-                player_movements += 1
                 # add score per damage
                 for other_color in colors:
                     if other_color != sequence.colors[playerId]:
                         board[x][y] = Color(other_color)
                         other_color_lines = lines_collector(board, other_color, x, y) 
                         score += lines_score(other_color_lines)
+                        score_updates += 1
 
             # Execute the movement
             board[x][y] = Color(color)
@@ -93,7 +93,8 @@ def calc_colab(sequence: Sequence, player: int):
             if playerId == player: 
                 # add team movement score
                 same_color_lines = lines_collector(board, color, x, y)
-                score += lines_score([same_color_lines])
+                score += lines_score(same_color_lines)
+                score_updates += 1
 
             # Set sequences
             for line in same_color_lines:
@@ -107,13 +108,13 @@ def calc_colab(sequence: Sequence, player: int):
         elif e is Event.REMOVE:
             playerId, _, (x, y) = details
             if playerId == player: 
-                player_movements += 1
                 # add score per damage
                 for other_color in colors:
                     if other_color != sequence.colors[playerId]:
                         board[x][y] = Color(other_color)
                         other_color_lines = lines_collector(board, other_color, x, y) 
-                        score += lines_score(other_color_lines)                    
+                        score += lines_score(other_color_lines)     
+                        score_updates += 1               
             board[x][y] = Color()
             
-    return score / (200 * player_movements)
+    return score / (200 * score_updates)
