@@ -1,6 +1,6 @@
 from typing import List, Any, Tuple, Callable, Dict
 from ...defaults import Card as CardType
-from ...sequence import Sequence
+from ...sequence import Sequence, Event
 
 
 class GameData:
