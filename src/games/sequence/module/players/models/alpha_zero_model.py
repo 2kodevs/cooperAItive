@@ -57,9 +57,9 @@ class Net(nn.Module):
 
         # value head
         self.value = nn.Sequential(
-            nn.Linear(filters, 256),
+            nn.Linear(filters, 512),
             nn.LeakyReLU(),
-            nn.Linear(256, 1),
+            nn.Linear(512, 1),
             nn.Tanh(),
         )
 
@@ -70,9 +70,9 @@ class Net(nn.Module):
 
         # colab head
         self.colab = nn.Sequential(
-            nn.Linear(filters, 256),
+            nn.Linear(filters, 512),
             nn.LeakyReLU(),
-            nn.Linear(256, colab_shape),
+            nn.Linear(512, colab_shape),
             nn.Tanh(),
         )
 
@@ -87,7 +87,8 @@ class Net(nn.Module):
         v = F.avg_pool2d(v, v.size(2))
 
         for b in self.blocks:
-            v = b(v)
+            # skip connection
+            v = b(v) + v
 
         v = self.avgpool(v)
         v = v.view(v.size(0), -1)
