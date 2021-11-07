@@ -215,7 +215,7 @@ class AlphaZeroTrainer(Trainer):
         total = 0
 
         #//TODO: Parameterize number of batch iterations (minibatches)
-        for _ in range(batch_size * 100 // sample):
+        for _ in range(batch_size * 500 // sample):
             batch = random.sample(data, sample)
             total += 1
             
@@ -426,11 +426,11 @@ class AlphaZeroTrainer(Trainer):
     def adjust_learning_rate(self, epoch, optimizer):
         lr = self.lr
 
-        if epoch == 800:
-            self.lr = lr / 10
-        elif epoch == 400:
+        if epoch == 150:
             self.lr = lr / 10
         elif epoch == 100:
+            self.lr = lr / 10
+        elif epoch == 50:
             self.lr = lr / 10
 
             for param_group in optimizer.param_groups:
