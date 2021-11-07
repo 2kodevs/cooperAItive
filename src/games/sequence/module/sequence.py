@@ -284,12 +284,12 @@ class SequenceManager:
 
     def init(self, hand, players, players_colors, cards_per_player, win_strike=2):
         self.logs_transmitted = 0
-        self.players = players
+        self.players = [player(i) for i, player in zip("0123", players)]
         self.seq = Sequence()
 
         self.seq.reset(hand, len(players), players_colors, cards_per_player, win_strike)
 
-        for i, player in enumerate(players):
+        for i, player in enumerate(self.players):
             player.reset(
                 i, 
                 self.seq.board, 

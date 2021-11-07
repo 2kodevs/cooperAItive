@@ -10,7 +10,7 @@ import os
 import json
 import torch
 import shutil
-import ray
+# import ray
 
 class AlphaZeroTrainer(Trainer):
     """
