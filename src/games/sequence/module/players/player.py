@@ -7,7 +7,7 @@ class BasePlayer:
     def __init__(self, name):
         self.name = name               # player name
         self.board = None              # Game board (read only) NOTE: Type is BoardViewer
-        self._cards = None              # Player card (read only) NOTE: self._cards() returns an iterator
+        self._cards = None             # Player card (read only) NOTE: self._cards() returns an iterator
         self.history = None            # Game history
         self.position = None           # Player number
         self.win_strike = None         # Number of sequences needed to win
