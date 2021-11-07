@@ -2,9 +2,8 @@ from typing import Tuple
 from ...utils import BoardViewer
 from ...defaults import ALL_CARDS_MAPPING, CORNERS, JACK
 from ...sequence import Sequence
-from ..player import BasePlayer
 from .types import Action, GameData, Position, RolloutMaker, Selector, State, Encoder, Any, Dict, List, Card
-from .game import get_discard_pile
+from .game import calc_colab, get_discard_pile
 from math import sqrt
 import numpy as np
 
@@ -81,14 +80,15 @@ def state_to_list(
 def rollout_maker(
     data: Dict,
     NN: Any,
-    Cput: int = 1,
+    Coop: int,
+    Cput: int,
 ) -> RolloutMaker: 
     def maker(
         sequence: Sequence,
         encoder: Encoder,
     ) -> None:
         s_comma_a = []
-        value = None
+        value, c = None, None
 
         while True:
             state = encoder(sequence, get_discard_pile(sequence.logs))
@@ -107,22 +107,26 @@ def rollout_maker(
 
                 if sequence.step(valids[best_index]):
                     value = lambda x: 0 if sequence.winner is None else [-1, 1][sequence.is_winner(x)]
+                    c = [Coop * calc_colab(sequence, player) for player in range(4)]
                     break
             except KeyError:
-                [P], [v], _ = NN.predict([state], [mask])
+                [P], [v], [c] = NN.predict([state], [mask])
                 v = v.cpu().detach().numpy()
                 player_color = sequence.colors[sequence.current_player]
                 value = lambda x: v if player_color == sequence.colors[x] else -v
+                c = c.cpu().detach().numpy()
                 size = len(P)
-                npq = np.zeros((size, 3), dtype=object)
+                npq = np.zeros((size, 4), dtype=object)
                 npq[:, 1] = P.cpu().detach().numpy()
                 data[state] = npq
+                break
 
         for state, index, player in s_comma_a:
             v = value(player)
-            n, q = data[state][index, 0], data[state][index, 2]
+            N, Q, C = data[state][index, 0], data[state][index, 2], data[state][index, 3]
             data[state][index, 0] += 1
-            data[state][index, 2] = (n*q + v) / (n + 1)
+            data[state][index, 2] = (N*Q + v) / (N + 1)
+            data[state][index, 3] = (N*C + c[player]) / (N + 1)
 
     return maker
 
