@@ -71,8 +71,9 @@ def rollout_maker(
         v = None
         end_value = {c:[-1, 1][sequence.color == c] for c in sequence.colors}
         end_value[None] = 0
+        value = None
 
-        while v is None:
+        while True:
             state = encoder(sequence, sequence.discard_pile)
             valids = sequence._valid_moves()
             try:
@@ -81,16 +82,17 @@ def rollout_maker(
 
                 index = randint(0, len(valids) - 1)
 
-                s_comma_a.append((state, index))
+                s_comma_a.append((state, index, sequence.current_player))
 
                 if sequence.step(valids[index]):
-                    v = end_value[sequence.winner]
+                    value = lambda x: 0 if sequence.winner is None else [-1, 1][sequence.is_winner(x)]
+                    break
             except KeyError:
-                v = 0
                 size = len(valids)
                 data[state] = [[0] * size, [0] * size]
 
-        for state, index in s_comma_a:
+        for state, index, player in s_comma_a:
+            v = value(player)
             N, Q = data[state]
             W = (Q[index] * N[index]) + v
             N[index] += 1

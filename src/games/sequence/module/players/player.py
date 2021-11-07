@@ -51,7 +51,7 @@ class BasePlayer:
                     Position: (Tuple<int, int>)  Selected board position to play the card
         """
         if valids is None:
-            return Sequence.valid_moves(self.board, self._cards(), self.can_discard)
+            return self.valid_moves()
         return valids
 
     def reset(self, position, board, card_view, players_colors, number_of_cards, number_of_players, win):
@@ -66,7 +66,7 @@ class BasePlayer:
         self.win_strike = win
 
     def valid_moves(self):
-        return Sequence.valid_moves(self.board, self.cards, self.can_discard) 
+        return Sequence.valid_moves(self.board, self.cards, self.can_discard, self.color) 
 
     @property
     def me(self):
