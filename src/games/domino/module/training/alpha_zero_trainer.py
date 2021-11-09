@@ -10,7 +10,7 @@ import os
 import json
 import torch
 import shutil
-# import ray
+import ray
 
 class AlphaZeroTrainer(Trainer):
     """
@@ -19,6 +19,7 @@ class AlphaZeroTrainer(Trainer):
     def __init__(
         self,
         batch_size: int,
+        batch_factor: int,
         handouts: int,
         rollouts: int,
         alpha: float,
@@ -36,6 +37,8 @@ class AlphaZeroTrainer(Trainer):
         """
         param batch_size: int
             Size of training data used per epoch
+        param batch_factor: int
+            Factor of batch size used for training
         param handouts: int
             Number of handouts per move search
         param rollouts: int
@@ -64,6 +67,7 @@ class AlphaZeroTrainer(Trainer):
             Threshold for temperature behavior to become equivalent to argmax
         """
         self.batch_size = batch_size
+        self.batch_factor = batch_factor
         self.handouts = handouts
         self.rollouts = rollouts
         self.alpha = alpha
@@ -214,8 +218,7 @@ class AlphaZeroTrainer(Trainer):
         batch_size = len(data)
         total = 0
 
-        #//TODO: Parameterize number of batch iterations (minibatches)
-        for _ in range(batch_size * 500 // sample):
+        for _ in range(batch_size * self.batch_factor // sample):
             batch = random.sample(data, sample)
             total += 1
             
@@ -376,6 +379,7 @@ class AlphaZeroTrainer(Trainer):
     def build_config(self, sample, tag, cur_epoch):
         return {
             "batch_size": self.batch_size,
+            "batch_factor": self.batch_factor,
             "handouts": self.handouts,
             "rollouts": self.rollouts,
             "tau_threshold": self.tau_threshold,
@@ -395,6 +399,7 @@ class AlphaZeroTrainer(Trainer):
 
     def load_config(self, config, epochs: int = 0):
         self.batch_size = config["batch_size"]
+        self.batch_factor = config["batch_factor"]
         self.handouts = config["handouts"]
         self.rollouts = config["rollouts"]
         self.tau_threshold = config["tau_threshold"]
