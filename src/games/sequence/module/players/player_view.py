@@ -14,8 +14,7 @@ class PlayerView:
 
     def view(self):
         def view_cards():
-            for x in self.cards:
-                yield x
+            return iter(self)
         return view_cards
 
     def __iter__(self):
