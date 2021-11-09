@@ -82,7 +82,7 @@ class Sequence:
         return self.logs[-1][2]
 
     def _partners(self, player):
-        color = self.color[player] 
+        color = self.colors[player] 
         for i, c in enumerate(self.colors):
             if i != player and c == color:
                 yield i
