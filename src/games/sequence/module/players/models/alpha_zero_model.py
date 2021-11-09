@@ -221,8 +221,8 @@ class Net(nn.Module):
         save_path = f'{path}/{self.save_path}'
         full_path = f'{save_path}{net_name}'
 
-        if not os.path.exists(path):
-            os.makedirs(path)
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
 
         if os.path.exists(full_path):
             # Save backup for tag
