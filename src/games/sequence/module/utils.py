@@ -2,13 +2,13 @@ from random import shuffle
 from .defaults import BOARD, CARD_SIMBOLS, CARD_NUMBERS
 
 
-class Color:
+class Piece:
     def __init__(self, color=None, seq=None):
         self.color = color
         self.sequence = seq
 
     def clone(self):
-        return Color(self.color, self.sequence)
+        return Piece(self.color, self.sequence)
 
     def set_sequence(self, number):
         self.sequence = number
@@ -22,7 +22,7 @@ class Color:
 
         * return False if sequence is None
         '''
-        if not isinstance(other, Color):
+        if not isinstance(other, Piece):
             return False
         if other.bypass() or (None in [self.sequence, other.sequence]):
             return False
@@ -32,7 +32,7 @@ class Color:
         '''
         Check if the objects have the same color
         '''
-        if not isinstance(other, Color):
+        if not isinstance(other, Piece):
             return False
         return (self.color == other.color) or other.bypass()
 
@@ -53,12 +53,12 @@ class Color:
         return str(self)
 
 
-class ByPassColor(Color):
+class ByPassPiece(Piece):
     def bypass(self):
         return True
 
     def __and__(self, other):
-        return isinstance(other, Color)
+        return isinstance(other, Piece)
 
     def __eq__(self, other):
         return False
@@ -154,8 +154,8 @@ class BoardViewer:
     def __iter__(self):
         board = super().__getattribute__('board')
         for i, row in enumerate(board):
-            for j, color in enumerate(row):
-                yield (i, j), color.clone()
+            for j, piece in enumerate(row):
+                yield (i, j), piece.clone()
 
     def __getattribute__(self, name: str):
         raise AttributeError("BoardViewer doesn't have attributes")
@@ -174,7 +174,7 @@ def lines_collector(board, color, i, j):
 
     # check a half of the line
     for inc_i, inc_j, idx in moves:
-        last = Color(color)
+        last = Piece(color)
         cur_i, cur_j = i, j
         while last & board[cur_i][cur_j]:
             if last == board[cur_i][cur_j]:
@@ -189,7 +189,7 @@ def lines_collector(board, color, i, j):
 
     # check the other line half
     for inc_i, inc_j, idx in moves:
-        last = Color(color)
+        last = Piece(color)
         cur_i, cur_j = i - inc_i, j - inc_j
         if not ((0 <= cur_i < 10) and (0 <= cur_j < 10)):
             continue

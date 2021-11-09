@@ -54,9 +54,9 @@ class BasePlayer:
             return self.valid_moves()
         return valids
 
-    def reset(self, position, board, card_view, players_colors, number_of_cards, number_of_players, win):
+    def reset(self, position, board, cards_view, players_colors, number_of_cards, number_of_players, win):
         self.position = position
-        self._cards = card_view
+        self._cards = cards_view
         self.players_colors = players_colors
         self.number_of_cards = number_of_cards
         self.number_of_players = number_of_players

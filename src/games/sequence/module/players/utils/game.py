@@ -1,7 +1,7 @@
 from random import shuffle
 from .types import History, Card, List, Sequence, Event
 from ..hands import split_cards, generate_cards
-from ...utils import BOARD, Color, lines_collector
+from ...utils import BOARD, Piece, lines_collector
 
 
 def get_discard_pile(history: History) -> List[Card]:
@@ -68,7 +68,7 @@ def lines_score(lines):
 def calc_colab(sequence: Sequence, player: int):
     history = sequence.logs
 
-    board = [[Color() for _ in range(len(l))] for l in BOARD]
+    board = [[Piece() for _ in range(len(l))] for l in BOARD]
     score = 0
     colors = set(sequence.colors)
     seq_id = 0
@@ -82,13 +82,13 @@ def calc_colab(sequence: Sequence, player: int):
                 # add score per damage
                 for other_color in colors:
                     if other_color != sequence.colors[playerId]:
-                        board[x][y] = Color(other_color)
+                        board[x][y] = Piece(other_color)
                         other_color_lines = lines_collector(board, other_color, x, y) 
                         score += lines_score(other_color_lines)
                         score_updates += 1
 
             # Execute the movement
-            board[x][y] = Color(color)
+            board[x][y] = Piece(color)
 
             same_color_lines = lines_collector(board, color, x, y)
             if playerId == player: 
@@ -111,10 +111,10 @@ def calc_colab(sequence: Sequence, player: int):
                 # add score per damage
                 for other_color in colors:
                     if other_color != sequence.colors[playerId]:
-                        board[x][y] = Color(other_color)
+                        board[x][y] = Piece(other_color)
                         other_color_lines = lines_collector(board, other_color, x, y) 
                         score += lines_score(other_color_lines)     
                         score_updates += 1               
-            board[x][y] = Color()
+            board[x][y] = Piece()
             
     return score / (200 * score_updates)

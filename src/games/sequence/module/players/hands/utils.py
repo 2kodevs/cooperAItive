@@ -7,6 +7,7 @@ def take(iterator, size):
     for _ in range(size):
         yield next(iterator)
 
+
 def generate_cards():
     # Generate the cards
     cards = []

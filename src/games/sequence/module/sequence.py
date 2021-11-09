@@ -1,5 +1,5 @@
 from enum import Enum
-from .utils import Color, ByPassColor, BoardViewer, lines_collector
+from .utils import Piece, ByPassPiece, BoardViewer, lines_collector
 from .defaults import *
 from random import shuffle
 
@@ -97,18 +97,18 @@ class Sequence:
         self.win_strike = win_strike
         self.colors = players_colors
         self.cards_per_player = cards_per_player
-        self.players, self.deck = hand(number_of_players, self.cards_per_player)
+        self.players, self.deck = hand(number_of_players, cards_per_player)
 
         self.logs = []
         self.sequence_id = 0
         self.discard_pile = []
         self.current_player = 0
         self.can_discard = True
-        self._board = [[Color() for _ in range(len(l))] for l in BOARD]
+        self._board = [[Piece() for _ in range(len(l))] for l in BOARD]
         self.board_size = sum(len(l) for l in self._board) - 4
         self.count = 0
         for i, j in CORNERS:
-            self._board[i][j] = ByPassColor("X")
+            self._board[i][j] = ByPassPiece("X")
         self.score = {i:0 for i in set(players_colors)}
 
         self.log((Event.NEW_GAME,))
@@ -232,17 +232,18 @@ class Sequence:
 
         # check REMOVE action
         if self._board[i][j]:
-            self._board[i][j] = Color()
+            self._board[i][j] = Piece()
             self.count -= 1
             self.log((Event.REMOVE, self.current_player, card, pos))
             return self._next()
 
         # Normal play, or a JACK
         self.log((Event.PLAY, self.current_player, card, self.color, pos))
-        self._board[i][j] = Color(self.color)
+        self._board[i][j] = Piece(self.color)
         self.count += 1
 
         # check for sequences
+
         data = lines_collector(self._board, self.color, i, j)
 
         for line in data:
