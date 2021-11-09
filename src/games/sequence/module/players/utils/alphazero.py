@@ -28,8 +28,14 @@ def encode_cards(cards: List[Card]) -> int:
     mask = 0
     data = {c:0 for c in cards}
     for c in cards:
-        mask |= 1 << table_bit(*ALL_CARDS_MAPPING[c][data[c]])
-        data[c] += 1
+        try:
+            mask |= 1 << table_bit(*ALL_CARDS_MAPPING[c][data[c]])
+            data[c] += 1
+        except IndexError:
+            print("Log of odd error on encode_cards:")
+            print("Cards:")
+            print(cards)
+            print("Problematic card:", c)
     return mask
 
 
