@@ -12,7 +12,6 @@ def monte_carlo(
     selector: Selector,
     handouts: int,
     rollouts: int,
-    NN: Any,
 ) -> Tuple[State, Action]:
     # basic game information
     discard_pile = get_discard_pile(player.history)
@@ -21,12 +20,6 @@ def monte_carlo(
         if e is Event.SEQUENCE:
             _, color, size = data
             score[color] += 1 + (size > 5)
-
-    #//TODO: Create state and mask to call NN and get beliefs
-    if NN is not None:
-       # _, _, [B] = NN.predict([state], None)
-       # use B to filter, B is a list of 104 probabilities
-       pass
 
     # simulations
     for _ in range(handouts):
