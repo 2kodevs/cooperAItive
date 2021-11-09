@@ -8,6 +8,7 @@ def main():
 
     trainer = AlphaZeroTrainer(
         config['batch_size'],
+        config['batch_factor'],
         config['handouts'],
         config['rollouts'],
         config['alpha'],
