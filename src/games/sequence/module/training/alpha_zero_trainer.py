@@ -245,13 +245,12 @@ class AlphaZeroTrainer(Trainer):
             self.loss = loss[0]
             config = self.build_config(sample, tag, epoch)
             self.net.save(self.error_log, config, epoch, self.save_path, True, tag + '-min', verbose=True)
-            self.net.save(self.error_log, config, epoch, self.save_path, False, tag, verbose=True)
         self.net.save(self.error_log, config, epoch, self.save_path, False, tag, verbose=True)
         self.net.save(self.error_log, config, epoch, self.save_path, True, tag, verbose=True)
 
         if verbose:
             print(f'-- Training took {str(int(time.time() - start))} seconds --')
-            print(f'policy head loss: {loss[1]} -- value head loss: {loss[2]} -- TOTAL LOSS: {loss[0]}')
+            print(f'policy head loss: {loss[1]} -- value head loss: {loss[2]} -- colab head loss: {loss[3]} -- TOTAL LOSS: {loss[0]}')
             print('')
 
         return loss
