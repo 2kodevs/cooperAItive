@@ -122,7 +122,13 @@ def get_rep(card):
 
 
 def get_color(color):
-    return COLORS[color.color] + str(color) + RESET + " X"[color.fixed]
+    if color is None: return " "
+    try: return COLORS[color] + str(color) + RESET
+    except: return str(color)
+
+
+def get_piece_color(piece):
+    return get_color(piece.color) + " X"[piece.fixed]
 
 
 def get_board_cards_rep():
@@ -130,9 +136,10 @@ def get_board_cards_rep():
 
 
 def get_board_rep(board):
+    it = iter(board)
     return '\n'.join(
-        (', '.join(f'{get_rep(ca)}{get_color(co)}' for ca, co in zip(cards, colors))) 
-        for cards, colors in zip(BOARD, board)
+        (', '.join(f'{get_rep(ca)}{get_piece_color(co)}' for ca, (_, co) in zip(cards, it))) 
+        for cards in BOARD
     )
 
 

@@ -33,7 +33,8 @@ def play(args):
     for _ in range(args.rep):
         game = rule()
         status[game.start(player0, player1, player2, player3, hand, *args.pieces)] += 1
-    print(status)
+    if args.verbose:
+        print(status)
     return status
 
 
@@ -51,7 +52,8 @@ def match(args):
             game = rule()
             status[1 - game.start(oponent, player, oponent, player, hand, *args.pieces)] += 1
     status[-1] += status.pop(2)
-    print(status)
+    if args.verbose:
+        print(status)
     return status 
 
 
@@ -71,16 +73,19 @@ def main():
     play_parser.add_argument('-n',   '--nine',        dest='pieces',  action='store_const', const=[9,10], default=[], help="Double nine mode")
     play_parser.add_argument('-rep', '--repetitions', dest='rep',     type=int, default=1, help="Numbers of plays to run")
     play_parser.add_argument('-H',   '--hand',        dest='hand',    default='hand_out', help="Game handout strategy")
+    play_parser.add_argument('-v',   '--verbose',     dest='verbose', action='store_true', help="Print the game result at the end")
+
     play_parser.set_defaults(command=play)
 
-    play_parser = subparsers.add_parser('match', help="Run a domino match")
-    play_parser.add_argument('-p',    '--player',     dest='player',   nargs='+', default=['random'], help="Player class name & arguments if needed")
-    play_parser.add_argument('-r',   '--rule',        dest='rule',     default='onegame', help="Game rule to use in each play")
-    play_parser.add_argument('-n',   '--nine',        dest='pieces',   action='store_const', const=[9,10], default=[], help="Double nine mode")
-    play_parser.add_argument('-rep', '--repetitions', dest='rep',      type=int, default=1, help="Numbers of plays to run per oponent")
-    play_parser.add_argument('-H',   '--hand',        dest='hand',     default='hand_out', help="Game handout strategy")
-    play_parser.add_argument('-o',   '--oponents',    dest='oponents', type=str, nargs='+', required=True, help="Oponents class names")
-    play_parser.set_defaults(command=match)
+    match_parser = subparsers.add_parser('match', help="Run a domino match")
+    match_parser.add_argument('-p',    '--player',     dest='player',   nargs='+', default=['random'], help="Player class name & arguments if needed")
+    match_parser.add_argument('-r',   '--rule',        dest='rule',     default='onegame', help="Game rule to use in each play")
+    match_parser.add_argument('-n',   '--nine',        dest='pieces',   action='store_const', const=[9,10], default=[], help="Double nine mode")
+    match_parser.add_argument('-rep', '--repetitions', dest='rep',      type=int, default=1, help="Numbers of plays to run per oponent")
+    match_parser.add_argument('-H',   '--hand',        dest='hand',     default='hand_out', help="Game handout strategy")
+    match_parser.add_argument('-o',   '--oponents',    dest='oponents', type=str, nargs='+', required=True, help="Oponents class names")
+    match_parser.add_argument('-v',   '--verbose',     dest='verbose', action='store_true', help="Print the game result at the end")
+    match_parser.set_defaults(command=match)
 
     args = parser.parse_args()
 

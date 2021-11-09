@@ -2,6 +2,8 @@ from .player_view import PlayerView
 from .player import BasePlayer
 from .random import Random
 from .monte_carlo import MonteCarlo
+from .alphazero import AlphaZero
+from .human import Human
 from .hands import *
 from .models import AlphaZeroNet
 from .utils import alphazero as alphazero_utils, mc as mc_utils, game as game_utils
@@ -10,6 +12,8 @@ from .utils import alphazero as alphazero_utils, mc as mc_utils, game as game_ut
 PLAYERS = [
     Random,
     MonteCarlo,
+    AlphaZero,
+    Human,
 ]
 
 
