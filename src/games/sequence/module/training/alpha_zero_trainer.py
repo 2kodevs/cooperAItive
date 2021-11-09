@@ -167,9 +167,9 @@ class AlphaZeroTrainer(Trainer):
 
         for state, pi, player, mask in data:
             #//TODO: Change this for more than 2 teams
-            end_value = [0, 0, 0]
-            end_value[player.team] = 1
-            end_value[1 - player.team] = -1
+            end_value = {c:-1 for c in player.players_colors}
+            end_value[None] = 0
+            end_value[player.color] = 1
             result = end_value[sequence.winner] 
             training_data.append((state, pi, result, cooperativeness, mask))
         return training_data
