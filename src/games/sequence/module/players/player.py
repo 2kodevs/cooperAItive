@@ -88,9 +88,9 @@ class BasePlayer:
     def from_sequence(sequence: Sequence):
         player = BasePlayer('SequencePlayer')
         player.board = BoardViewer(sequence.board)
-        player.cards = sequence.cards
         player.position = sequence.current_player
-        player.color = sequence.color
+        player._cards = sequence.players[player.me].view()
+        player.players_colors = sequence.colors
         player.history = sequence.logs[:]
         player.can_discard = sequence.can_discard
         player.number_of_cards = sequence.cards_per_player
