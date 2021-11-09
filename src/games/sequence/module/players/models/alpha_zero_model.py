@@ -99,7 +99,7 @@ class Net(nn.Module):
 
         return pol, val, col
 
-    def predict(self, s, valids_actions):
+    def predict(self, s, mask):
         """
         Infer node data given an state
 
