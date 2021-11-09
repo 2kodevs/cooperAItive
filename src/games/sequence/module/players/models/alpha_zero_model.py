@@ -180,6 +180,7 @@ class Net(nn.Module):
             v_targets.append(v)
             c_targets.append(c)
             valids_actions.append(actions)
+        batch = self.state_lists_to_batch(batch)
 
         self.train()
         self.optimizer.zero_grad()
