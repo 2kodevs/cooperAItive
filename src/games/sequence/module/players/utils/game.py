@@ -90,9 +90,9 @@ def calc_colab(sequence: Sequence, player: int):
             # Execute the movement
             board[x][y] = Color(color)
 
+            same_color_lines = lines_collector(board, color, x, y)
             if playerId == player: 
                 # add team movement score
-                same_color_lines = lines_collector(board, color, x, y)
                 score += lines_score(same_color_lines)
                 score_updates += 1
 
