@@ -87,12 +87,14 @@ class BasePlayer:
     @staticmethod
     def from_sequence(sequence: Sequence):
         player = BasePlayer('SequencePlayer')
-        player.board = BoardViewer(sequence.board)
+        player.board = sequence.board
         player.position = sequence.current_player
         player._cards = sequence.players[player.me].view()
         player.players_colors = sequence.colors
         player.history = sequence.logs[:]
         player.can_discard = sequence.can_discard
         player.number_of_cards = sequence.cards_per_player
+        player.number_of_players = len(sequence.players)
+        player.win_strike = sequence.win_strike
         return player
         
