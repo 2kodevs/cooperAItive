@@ -97,7 +97,7 @@ def rollout_maker(
         value, c = None, None
 
         while True:
-            state = encoder(sequence, get_discard_pile(sequence.logs))
+            state = encoder(sequence, sequence.discard_pile)
             valids = sequence._valid_moves()
             mask = encode_valids(valids)
             try:
