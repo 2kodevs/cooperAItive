@@ -14,12 +14,8 @@ def monte_carlo(
     rollouts: int,
 ) -> Tuple[State, Action]:
     # basic game information
-    discard_pile = get_discard_pile(player.history)
-    score = {c:0 for c in player.players_colors}
-    for e, *data in player.history:
-        if e is Event.SEQUENCE:
-            _, color, size = data
-            score[color] += 1 + (size > 5)
+    discard_pile = player.pile
+    score = player.score
 
     # simulations
     for _ in range(handouts):

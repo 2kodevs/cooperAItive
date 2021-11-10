@@ -56,30 +56,10 @@ class Sequence:
         self.discard_pile = None        # Players discarted cards
         self.current_player = None      # Id of the current player
         self.cards_per_player = None    # Number of cards per player
+        self.number_of_players = None   # Number of players
 
     def log(self, data):
         self.logs.append(data)
-
-    @property
-    def cards(self):
-        return self.players[self.current_player].view()()
-
-    @property
-    def color(self):
-        return self.colors[self.current_player]
-
-    @property
-    def partners(self):
-        return self._partner(self.current_player)
-
-    @property
-    def board(self):
-        return BoardViewer(self._board)
-
-    @property
-    def winner(self):
-        assert self.logs[-1][0] == Event.WIN
-        return self.logs[-1][2]
 
     def _partners(self, player):
         color = self.colors[player] 
@@ -98,6 +78,7 @@ class Sequence:
         self.colors = players_colors
         self.cards_per_player = cards_per_player
         self.players, self.deck = hand(number_of_players, cards_per_player)
+        self.number_of_players = number_of_players
 
         self.logs = []
         self.sequence_id = 0
@@ -232,6 +213,31 @@ class Sequence:
               
         return self._next()
 
+    @property
+    def cards(self):
+        return self.players[self.current_player].view()()
+
+    @property
+    def color(self):
+        return self.colors[self.current_player]
+
+    @property
+    def partners(self):
+        return self._partner(self.current_player)
+
+    @property
+    def board(self):
+        return BoardViewer(self._board)
+
+    @property
+    def winner(self):
+        assert self.logs[-1][0] == Event.WIN
+        return self.logs[-1][2]
+
+    @property
+    def view(self):
+        return SequenceView(self)
+
     @staticmethod
     def valid_moves(board, cards, can_discard, pcolor):
         # List all valid moves in the form (card, position).
@@ -282,12 +288,8 @@ class SequenceManager:
         for i, player in enumerate(self.players):
             player.reset(
                 i, 
-                self.seq.board, 
                 self.seq.players[i].view(), 
-                players_colors[:], 
-                cards_per_player, 
-                len(players),
-                win_strike,
+                self.seq.view
             )
         self.feed_logs()
 
@@ -303,4 +305,58 @@ class SequenceManager:
 
         while not self.step(): pass
 
-        return self.seq.winner
+        return super().__getattribute__("seq").winner
+
+
+class SequenceView:
+    def __init__(self, seq):
+        self.seq = seq
+
+    @property
+    def colors(self):
+        return super().__getattribute__("seq").colors[:]
+
+    @property
+    def pile(self):
+        return super().__getattribute__("seq").discard_pile[:]
+
+    @property
+    def board(self):
+        return super().__getattribute__("seq").board
+
+    @property
+    def count(self):
+        return super().__getattribute__("seq").count
+
+    @property
+    def score(self):
+        return super().__getattribute__("seq").score.copy()
+
+    @property
+    def size(self):
+        return super().__getattribute__("seq").board_size
+
+    @property
+    def strike(self):
+        return super().__getattribute__("seq").win_strike
+
+    @property
+    def discard(self):
+        return super().__getattribute__("seq").can_discard
+
+    @property
+    def player(self):
+        return super().__getattribute__("seq").current_player
+
+    @property
+    def cards(self):
+        return super().__getattribute__("seq").cards_per_player
+
+    @property
+    def players(self):
+        return super().__getattribute__("seq").number_of_players
+
+    def __getattribute__(self, name: str):
+        if name is "seq":
+            raise AttributeError("SequenceView doesn't have a `seq` attribute")
+        return super().__getattribute__(name)

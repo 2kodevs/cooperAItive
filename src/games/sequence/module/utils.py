@@ -1,6 +1,30 @@
 from random import shuffle
 from .defaults import BOARD, CARD_SIMBOLS, CARD_NUMBERS
 
+BLACK   = "\x1b[30m"
+RED     = "\x1b[31m"
+GREEN   = "\x1b[32m"
+YELLOW  = "\x1b[33m"
+BLUE    = "\x1b[34m"
+MAGENTA = "\x1b[35m"
+CYAN    = "\x1b[36m"
+RESET   = "\x1b[0m"
+BOLD    = "\x1b[1m"
+BLACKB  =  BLACK   +   BOLD
+REDB    =  RED     +   BOLD
+GREENB  =  GREEN   +   BOLD
+YELLOWB =  YELLOW  +   BOLD
+BLUEB   =  BLUE    +   BOLD
+MAGENTAB=  MAGENTA +   BOLD
+CYANB   =  CYAN    +   BOLD
+COLORS = {
+    None:RESET,
+    'X':RESET,
+    '0':RED, 
+    '1':BLUE, 
+    '2':GREEN, 
+    '3':YELLOW,
+}
 
 class Piece:
     def __init__(self, color=None, seq=None):
@@ -68,6 +92,41 @@ class ByPassPiece(Piece):
         return True
 
 
+class BoardViewer:
+    def __init__(self, board):
+        self.board = board
+
+    def __getitem__(self, pos):
+        i, j = pos
+        return super().__getattribute__('board')[i][j].clone()
+
+    def __iter__(self):
+        board = super().__getattribute__('board')
+        for i, row in enumerate(board):
+            for j, piece in enumerate(row):
+                yield (i, j), piece.clone()
+
+    def __getattribute__(self, name: str):
+        raise AttributeError("BoardViewer doesn't have attributes")
+  
+
+class PileViewer:
+    def __init__(self, pile):
+        self.pile = pile
+
+    def __getitem__(self, pos):
+        return super().__getattribute__('pile')[pos]
+
+    def __iter__(self):
+        return iter(super().__getattribute__('pile'))
+
+    def __len__(self):
+        return len(super().__getattribute__('pile'))
+
+    def __getattribute__(self, name: str):
+        raise AttributeError("PileViewer doesn't have attributes")
+
+
 def find_pairs(board):
     pairs = {}
 
@@ -88,32 +147,6 @@ def printer(cards):
     print('{')
     print(',\n'.join(output))
     print('}')
-
-
-BLACK   = "\x1b[30m"
-RED     = "\x1b[31m"
-GREEN   = "\x1b[32m"
-YELLOW  = "\x1b[33m"
-BLUE    = "\x1b[34m"
-MAGENTA = "\x1b[35m"
-CYAN    = "\x1b[36m"
-RESET   = "\x1b[0m"
-BOLD    = "\x1b[1m"
-BLACKB  =  BLACK   +   BOLD
-REDB    =  RED     +   BOLD
-GREENB  =  GREEN   +   BOLD
-YELLOWB =  YELLOW  +   BOLD
-BLUEB   =  BLUE    +   BOLD
-MAGENTAB=  MAGENTA +   BOLD
-CYANB   =  CYAN    +   BOLD
-COLORS = {
-    None:RESET,
-    'X':RESET,
-    '0':RED, 
-    '1':BLUE, 
-    '2':GREEN, 
-    '3':YELLOW,
-}
 
 
 def get_rep(card):
@@ -141,25 +174,7 @@ def get_board_rep(board):
         (', '.join(f'{get_rep(ca)}{get_piece_color(co)}' for ca, (_, co) in zip(cards, it))) 
         for cards in BOARD
     )
-
-
-class BoardViewer:
-    def __init__(self, board):
-        self.board = board
-
-    def __getitem__(self, pos):
-        i, j = pos
-        return super().__getattribute__('board')[i][j].clone()
-
-    def __iter__(self):
-        board = super().__getattribute__('board')
-        for i, row in enumerate(board):
-            for j, piece in enumerate(row):
-                yield (i, j), piece.clone()
-
-    def __getattribute__(self, name: str):
-        raise AttributeError("BoardViewer doesn't have attributes")
-        
+      
 
 def lines_collector(board, color, i, j):
     # check for sequences
