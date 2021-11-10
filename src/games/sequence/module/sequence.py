@@ -357,6 +357,6 @@ class SequenceView:
         return super().__getattribute__("seq").number_of_players
 
     def __getattribute__(self, name: str):
-        if name is "seq":
+        if name == "seq":
             raise AttributeError("SequenceView doesn't have a `seq` attribute")
         return super().__getattribute__(name)

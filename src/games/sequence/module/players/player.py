@@ -113,6 +113,6 @@ class BasePlayer:
         player.position = sequence.current_player
         player._cards = sequence.players[player.me].view()
         player.history = sequence.logs[:]
-        player.seq = sequence.view()
+        player.seq = sequence.view
         return player
         
