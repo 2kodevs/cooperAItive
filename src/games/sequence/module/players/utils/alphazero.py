@@ -3,7 +3,7 @@ from ...utils import BoardViewer
 from ...defaults import ALL_CARDS_MAPPING, CORNERS, JACK
 from ...sequence import Sequence
 from .types import Action, GameData, Position, RolloutMaker, Selector, State, Encoder, Any, Dict, List, Card
-from .game import calc_colab, get_discard_pile
+from .game import calc_colab
 from math import sqrt
 import numpy as np
 
@@ -28,14 +28,8 @@ def encode_cards(cards: List[Card], foo) -> int:
     mask = 0
     data = {c:0 for c in cards}
     for c in cards:
-        try:
-            mask |= 1 << table_bit(*ALL_CARDS_MAPPING[c][data[c]])
-            data[c] += 1
-        except IndexError:
-            print("Log of odd error on encode_cards:")
-            print("Problematic card:", c)
-            print(foo)
-            exit(0)
+        mask |= 1 << table_bit(*ALL_CARDS_MAPPING[c][data[c]])
+        data[c] += 1
     return mask
 
 

@@ -2,7 +2,7 @@ from random import choice, randint
 from ..player import BasePlayer
 from ...sequence import Event, Sequence
 from .types import *
-from .game import get_discard_pile, fixed_hand
+from .game import fixed_hand
 
 
 def monte_carlo(
