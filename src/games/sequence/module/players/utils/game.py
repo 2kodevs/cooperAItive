@@ -1,7 +1,10 @@
 from random import shuffle
-from .types import History, Card, List, Sequence, Event
+from collections import defaultdict
+
+from ...defaults import ALL_CARDS_MAPPING, CORNERS, JACK
+from .types import Card, GameData, List, Position, Sequence, Event, Action, State
 from ..hands import split_cards, generate_cards
-from ...utils import BOARD, Piece, lines_collector
+from ...utils import BOARD, BoardViewer, Piece, lines_collector, take
 
 
 def order_hand(cards, pile, id, number_of_cards):
@@ -107,3 +110,84 @@ def calc_colab(sequence: Sequence, player: int):
             board[x][y] = Piece()
             
     return score / (200 * score_updates)
+
+
+def sparse_board(board: BoardViewer):
+    sparse = []
+    for pos, piece in board:
+        if piece:
+            sparse.append((pos, piece))
+    return sparse
+
+
+def table_bit(i: int, j: int) -> int:
+    return i * 10 + j
+
+
+def encode_board(sparse, color):
+    masks = defaultdict(lambda: 0)
+    masks[color] = 0 # needed to ensure that the pop will work
+    for pos, piece in sparse:
+        if piece:
+            masks[piece.color] |= table_bit(*pos)
+    return masks.pop(color), masks
+
+
+def encode_cards(cards: List[Card]) -> int:
+    mask = 0
+    data = {c:0 for c in cards}
+    for c in cards:
+        mask += table_bit(*ALL_CARDS_MAPPING[c][data[c]])
+        data[c] += 1
+    return mask
+
+
+def adjust_shifting(pos: Position) -> int:
+    return len([1 for x in CORNERS if x < pos])
+
+
+def encode_valids(valids: List[Action]) -> int:
+    if valids[0] is None:
+        return 1 << 198
+    mask = 0
+    discards = 0
+    for (_, num), pos in valids:
+        if pos is None:
+            mask |= 1 << (192 + discards)
+            discards += 1
+        else:
+            cur_bit = 1 << (table_bit(*pos) - adjust_shifting(pos))
+            if num is JACK: mask |= cur_bit << 96
+            else : mask |= cur_bit
+    return mask
+
+
+def encode(
+    player: GameData,
+    discard_pile: List[Card],
+) -> State :       
+    player_board, boards = encode_board(player.board, player.color)
+    cards = encode_cards(list(player.cards))
+    pile = encode_cards(discard_pile)
+    offset = 0
+    state = 0
+    for mask in [player_board, *boards.values(), cards, pile]:
+        state += (mask << offset)
+        offset += 110 # 11 x 10 state boards
+    return state
+    
+
+def state_to_list(
+    state: State,
+    size: int,
+) -> List[int]:
+    binary_rep = bin(state)[2:]
+    binary_rep = '0' * max(0, size - len(binary_rep)) + binary_rep
+    return [int(x) for x in binary_rep[-1 : -(size + 1) : -1]]
+
+
+def state_number_to_matrix(state: int, number_of_matrixes: int = 4):
+    state_list = state_to_list(state, number_of_matrixes * 110)
+    it = iter(state_list)
+    return [list(take(it, 110)) for _ in range(number_of_matrixes)]
+    

@@ -220,3 +220,8 @@ def lines_collector(board, color, i, j):
 
     return data
     
+
+def take(iterator, size):
+    for _ in range(size):
+        yield next(iterator)
+        

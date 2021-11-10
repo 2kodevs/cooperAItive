@@ -91,10 +91,10 @@ CARDS_POSITIONS = {
 
 ALL_CARDS_MAPPING = {
     **CARDS_POSITIONS,
-    (Card.HEART, 11):   [(0, 0), (0, 9)],
-    (Card.DIAMOND, 11): [(9, 0), (9, 9)],
-    (Card.SPADES, 11):  [(10, 0), (10, 1)],
-    (Card.CLUBS, 11):   [(10, 2), (10, 3)],
+    (Card.HEART, 11):   [(10, 0), (10, 1)],
+    (Card.DIAMOND, 11): [(10, 2), (10, 3)],
+    (Card.SPADES, 11):  [(10, 4), (10, 5)],
+    (Card.CLUBS, 11):   [(10, 6), (10, 7)],
 }
 
 

@@ -1,5 +1,6 @@
 from .player import BasePlayer
-from .utils.alphazero import encode, rollout_maker, selector_maker
+from .utils.alphazero import rollout_maker, selector_maker
+from .utils.game import encode
 from .utils.mc import monte_carlo
 from .models import AlphaZeroNet
 

@@ -1,6 +1,6 @@
 from random import choice, randint
 from ..player import BasePlayer
-from ...sequence import Event, Sequence
+from ...sequence import Sequence
 from .types import *
 from .game import fixed_hand
 
