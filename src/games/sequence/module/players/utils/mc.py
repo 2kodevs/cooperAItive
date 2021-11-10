@@ -35,11 +35,10 @@ def monte_carlo(
                 player.win_strike,
             )
             # Update the game
-            for (i, j), color in player.board:
-                seq._board[i][j] = color
-                seq.count += bool(color)
-            for log in player.history[1:]:
-                seq.log(log)
+            for (i, j), piece in player.board:
+                seq._board[i][j] = piece
+                seq.count += bool(piece)
+            seq.logs = player.history[:]
             seq.discard_pile = discard_pile[:]
             seq.can_discard = player.can_discard
             seq.current_player = player.position
@@ -61,8 +60,8 @@ def rollout_maker(
         encoder: Encoder,
     ):
         s_comma_a = []
-        v = None
-        end_value = {c:[-1, 1][sequence.color == c] for c in sequence.colors}
+        end_value = {c:-1 for c in sequence.colors}
+        end_value[sequence.color] = 1
         end_value[None] = 0
         value = None
 
@@ -76,10 +75,14 @@ def rollout_maker(
                 index = randint(0, len(valids) - 1)
 
                 s_comma_a.append((state, index, sequence.current_player))
-
-                if sequence.step(valids[index]):
-                    value = lambda x: 0 if sequence.winner is None else [-1, 1][sequence.is_winner(x)]
-                    break
+                try:
+                    if sequence.step(valids[index]):
+                        value = lambda x: 0 if sequence.winner is None else [-1, 1][sequence.is_winner(x)]
+                        break
+                except Exception as e:
+                    print(e)
+                    print(valids)
+                    raise Exception("dpepdpe")
             except KeyError:
                 size = len(valids)
                 data[state] = [[0] * size, [0] * size]

@@ -123,32 +123,7 @@ class Sequence:
         return True
 
     def check_valid(self, action):
-        if action is None:
-            # All the cards should be dead
-            for card in self.cards:
-                if not self._is_dead_card(card):
-                    return False
-            return True
-
-        card, pos = action
-        ctype, number = card
-
-        # check dead cards
-        if pos is None:
-            return self._is_dead_card(card)
-        i, j = pos
-
-        # check card in the board
-        if BOARD[i][j] == card:
-            # return if the board position is used
-            return self.empty(i, j)
-
-        # check if the card is a JACK
-        if number is JACK:
-            # check if the JACK is used correctly
-            return self.empty(i, j) != (ctype in REMOVE)
-        # not a valid move
-        return False
+        return action in self._valid_moves()
 
     def _valid_moves(self):
        return Sequence.valid_moves(self.board, self.cards, self.can_discard, self.color)
