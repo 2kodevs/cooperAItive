@@ -75,14 +75,9 @@ def rollout_maker(
                 index = randint(0, len(valids) - 1)
 
                 s_comma_a.append((state, index, sequence.current_player))
-                try:
-                    if sequence.step(valids[index]):
-                        value = lambda x: 0 if sequence.winner is None else [-1, 1][sequence.is_winner(x)]
-                        break
-                except Exception as e:
-                    print(e)
-                    print(valids)
-                    raise Exception("dpepdpe")
+                if sequence.step(valids[index]):
+                    value = lambda x: 0 if sequence.winner is None else [-1, 1][sequence.is_winner(x)]
+                    break
             except KeyError:
                 size = len(valids)
                 data[state] = [[0] * size, [0] * size]

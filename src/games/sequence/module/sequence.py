@@ -167,13 +167,17 @@ class Sequence:
         player = self.players[self.current_player]
         player.remove(card)
         self.discard_pile.append(card)
+        for x in  self.discard_pile:
+            if  self.discard_pile.count(x) > 2:
+                print("dpepdpe")
+                exit(0)
+        if self.deck:
+            player.draw(self.deck.pop())
         if not self.deck:
             self.log((Event.REFILL_DECK,))
             self.deck = self.discard_pile[:]
             self.discard_pile = []
             shuffle(self.deck)
-        if self.deck:
-            player.draw(self.deck.pop())
 
     def step(self, action):
         """

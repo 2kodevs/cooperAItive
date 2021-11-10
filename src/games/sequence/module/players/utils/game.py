@@ -12,6 +12,11 @@ def get_discard_pile(history: History) -> List[Card]:
             pile.append(card)
         if e is Event.REFILL_DECK:
             pile = []
+
+    for x in pile:
+        if pile.count(x) > 2:
+            print("jajajajaj")
+            exit(0)
     return pile
     
 
@@ -40,6 +45,11 @@ def order_hand(cards, pile, id, number_of_cards):
 
     player_first_card = number_of_cards * id
     all_cards = [*deck[:player_first_card], *cards, *deck[player_first_card:]]
+
+    for x in all_cards:
+        if all_cards.count(x) > 2:
+            print("ejaki")
+            exit(0)
 
     return all_cards
 

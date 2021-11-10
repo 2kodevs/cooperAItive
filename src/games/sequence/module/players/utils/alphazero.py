@@ -24,7 +24,7 @@ def encode_board(board: BoardViewer, color: Any = -1) -> int:
     return masks
 
 
-def encode_cards(cards: List[Card]) -> int:
+def encode_cards(cards: List[Card], foo) -> int:
     mask = 0
     data = {c:0 for c in cards}
     for c in cards:
@@ -33,9 +33,9 @@ def encode_cards(cards: List[Card]) -> int:
             data[c] += 1
         except IndexError:
             print("Log of odd error on encode_cards:")
-            print("Cards:")
-            print(cards)
             print("Problematic card:", c)
+            print(foo)
+            exit(0)
     return mask
 
 
@@ -64,8 +64,8 @@ def encode(
     discard_pile: List[Card],
 ) -> State :       
     boards = encode_board(player.board, player.color)
-    cards = encode_cards(list(player.cards))
-    pile = encode_cards(discard_pile)
+    cards = encode_cards(list(player.cards), "player")
+    pile = encode_cards(discard_pile, "pile")
     offset = 0
     state = 0
     for mask in [*boards, cards, pile]:
