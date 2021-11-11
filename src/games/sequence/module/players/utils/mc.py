@@ -66,9 +66,9 @@ def rollout_maker(
             valids = sequence._valid_moves()
             try:
                 # Check if state is explored
-                _, _ = data[state]
+                _, _, values = data[state]
 
-                index = randint(0, len(valids) - 1)
+                index = randint(0, len(values) - 1)
 
                 s_comma_a.append((state, index, sequence.current_player))
                 if sequence.step(valids[index]):
@@ -76,11 +76,11 @@ def rollout_maker(
                     break
             except KeyError:
                 size = len(valids)
-                data[state] = [[0] * size, [0] * size]
+                data[state] = [[0] * size, [0] * size, valids]
 
         for state, index, player in s_comma_a:
             v = value(player)
-            N, Q = data[state]
+            N, Q, _ = data[state]
             W = (Q[index] * N[index]) + v
             N[index] += 1
             Q[index] = W / N[index]
@@ -95,7 +95,7 @@ def selector_maker(
     def selector(
         state: State,
     ):
-        _, Q = data[state]
+        _, Q, _ = data[state]
         value = max(Q)
         filtered_data = [i for i, x in enumerate(Q) if x == value]
         return (valids[choice(filtered_data)],)
