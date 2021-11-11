@@ -186,8 +186,13 @@ def state_to_list(
     return [int(x) for x in binary_rep[-1 : -(size + 1) : -1]]
 
 
+def split_list(l, rows, cols):
+    it = iter(l)
+    return [list(take(it, cols)) for _ in range(rows)]
+
+
 def state_number_to_matrix(state: int, number_of_matrixes: int = 4):
     state_list = state_to_list(state, number_of_matrixes * 110)
-    it = iter(state_list)
-    return [list(take(it, 110)) for _ in range(number_of_matrixes)]
+    matrix_data = split_list(state_list, number_of_matrixes, 110)
+    return [split_list(l, 11, 10) for l in matrix_data]
     
