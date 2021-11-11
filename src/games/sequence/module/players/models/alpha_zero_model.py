@@ -7,8 +7,7 @@ import numpy as np
 
 from ..utils.game import state_to_list
 
-#STATE= [(52bits, 52bits) x 4]
-STATE_SHAPE = (1, 4, 104)
+STATE_SHAPE = (4, 11, 10)
 KERNEL_SIZE = 3
 
 class Net(nn.Module):
@@ -84,7 +83,7 @@ class Net(nn.Module):
 
     def forward(self, x):
         v = self.conv_in(x)
-        v = F.avg_pool2d(v, v.size(2))
+        v = F.avg_pool2d(v, (v.size(2), v.size(3)))
 
         for b in self.blocks:
             # skip connection
@@ -99,13 +98,13 @@ class Net(nn.Module):
 
         return pol, val, col
 
-    def predict(self, s, mask):
+    def predict(self, s, valids_actions):
         """
         Infer node data given an state
 
         param s: 
             list of encoded states of the game
-        param mask
+        param valids_actions
             list of encoded valids actions from a position of the game
 
         return
@@ -113,7 +112,7 @@ class Net(nn.Module):
         """
         self.eval()
         batch = self.state_lists_to_batch(s)
-        valid_actions_masks = [self.valids_actions_to_tensor(va) for va in mask]
+        valid_actions_masks = [self.valids_actions_to_tensor(va) for va in valids_actions]
         pol, val, col = self(batch)
         pol = [self.get_policy_value(p, mask, False) for p, mask in zip(pol, valid_actions_masks)]
         return pol, val, col

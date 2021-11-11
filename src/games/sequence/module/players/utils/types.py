@@ -13,6 +13,9 @@ class GameData:
     @property
     def board(self): pass
 
+    @property
+    def can_discard(self): pass
+
 
 State = int
 History = List[Any]

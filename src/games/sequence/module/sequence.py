@@ -253,12 +253,21 @@ class Sequence:
                 assert number is JACK, f"Unexpected card number ({number})"
                 if ctype in REMOVE:
                     for (i, j), piece in board:
+                        if (i, j) in CORNERS:
+                            continue
                         if piece and piece.color != pcolor and not piece.fixed:
+                            if ((Card.CLUBS, 11), (i, j)) in valids or ((Card.SPADES, 11), (i, j)):
+                                continue
                             valids.append((card, (i, j)))
                 else:
                     for (i, j), piece in board:
+                        if (i, j) in CORNERS:
+                            continue
                         if not (piece.bypass() or piece):
+                            if ((Card.DIAMOND, 11), (i, j)) in valids or ((Card.HEART, 11), (i, j)):
+                                continue
                             valids.append((card, (i, j)))
+        valids = list(set(valids))
         return valids if valids else [None]
 
 

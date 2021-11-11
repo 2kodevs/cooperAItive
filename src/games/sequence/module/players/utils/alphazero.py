@@ -23,10 +23,10 @@ def rollout_maker(
             valids = sequence._valid_moves()
             mask = encode_valids(valids)
             try:
-                N, P, Q = data[state][:, 0], data[state][:, 1], data[state][:, 2]
+                N, P, Q, C = data[state][:, 0], data[state][:, 1], data[state][:, 2], data[state][:, 3]
                 all_N = sqrt(N.sum())
                 U = Cput * P * all_N / (1 + N)
-                values = Q + U
+                values = Q + U + C 
 
                 args_max = np.argwhere(values == np.max(values)).flatten()
                 best_index = np.random.choice(args_max)
@@ -69,7 +69,7 @@ def selector_maker(
     epsilon: float = 0.25,
 ) -> Selector:
     def selector(state: State) -> Tuple[Action, List[Any]]:
-        # data = {state: [N, P, Q]}
+        # data = {state: [N, P, Q, C]}
         N = data[state][:, 0]
 
         if turn <= tau_threshold:

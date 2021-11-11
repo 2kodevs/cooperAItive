@@ -151,14 +151,26 @@ def encode_valids(valids: List[Action]) -> int:
         return 1 << 198
     mask = 0
     discards = 0
+    vector = []
     for (_, num), pos in valids:
         if pos is None:
-            mask |= 1 << (192 + discards)
+            mask |= (1 << (192 + discards))
+            vector.append(192 + discards)
             discards += 1
         else:
             cur_bit = 1 << (table_bit(*pos) - adjust_shifting(pos))
-            if num is JACK: mask |= cur_bit << 96
-            else : mask |= cur_bit
+            if num is JACK: 
+                temp1 = mask                
+                mask |= (cur_bit << 96)
+                vector.append((table_bit(*pos) - adjust_shifting(pos)) + 96)
+                assert temp1 != mask, 'JACK \n' + str(valids) +  '\n' + repr(vector) + '\n' + str(mask) + '\n' + str(temp1)
+            else:
+                temp1 = mask  
+                mask |= cur_bit
+                vector.append((table_bit(*pos) - adjust_shifting(pos)))
+                assert temp1 != mask, 'No JACK \n' + str(valids) + '\n' + repr(vector) + '\n' + str(mask) + '\n' + str(temp1)
+    if discards:
+        print(discards)
     return mask
 
 
@@ -174,8 +186,9 @@ def encode(
     for mask in [player_board, *boards.values(), cards, pile]:
         state += (mask << offset)
         offset += 110 # 11 x 10 state boards
+    state += (player.can_discard << (offset - 1))
     return state
-    
+   
 
 def state_to_list(
     state: State,

@@ -141,7 +141,7 @@ class AlphaZeroTrainer(Trainer):
             stats = {}
             cur_player = BasePlayer.from_sequence(sequence)
             selector = utils.selector_maker(stats, cur_player.valid_moves(), turn, root, self.tau_threshold, alpha)
-            encoder = utils.encode
+            encoder = game_utils.encode
             rollout = utils.rollout_maker(stats, self.net, self.coop, self.cput)
 
             root = False

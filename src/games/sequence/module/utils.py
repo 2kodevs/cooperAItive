@@ -32,7 +32,7 @@ class Piece:
         self.sequence = seq
 
     def clone(self):
-        return Piece(self.color, self.sequence)
+        return type(self)(self.color, self.sequence)
 
     def set_sequence(self, number):
         self.sequence = number

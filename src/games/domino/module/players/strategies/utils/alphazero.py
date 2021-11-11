@@ -149,7 +149,7 @@ def selector_maker(
     epsilon: float = 0.25,
 ):
     def selector(state):
-        # data = {state: [N, P, Q]}
+        # data = {state: [N, P, Q, C]}
         N = data[state][:, 0]
 
         if turn <= tau_threshold:
