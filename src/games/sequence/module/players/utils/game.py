@@ -111,22 +111,15 @@ def calc_colab(sequence: Sequence, player: int):
     return score / (200 * score_updates)
 
 
-def sparse_board(board: BoardViewer):
-    sparse = []
-    for pos, piece in board:
-        if piece and not piece.bypass():
-            sparse.append((pos, piece))
-    return sparse
-
-
 def table_bit(i: int, j: int) -> int:
     return i * 10 + j
 
 
-def encode_board(sparse, color, all_colors):
+def encode_board(board, color, all_colors):
     masks = {c:0 for c in all_colors}
-    for pos, piece in sparse:
-        masks[piece.color] |= table_bit(*pos)
+    for pos, piece in board:
+        if piece and not piece.bypass():
+            masks[piece.color] |= (1 << table_bit(*pos))
     return masks.pop(color), masks
 
 
@@ -134,7 +127,7 @@ def encode_cards(cards: List[Card]) -> int:
     mask = 0
     data = {c:0 for c in cards}
     for c in cards:
-        mask += table_bit(*ALL_CARDS_MAPPING[c][data[c]])
+        mask |= (1 << table_bit(*ALL_CARDS_MAPPING[c][data[c]]))
         data[c] += 1
     return mask
 
@@ -176,7 +169,7 @@ def encode(
     discard_pile: List[Card],
 ) -> State :       
     player_board, boards = encode_board(
-        sparse_board(player.board), 
+        player.board, 
         player.color,
         player.colors,
     )
