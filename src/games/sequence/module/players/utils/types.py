@@ -6,6 +6,9 @@ from ...sequence import Sequence, Event
 class GameData:
     @property
     def color(self): pass
+
+    @property
+    def colors(self): pass
     
     @property
     def cards(self): pass

@@ -1,5 +1,4 @@
 from random import shuffle
-from collections import defaultdict
 
 from ...defaults import ALL_CARDS_MAPPING, CORNERS, JACK
 from .types import Card, GameData, List, Position, Sequence, Event, Action, State
@@ -124,9 +123,8 @@ def table_bit(i: int, j: int) -> int:
     return i * 10 + j
 
 
-def encode_board(sparse, color):
-    masks = defaultdict(lambda: 0)
-    masks[color] = 0 # needed to ensure that the pop will work
+def encode_board(sparse, color, all_colors):
+    masks = {c:0 for c in all_colors}
     for pos, piece in sparse:
         masks[piece.color] |= table_bit(*pos)
     return masks.pop(color), masks
@@ -177,7 +175,11 @@ def encode(
     player: GameData,
     discard_pile: List[Card],
 ) -> State :       
-    player_board, boards = encode_board(sparse_board(player.board), player.color)
+    player_board, boards = encode_board(
+        sparse_board(player.board), 
+        player.color,
+        player.colors,
+    )
     cards = encode_cards(list(player.cards))
     pile = encode_cards(discard_pile)
     offset = 0

@@ -60,6 +60,10 @@ class BasePlayer:
         return self.seq.colors
 
     @property
+    def colors(self):
+        return self.players_colors
+
+    @property
     def is_current(self):
         return self.me == self.seq.player
 
