@@ -115,7 +115,7 @@ def calc_colab(sequence: Sequence, player: int):
 def sparse_board(board: BoardViewer):
     sparse = []
     for pos, piece in board:
-        if piece:
+        if piece and not piece.bypass():
             sparse.append((pos, piece))
     return sparse
 
@@ -128,8 +128,7 @@ def encode_board(sparse, color):
     masks = defaultdict(lambda: 0)
     masks[color] = 0 # needed to ensure that the pop will work
     for pos, piece in sparse:
-        if piece:
-            masks[piece.color] |= table_bit(*pos)
+        masks[piece.color] |= table_bit(*pos)
     return masks.pop(color), masks
 
 
@@ -178,7 +177,7 @@ def encode(
     player: GameData,
     discard_pile: List[Card],
 ) -> State :       
-    player_board, boards = encode_board(player.board, player.color)
+    player_board, boards = encode_board(sparse_board(player.board), player.color)
     cards = encode_cards(list(player.cards))
     pile = encode_cards(discard_pile)
     offset = 0
