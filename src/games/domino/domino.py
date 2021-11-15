@@ -57,7 +57,7 @@ def match(args):
     return status 
 
 
-def main():
+def get_parser():
     parser = argparse.ArgumentParser("DomAIno")
 
     subparsers = parser.add_subparsers()
@@ -86,6 +86,12 @@ def main():
     match_parser.add_argument('-o',   '--oponents',    dest='oponents', type=str, nargs='+', required=True, help="Oponents class names")
     match_parser.add_argument('-v',   '--verbose',     dest='verbose', action='store_true', help="Print the game result at the end")
     match_parser.set_defaults(command=match)
+
+    return parser
+
+
+def main():
+    parser = get_parser()
 
     args = parser.parse_args()
 
