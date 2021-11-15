@@ -62,8 +62,8 @@ def main():
 
     play_parser = subparsers.add_parser('play', help="Run a Sequence game")
     play_parser.add_argument('-p0',  '--player0',     dest='player0', nargs='+', default=['random'], help="Player0 class name & arguments if needed")
-    play_parser.add_argument('-c1',  '--player1',     dest='player1', nargs='+', default=['random'], help="Player1 class name & arguments if needed")
-    play_parser.add_argument('-c2',  '--player2',     dest='player2', nargs='+', default=None, help="Player2 class name & arguments if needed")
+    play_parser.add_argument('-p1',  '--player1',     dest='player1', nargs='+', default=['random'], help="Player1 class name & arguments if needed")
+    play_parser.add_argument('-p2',  '--player2',     dest='player2', nargs='+', default=None, help="Player2 class name & arguments if needed")
     play_parser.add_argument('-p3',  '--player3',     dest='player3', nargs='+', default=None, help="Player3 class name & arguments if needed")
     play_parser.add_argument('-c',   '--colors',      dest='colors',  nargs='+', default="0101", help="Players colors")
     play_parser.add_argument('-rep', '--repetitions', dest='rep',     type=int,  default=1, help="Numbers of plays to run")

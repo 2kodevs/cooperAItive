@@ -1,95 +1,6 @@
 from random import shuffle
 from .defaults import BOARD, CARD_SIMBOLS, CARD_NUMBERS
 
-
-class Color:
-    def __init__(self, color=None, seq=None):
-        self.color = color
-        self.sequence = seq
-
-    def clone(self):
-        return Color(self.color, self.sequence)
-
-    def set_sequence(self, number):
-        self.sequence = number
-
-    def bypass(self):
-        return False
-
-    def __eq__(self, other):
-        '''
-        Check if the objects have the same sequence id
-
-        * return False if sequence is None
-        '''
-        if not isinstance(other, Color):
-            return False
-        if other.bypass() or (None in [self.sequence, other.sequence]):
-            return False
-        return self.sequence == other.sequence
-
-    def __and__(self, other):
-        '''
-        Check if the objects have the same color
-        '''
-        if not isinstance(other, Color):
-            return False
-        return (self.color == other.color) or other.bypass()
-
-    @property
-    def fixed(self):
-        return self.sequence is not None 
-    
-    def __bool__(self):
-        # return is the color is not None
-        return self.color is not None 
-
-    def __str__(self):
-        if self.color is None:
-            return " "
-        return str(self.color)
-
-    def __repr__(self):
-        return str(self)
-
-
-class ByPassColor(Color):
-    def bypass(self):
-        return True
-
-    def __and__(self, other):
-        return isinstance(other, Color)
-
-    def __eq__(self, other):
-        return False
-
-    @property
-    def fixed(self):
-        return True
-
-
-def find_pairs(board):
-    pairs = {}
-
-    for i, row in enumerate(board):
-        for j, tile in enumerate(row):
-            if tile not in pairs:
-                pairs[tile] = []
-            pairs[tile].append((i, j))
-
-    return pairs
-
-
-def printer(cards):
-    output = [
-        f'\t(Card.{card.name}, {num}): ' + str(value) 
-        for (card, num), value in cards.items()
-    ]
-    print('{')
-    print(',\n'.join(output))
-    print('}')
-
-
 BLACK   = "\x1b[30m"
 RED     = "\x1b[31m"
 GREEN   = "\x1b[32m"
@@ -114,6 +25,128 @@ COLORS = {
     '2':GREEN, 
     '3':YELLOW,
 }
+
+class Piece:
+    def __init__(self, color=None, seq=None):
+        self.color = color
+        self.sequence = seq
+
+    def clone(self):
+        return type(self)(self.color, self.sequence)
+
+    def set_sequence(self, number):
+        self.sequence = number
+
+    def bypass(self):
+        return False
+
+    def __eq__(self, other):
+        '''
+        Check if the objects have the same sequence id
+
+        * return False if sequence is None
+        '''
+        if not isinstance(other, Piece):
+            return False
+        if other.bypass() or (None in [self.sequence, other.sequence]):
+            return False
+        return self.sequence == other.sequence
+
+    def __and__(self, other):
+        '''
+        Check if the objects have the same color
+        '''
+        if not isinstance(other, Piece):
+            return False
+        return (self.color == other.color) or other.bypass()
+
+    @property
+    def fixed(self):
+        return self.sequence is not None 
+    
+    def __bool__(self):
+        # return is the color is not None
+        return self.color is not None 
+
+    def __str__(self):
+        if self.color is None:
+            return " "
+        return str(self.color)
+
+    def __repr__(self):
+        return str(self)
+
+
+class ByPassPiece(Piece):
+    def bypass(self):
+        return True
+
+    def __and__(self, other):
+        return isinstance(other, Piece)
+
+    def __eq__(self, other):
+        return False
+
+    @property
+    def fixed(self):
+        return True
+
+
+class BoardViewer:
+    def __init__(self, board):
+        self.board = board
+
+    def __getitem__(self, pos):
+        i, j = pos
+        return super().__getattribute__('board')[i][j].clone()
+
+    def __iter__(self):
+        board = super().__getattribute__('board')
+        for i, row in enumerate(board):
+            for j, piece in enumerate(row):
+                yield (i, j), piece.clone()
+
+    def __getattribute__(self, name: str):
+        raise AttributeError("BoardViewer doesn't have attributes")
+  
+
+class PileViewer:
+    def __init__(self, pile):
+        self.pile = pile
+
+    def __getitem__(self, pos):
+        return super().__getattribute__('pile')[pos]
+
+    def __iter__(self):
+        return iter(super().__getattribute__('pile'))
+
+    def __len__(self):
+        return len(super().__getattribute__('pile'))
+
+    def __getattribute__(self, name: str):
+        raise AttributeError("PileViewer doesn't have attributes")
+
+
+def find_pairs(board):
+    pairs = {}
+
+    for i, row in enumerate(board):
+        for j, tile in enumerate(row):
+            if tile not in pairs:
+                pairs[tile] = []
+            pairs[tile].append((i, j))
+
+    return pairs
+
+
+def printer(cards):
+    output = [
+        f'\t(Card.{card.name}, {num}): ' + str(value) 
+        for (card, num), value in cards.items()
+    ]
+    print('{')
+    print(',\n'.join(output))
+    print('}')
 
 
 def get_rep(card):
@@ -141,25 +174,7 @@ def get_board_rep(board):
         (', '.join(f'{get_rep(ca)}{get_piece_color(co)}' for ca, (_, co) in zip(cards, it))) 
         for cards in BOARD
     )
-
-
-class BoardViewer:
-    def __init__(self, board):
-        self.board = board
-
-    def __getitem__(self, pos):
-        i, j = pos
-        return super().__getattribute__('board')[i][j].clone()
-
-    def __iter__(self):
-        board = super().__getattribute__('board')
-        for i, row in enumerate(board):
-            for j, color in enumerate(row):
-                yield (i, j), color.clone()
-
-    def __getattribute__(self, name: str):
-        raise AttributeError("BoardViewer doesn't have attributes")
-        
+      
 
 def lines_collector(board, color, i, j):
     # check for sequences
@@ -174,7 +189,7 @@ def lines_collector(board, color, i, j):
 
     # check a half of the line
     for inc_i, inc_j, idx in moves:
-        last = Color(color)
+        last = Piece(color)
         cur_i, cur_j = i, j
         while last & board[cur_i][cur_j]:
             if last == board[cur_i][cur_j]:
@@ -189,7 +204,7 @@ def lines_collector(board, color, i, j):
 
     # check the other line half
     for inc_i, inc_j, idx in moves:
-        last = Color(color)
+        last = Piece(color)
         cur_i, cur_j = i - inc_i, j - inc_j
         if not ((0 <= cur_i < 10) and (0 <= cur_j < 10)):
             continue
@@ -205,3 +220,8 @@ def lines_collector(board, color, i, j):
 
     return data
     
+
+def take(iterator, size):
+    for _ in range(size):
+        yield next(iterator)
+        

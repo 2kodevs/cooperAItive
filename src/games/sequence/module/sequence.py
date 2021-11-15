@@ -1,5 +1,5 @@
 from enum import Enum
-from .utils import Color, ByPassColor, BoardViewer, lines_collector
+from .utils import Piece, ByPassPiece, BoardViewer, lines_collector
 from .defaults import *
 from random import shuffle
 
@@ -44,7 +44,7 @@ class Sequence:
     def __init__(self):
         self.deck = None                # Game deck
         self.logs = None                # Game history
-        self._board = None               # Game board
+        self._board = None              # Game board
         self.count = None               # Number of positions used of the board
         self.score = None               # Score per color (i.e Number of consecutive sequences)
         self.colors = None              # Players color
@@ -56,26 +56,16 @@ class Sequence:
         self.discard_pile = None        # Players discarted cards
         self.current_player = None      # Id of the current player
         self.cards_per_player = None    # Number of cards per player
+        self.number_of_players = None   # Number of players
 
     def log(self, data):
         self.logs.append(data)
 
-    @property
-    def cards(self):
-        return self.players[self.current_player].view()()
-
-    @property
-    def color(self):
-        return self.colors[self.current_player]
-
-    @property
-    def board(self):
-        return BoardViewer(self._board)
-
-    @property
-    def winner(self):
-        assert self.logs[-1][0] == Event.WIN
-        return self.logs[-1][2]
+    def _partners(self, player):
+        color = self.colors[player] 
+        for i, c in enumerate(self.colors):
+            if i != player and c == color:
+                yield i
 
     def empty(self, i, j):
         return not self._board[i][j]
@@ -87,18 +77,19 @@ class Sequence:
         self.win_strike = win_strike
         self.colors = players_colors
         self.cards_per_player = cards_per_player
-        self.players, self.deck = hand(number_of_players, self.cards_per_player)
+        self.players, self.deck = hand(number_of_players, cards_per_player)
+        self.number_of_players = number_of_players
 
         self.logs = []
         self.sequence_id = 0
         self.discard_pile = []
         self.current_player = 0
         self.can_discard = True
-        self._board = [[Color() for _ in range(len(l))] for l in BOARD]
+        self._board = [[Piece() for _ in range(len(l))] for l in BOARD]
         self.board_size = sum(len(l) for l in self._board) - 4
         self.count = 0
         for i, j in CORNERS:
-            self._board[i][j] = ByPassColor("X")
+            self._board[i][j] = ByPassPiece("X")
         self.score = {i:0 for i in set(players_colors)}
 
         self.log((Event.NEW_GAME,))
@@ -113,32 +104,7 @@ class Sequence:
         return True
 
     def check_valid(self, action):
-        if action is None:
-            # All the cards should be dead
-            for card in self.cards:
-                if not self._is_dead_card(card):
-                    return False
-            return True
-
-        card, pos = action
-        ctype, number = card
-
-        # check dead cards
-        if pos is None:
-            return self._is_dead_card(card)
-        i, j = pos
-
-        # check card in the board
-        if BOARD[i][j] == card:
-            # return if the board position is used
-            return self.empty(i, j)
-
-        # check if the card is a JACK
-        if number is JACK:
-            # check if the JACK is used correctly
-            return self.empty(i, j) != (ctype in REMOVE)
-        # not a valid move
-        return False
+        return action in self._valid_moves()
 
     def _valid_moves(self):
        return Sequence.valid_moves(self.board, self.cards, self.can_discard, self.color)
@@ -182,13 +148,13 @@ class Sequence:
         player = self.players[self.current_player]
         player.remove(card)
         self.discard_pile.append(card)
+        if self.deck:
+            player.draw(self.deck.pop())
         if not self.deck:
             self.log((Event.REFILL_DECK,))
             self.deck = self.discard_pile[:]
             self.discard_pile = []
             shuffle(self.deck)
-        if self.deck:
-            player.draw(self.deck.pop())
 
     def step(self, action):
         """
@@ -222,17 +188,18 @@ class Sequence:
 
         # check REMOVE action
         if self._board[i][j]:
-            self._board[i][j] = Color()
+            self._board[i][j] = Piece()
             self.count -= 1
             self.log((Event.REMOVE, self.current_player, card, pos))
             return self._next()
 
         # Normal play, or a JACK
         self.log((Event.PLAY, self.current_player, card, self.color, pos))
-        self._board[i][j] = Color(self.color)
+        self._board[i][j] = Piece(self.color)
         self.count += 1
 
         # check for sequences
+
         data = lines_collector(self._board, self.color, i, j)
 
         for line in data:
@@ -241,6 +208,31 @@ class Sequence:
             self._sequence(seq, line)
               
         return self._next()
+
+    @property
+    def cards(self):
+        return self.players[self.current_player].view()()
+
+    @property
+    def color(self):
+        return self.colors[self.current_player]
+
+    @property
+    def partners(self):
+        return self._partner(self.current_player)
+
+    @property
+    def board(self):
+        return BoardViewer(self._board)
+
+    @property
+    def winner(self):
+        assert self.logs[-1][0] == Event.WIN
+        return self.logs[-1][2]
+
+    @property
+    def view(self):
+        return SequenceView(self)
 
     @staticmethod
     def valid_moves(board, cards, can_discard, pcolor):
@@ -261,12 +253,21 @@ class Sequence:
                 assert number is JACK, f"Unexpected card number ({number})"
                 if ctype in REMOVE:
                     for (i, j), piece in board:
+                        if (i, j) in CORNERS:
+                            continue
                         if piece and piece.color != pcolor and not piece.fixed:
+                            if ((Card.CLUBS, 11), (i, j)) in valids or ((Card.SPADES, 11), (i, j)):
+                                continue
                             valids.append((card, (i, j)))
                 else:
                     for (i, j), piece in board:
+                        if (i, j) in CORNERS:
+                            continue
                         if not (piece.bypass() or piece):
+                            if ((Card.DIAMOND, 11), (i, j)) in valids or ((Card.HEART, 11), (i, j)):
+                                continue
                             valids.append((card, (i, j)))
+        valids = list(set(valids))
         return valids if valids else [None]
 
 
@@ -292,12 +293,8 @@ class SequenceManager:
         for i, player in enumerate(self.players):
             player.reset(
                 i, 
-                self.seq.board, 
                 self.seq.players[i].view(), 
-                players_colors[:], 
-                cards_per_player, 
-                len(players),
-                win_strike,
+                self.seq.view
             )
         self.feed_logs()
 
@@ -313,4 +310,58 @@ class SequenceManager:
 
         while not self.step(): pass
 
-        return self.seq.winner
+        return super().__getattribute__("seq").winner
+
+
+class SequenceView:
+    def __init__(self, seq):
+        self.seq = seq
+
+    @property
+    def colors(self):
+        return super().__getattribute__("seq").colors[:]
+
+    @property
+    def pile(self):
+        return super().__getattribute__("seq").discard_pile[:]
+
+    @property
+    def board(self):
+        return super().__getattribute__("seq").board
+
+    @property
+    def count(self):
+        return super().__getattribute__("seq").count
+
+    @property
+    def score(self):
+        return super().__getattribute__("seq").score.copy()
+
+    @property
+    def size(self):
+        return super().__getattribute__("seq").board_size
+
+    @property
+    def strike(self):
+        return super().__getattribute__("seq").win_strike
+
+    @property
+    def discard(self):
+        return super().__getattribute__("seq").can_discard
+
+    @property
+    def player(self):
+        return super().__getattribute__("seq").current_player
+
+    @property
+    def cards(self):
+        return super().__getattribute__("seq").cards_per_player
+
+    @property
+    def players(self):
+        return super().__getattribute__("seq").number_of_players
+
+    def __getattribute__(self, name: str):
+        if name == "seq":
+            raise AttributeError("SequenceView doesn't have a `seq` attribute")
+        return super().__getattribute__(name)
