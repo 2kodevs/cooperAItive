@@ -53,7 +53,7 @@ def match(args):
     return status1, status2
 
 
-def main():
+def get_parser():
     parser = argparse.ArgumentParser("Sequence IA")
 
     subparsers = parser.add_subparsers()
@@ -83,6 +83,12 @@ def main():
     match_parser.add_argument('-w',   '--win',         dest='win',      type=int,  default=2, help="Numbers of sequences needed to win")
     match_parser.add_argument('-v',   '--verbose',     dest='verbose',  action='store_true', help="Print the game result at the end")
     match_parser.set_defaults(command=match)
+
+    return parser
+
+
+def main():
+    parser = get_parser()
 
     args = parser.parse_args()
 
