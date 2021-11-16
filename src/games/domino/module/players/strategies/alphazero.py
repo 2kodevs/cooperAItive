@@ -15,8 +15,8 @@ class AlphaZero(BasePlayer):
             self.NN = NN
         self.handouts = int(handouts)
         self.rollouts = int(rollouts)
-        self.coop = coop
-        self.cput = cput
+        self.coop = int(coop)
+        self.cput = int(cput)
 
     def filter(self, valids):
         data = {}

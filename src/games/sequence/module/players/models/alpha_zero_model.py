@@ -290,7 +290,7 @@ class Net(nn.Module):
         model = net_checkpoint['model']
         device = net_checkpoint['device']
 
-        if 'cuda' not in device and torch.cuda.is_available():
+        if torch.cuda.is_available():
             device = "cuda:0"
         
         model = model.to(device)
