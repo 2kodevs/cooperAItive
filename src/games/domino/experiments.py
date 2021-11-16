@@ -158,7 +158,7 @@ if __name__ == "__main__":
         action='append_const', const=test_handouts_vs_rollout,
         help="Handouts vs Rollouts test",
     )
-    parser.set_defaults(experiments=[], test=[], command=main)
+    parser.set_defaults(experiments=[], tests=[], command=main)
 
     args = parser.parse_args()
 
