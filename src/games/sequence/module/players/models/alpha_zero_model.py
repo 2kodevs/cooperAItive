@@ -228,13 +228,15 @@ class Net(nn.Module):
             os.rename(full_path, f'{save_path}{net_name[:-5]}_backup.ckpt')
 
         if save_model:
+            model = self.cpu()
             torch.save({
-                'model': self,
+                'model': model,
                 'device': self.device,
                 'error_log': error_log,
                 'config': config,
                 'epoch': epoch,
             }, full_path)
+            model.to(device=self.device)
         else:
             torch.save({
                 'model_state_dict': self.state_dict(),
@@ -288,11 +290,9 @@ class Net(nn.Module):
         model = net_checkpoint['model']
         device = net_checkpoint['device']
 
-        try:
-            model = model.to(device)
-            model.device = device
-        except AssertionError:
-            device = torch.device('cpu')
-            model.to(device)
-            model.device = device
+        if 'cuda' not in device and torch.cuda.is_available():
+            device = "cuda:0"
+        
+        model = model.to(device)
+        model.device = device
         return model
