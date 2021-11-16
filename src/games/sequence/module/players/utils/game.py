@@ -153,17 +153,11 @@ def encode_valids(valids: List[Action]) -> int:
         else:
             cur_bit = 1 << (table_bit(*pos) - adjust_shifting(pos))
             if num is JACK: 
-                temp1 = mask                
                 mask |= (cur_bit << 96)
                 vector.append((table_bit(*pos) - adjust_shifting(pos)) + 96)
-                assert temp1 != mask, 'JACK \n' + str(valids) +  '\n' + repr(vector) + '\n' + str(mask) + '\n' + str(temp1)
             else:
-                temp1 = mask  
                 mask |= cur_bit
                 vector.append((table_bit(*pos) - adjust_shifting(pos)))
-                assert temp1 != mask, 'No JACK \n' + str(valids) + '\n' + repr(vector) + '\n' + str(mask) + '\n' + str(temp1)
-    if discards:
-        print(discards)
     return mask
 
 
