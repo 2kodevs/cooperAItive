@@ -56,6 +56,11 @@ def lines_score(lines):
     return score
     
 
+def move_score(*collector_params):
+    lines = lines_collector(*collector_params)
+    return lines_score(lines)
+
+
 def calc_colab(sequence: Sequence, player: int):
     history = sequence.logs
 
@@ -74,8 +79,7 @@ def calc_colab(sequence: Sequence, player: int):
                 for other_color in colors:
                     if other_color != sequence.colors[playerId]:
                         board[x][y] = Piece(other_color)
-                        other_color_lines = lines_collector(board, other_color, x, y) 
-                        score += lines_score(other_color_lines)
+                        score += move_score(board, other_color, x, y) 
                         score_updates += 1
 
             # Execute the movement
@@ -103,8 +107,7 @@ def calc_colab(sequence: Sequence, player: int):
                 for other_color in colors:
                     if other_color != sequence.colors[playerId]:
                         board[x][y] = Piece(other_color)
-                        other_color_lines = lines_collector(board, other_color, x, y) 
-                        score += lines_score(other_color_lines)     
+                        score += move_score(board, other_color, x, y) 
                         score_updates += 1               
             board[x][y] = Piece()
             

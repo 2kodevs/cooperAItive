@@ -1,12 +1,13 @@
+from .utils import alphazero as alphazero_utils, mc as mc_utils, game as game_utils
 from .player_view import PlayerView
-from .player import BasePlayer
-from .random import Random
 from .monte_carlo import MonteCarlo
 from .alphazero import AlphaZero
+from .models import AlphaZeroNet
+from .heuristic import Heuristic
+from .player import BasePlayer
+from .random import Random
 from .human import Human
 from .hands import *
-from .models import AlphaZeroNet
-from .utils import alphazero as alphazero_utils, mc as mc_utils, game as game_utils
 
 
 class Shortcut:
@@ -23,6 +24,7 @@ PLAYERS = [
     MonteCarlo,
     AlphaZero,
     Human,
+    Heuristic,
     Shortcut("MC", MonteCarlo),
     Shortcut("A0", AlphaZero),
 ]
