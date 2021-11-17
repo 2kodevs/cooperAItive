@@ -5,17 +5,16 @@ import torch.optim as optim
 import torch.nn.functional as F
 import numpy as np
 
-from ..utils import state_to_list
+from ..utils.game import state_to_list
 
-#STATE= [(56bits, 4bits, 2bits) x 41]
-STATE_SHAPE = (1, 41, 62)
+STATE_SHAPE = (4, 11, 10)
 KERNEL_SIZE = 3
 
 class Net(nn.Module):
     """
-    Neural Network for Alpha Zero implementation of Dominoes
+    Neural Network for Alpha Zero implementation of Sequence
     """
-    def __init__(self, residual_layers, filters, input_shape=STATE_SHAPE, policy_shape=111, lr=0.001):
+    def __init__(self, residual_layers, filters, input_shape=STATE_SHAPE, policy_shape=199, colab_shape=4, lr=0.001):
         """
         Initialize the network
 
@@ -27,6 +26,8 @@ class Net(nn.Module):
             Dimensions of the input.
         param policy_shape: int
             Number of total actions in policy head
+        param colab_shape: int
+            Number of players in colab head
         param lr: float
             Learning rate
         """
@@ -70,7 +71,7 @@ class Net(nn.Module):
         self.colab = nn.Sequential(
             nn.Linear(filters, 512),
             nn.LeakyReLU(),
-            nn.Linear(512, 4),
+            nn.Linear(512, colab_shape),
             nn.Tanh(),
         )
 
@@ -82,7 +83,7 @@ class Net(nn.Module):
 
     def forward(self, x):
         v = self.conv_in(x)
-        v = F.avg_pool2d(v, v.size(2))
+        v = F.avg_pool2d(v, (v.size(2), v.size(3)))
 
         for b in self.blocks:
             # skip connection
@@ -97,20 +98,21 @@ class Net(nn.Module):
 
         return pol, val, col
 
-    def predict(self, s, mask):
+    def predict(self, s, valids_actions):
         """
         Infer node data given an state
 
         param s: 
             list of encoded states of the game
-        param mask
+        param valids_actions
             list of encoded valids actions from a position of the game
+
         return
             (Move probabilities P vector, value V vector)
         """
         self.eval()
         batch = self.state_lists_to_batch(s)
-        valid_actions_masks = [self.valids_actions_to_tensor(va) for va in mask]
+        valid_actions_masks = [self.valids_actions_to_tensor(va) for va in valids_actions]
         pol, val, col = self(batch)
         pol = [self.get_policy_value(p, mask, False) for p, mask in zip(pol, valid_actions_masks)]
         return pol, val, col
@@ -156,10 +158,6 @@ class Net(nn.Module):
 
     def valids_actions_to_tensor(self, valids_actions):
         mask = state_to_list(valids_actions, self.policy_shape)
-        return torch.tensor(mask, dtype=torch.bool).to(self.device)
-
-    def remaining_pieces_to_tensor(self, remaining_pieces):
-        mask = state_to_list(remaining_pieces, 55)
         return torch.tensor(mask, dtype=torch.bool).to(self.device)
 
     def train_batch(self, data):

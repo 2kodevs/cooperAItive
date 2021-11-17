@@ -1,8 +1,9 @@
+from typing import List, Any
 from torch.multiprocessing import Pool, set_start_method
 from torch.utils.tensorboard import SummaryWriter
-from ..players import AlphaZeroNet, alphazero_utils as utils, mc_utils, game_utils, BasePlayer, hand_out
+from ..players import AlphaZeroNet, alphazero_utils as utils, mc_utils, game_utils, BasePlayer, handout
 from .trainer import Trainer
-from ..domino import Domino
+from ..sequence import Sequence
 
 import random
 import time
@@ -10,11 +11,11 @@ import os
 import json
 import torch
 import shutil
-# import ray
+import ray
 
 class AlphaZeroTrainer(Trainer):
     """
-    Trainer manager for Alpha Zero Domino model
+    Trainer manager for Alpha Zero Sequence model
     """
     def __init__(
         self,
@@ -23,8 +24,9 @@ class AlphaZeroTrainer(Trainer):
         handouts: int,
         rollouts: int,
         alpha: float,
-        max_number: int,
-        pieces_per_player: int,
+        number_of_players: int,
+        cards_per_player: int,
+        players_colors: List[Any],
         data_path: str,
         save_path: str,
         lr: int,
@@ -32,7 +34,7 @@ class AlphaZeroTrainer(Trainer):
         coop: int,
         residual_layers: int,
         num_filters: int,
-        tau_threshold: int = 8,
+        tau_threshold: int = 50,
     ):
         """
         param batch_size: int
@@ -45,10 +47,12 @@ class AlphaZeroTrainer(Trainer):
             Number of rollouts per handout
         param alpha: float
             Parameter of Dirichlet random variable
-        param max_number: int:
-            Max piece number
-        param pieces_per_player: int:
-            Number of pieces distributed per player
+        param number_of_players: int:
+            Number of players in the game
+        param cards_per_player: int:
+            Number of cards distributed per player
+        param players_colors: List[Any]
+            Color of every player
         param data_path: string
             Path to the folder where training data will be saved
         param save_path: string
@@ -71,8 +75,9 @@ class AlphaZeroTrainer(Trainer):
         self.handouts = handouts
         self.rollouts = rollouts
         self.alpha = alpha
-        self.max_number = max_number
-        self.pieces_per_player = pieces_per_player
+        self.number_of_players = number_of_players
+        self.cards_per_player = cards_per_player
+        self.players_colors = players_colors
         self.data_path = data_path
         self.save_path = save_path
         self.lr = lr
@@ -128,14 +133,15 @@ class AlphaZeroTrainer(Trainer):
         data = []
         game_over = False
         root = True
-        domino = Domino()
-        domino.reset(hand_out, self.max_number, self.pieces_per_player)
+        sequence = Sequence()
+        sequence.reset(handout, self.number_of_players, self.players_colors, self.cards_per_player)
+        turn = 1
 
         while not game_over:
             stats = {}
-            cur_player = BasePlayer.from_domino(domino)
-            selector = utils.selector_maker(stats, cur_player.valid_moves(), cur_player.pieces_per_player - len(cur_player.pieces), root, self.tau_threshold, alpha)
-            encoder = utils.encoder_generator(self.max_number)
+            cur_player = BasePlayer.from_sequence(sequence)
+            selector = utils.selector_maker(stats, cur_player.valid_moves(), turn, root, self.tau_threshold, alpha)
+            encoder = game_utils.encode
             rollout = utils.rollout_maker(stats, self.net, self.coop, self.cput)
 
             root = False
@@ -148,20 +154,24 @@ class AlphaZeroTrainer(Trainer):
                 handouts,
                 rollouts,
             )
-            _, mask = utils.get_valids_data(domino)
+            # Get valids actions mask
+            valids = sequence._valid_moves()
+            mask = utils.encode_valids(valids)
 
-            game_over = domino.step(action)
+            game_over = sequence.step(action)
+            turn += 1
             data.append((state, pi.tolist(), cur_player, mask))
 
         training_data = []
-        cooperativeness = [game_utils.calc_colab(domino, player) for player in range(4)]
+        cooperativeness = [game_utils.calc_colab(sequence, player) for player in range(self.number_of_players)]
 
-        for state, pi, player, valids_mask in data:
-            end_value = [0, 0, 0]
-            end_value[player.team] = 1
-            end_value[1 - player.team] = -1
-            result = end_value[domino.winner] 
-            training_data.append((state, pi, result, cooperativeness, valids_mask))
+        for state, pi, player, mask in data:
+            #//TODO: Change this for more than 2 teams
+            end_value = {c:-1 for c in player.players_colors}
+            end_value[None] = 0
+            end_value[player.color] = 1
+            result = end_value[sequence.winner] 
+            training_data.append((state, pi, result, cooperativeness, mask))
         return training_data
 
     def policy_iteration(
@@ -221,10 +231,6 @@ class AlphaZeroTrainer(Trainer):
         for _ in range(batch_size * self.batch_factor // sample):
             batch = random.sample(data, sample)
             total += 1
-            
-            # if verbose:
-            #     print('Iteration:', total, '/', batch_size * 100 // sample)
-
             loss = self.net.train_batch(batch)
             total_loss += loss[0]
             policy_loss += loss[1]
@@ -383,8 +389,9 @@ class AlphaZeroTrainer(Trainer):
             "handouts": self.handouts,
             "rollouts": self.rollouts,
             "tau_threshold": self.tau_threshold,
-            "max_number": self.max_number,
-            "pieces_per_player": self.pieces_per_player,
+            "number_of_players": self.number_of_players,
+            "cards_per_player": self.cards_per_player,
+            "players_colors": self.players_colors,
             "data_path": self.data_path, 
             "save_path": self.save_path,
             "lr": self.lr,
@@ -403,8 +410,9 @@ class AlphaZeroTrainer(Trainer):
         self.handouts = config["handouts"]
         self.rollouts = config["rollouts"]
         self.tau_threshold = config["tau_threshold"]
-        self.max_number = config["max_number"]
-        self.pieces_per_player = config["pieces_per_player"]
+        self.number_of_players = config["number_of_players"]
+        self.cards_per_player = config["cards_per_player"]
+        self.players_colors = config["players_colors"]
         self.data_path = config["data_path"]
         self.save_path = config["save_path"]
         self.lr = config["lr"]

@@ -1,20 +1,15 @@
 from ..defaults import BOARD
-from ..sequence import Sequence
+from ..sequence import Sequence, SequenceView
 from ..utils import BoardViewer
 import random
 
 class BasePlayer:
     def __init__(self, name):
-        self.name = name               # player name
-        self.board = None              # Game board (read only) NOTE: Type is BoardViewer
-        self._cards = None              # Player card (read only) NOTE: self._cards() returns an iterator
-        self.history = None            # Game history
-        self.position = None           # Player number
-        self.win_strike = None         # Number of sequences needed to win
-        self.can_discard = None        # Indicates if the player can change a dead card
-        self.players_colors = None     # Colors of all the players
-        self.number_of_cards = None    # The number of cards per player
-        self.number_of_players = None  # The number of players in the game
+        self.name = name        # player name
+        self.seq = None         # The player game view
+        self._cards = None      # Player card (read only) NOTE: self._cards() returns an iterator
+        self.history = None     # Game history
+        self.position = None    # Player number
 
     def log(self, data):
         self.history.append(data)
@@ -24,11 +19,8 @@ class BasePlayer:
         if choice is not None:
             card, position = choice
             assert card in list(self._cards())
-            self.can_discard = (position is not None)
             return card, position
-        else:
-            self.can_discard = True
-            return None
+        return None
 
     def choice(self, valids=None):
         """
@@ -51,22 +43,57 @@ class BasePlayer:
                     Position: (Tuple<int, int>)  Selected board position to play the card
         """
         if valids is None:
-            return Sequence.valid_moves(self.board, self._cards(), self.can_discard)
+            return self.valid_moves()
         return valids
 
-    def reset(self, position, board, card_view, players_colors, number_of_cards, number_of_players, win):
+    def reset(self, position, cards_view, sequence: SequenceView):
         self.position = position
-        self._cards = card_view
-        self.players_colors = players_colors
-        self.number_of_cards = number_of_cards
-        self.number_of_players = number_of_players
+        self._cards = cards_view
+        self.seq = sequence
         self.history = []
-        self.can_discard = True
-        self.board = board
-        self.win_strike = win
 
     def valid_moves(self):
-        return Sequence.valid_moves(self.board, self.cards, self.can_discard) 
+        return Sequence.valid_moves(self.board, self.cards, self.can_discard, self.color) 
+
+    @property
+    def players_colors(self):
+        return self.seq.colors
+
+    @property
+    def colors(self):
+        return self.players_colors
+
+    @property
+    def is_current(self):
+        return self.me == self.seq.player
+
+    @property
+    def win_strike(self):
+        return self.seq.strike
+
+    @property
+    def board(self):
+        return self.seq.board
+
+    @property
+    def can_discard(self):
+        return self.seq.discard
+
+    @property
+    def number_of_cards(self):
+        return self.seq.cards
+
+    @property
+    def number_of_players(self):
+        return self.seq.players
+
+    @property
+    def pile(self):
+        return self.seq.pile
+
+    @property
+    def score(self):
+        return self.seq.score
 
     @property
     def me(self):
@@ -87,12 +114,9 @@ class BasePlayer:
     @staticmethod
     def from_sequence(sequence: Sequence):
         player = BasePlayer('SequencePlayer')
-        player.board = BoardViewer(sequence.board)
-        player.cards = sequence.cards
         player.position = sequence.current_player
-        player.color = sequence.color
+        player._cards = sequence.players[player.me].view()
         player.history = sequence.logs[:]
-        player.can_discard = sequence.can_discard
-        player.number_of_cards = sequence.cards_per_player
+        player.seq = sequence.view
         return player
         

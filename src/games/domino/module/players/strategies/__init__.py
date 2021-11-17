@@ -18,8 +18,18 @@ from .alphazero import AlphaZero
 from .monte_carlo import MonteCarlo
 from .human import Human
 
-from .utils import alphazero as alphazero_utils, mc as mc_utils
+from .utils import alphazero as alphazero_utils, mc as mc_utils, game as game_utils
 from .models import alpha_zero_model as AlphaZeroModel, AlphaZeroNet
+
+
+class Shortcut:
+    def __init__(self, name, cls) -> None:
+        self.__name__ = name
+        self.cls = cls
+
+    def __call__(self, *args, **kwds):
+        return self.cls(*args, **kwds)
+
 
 # Add players to this list
 PLAYERS = [
@@ -43,4 +53,11 @@ PLAYERS = [
     Human,
     MonteCarlo,
     AlphaZero,
+    Shortcut("MC", MonteCarlo),
+    Shortcut("A0", AlphaZero),
+    Shortcut("heuristic", MergeFactory([
+        SmallDrop, AlwaysDouble, Agachao, DataKeeper,
+        DataDropper, SimpleHybrid, TableCounter, LessPlayed,
+        Passer, Repeater, Frequent, BigDrop,
+    ])),
 ]

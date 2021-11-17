@@ -1,11 +1,8 @@
 from ..player_view import PlayerView
 from ...defaults import Card
+from ...utils import take
 from random import shuffle
 
-
-def take(iterator, size):
-    for _ in range(size):
-        yield next(iterator)
 
 def generate_cards():
     # Generate the cards

@@ -34,7 +34,8 @@ def play(args):
     for _ in range(args.rep):
         game = rule()
         status[game.start(player0, player1, player2, player3, hand, *args.pieces)] += 1
-    print(status)
+    if args.verbose:
+        print(status)
     return status
 
 
@@ -52,7 +53,8 @@ def match(args):
             game = rule()
             status[1 - game.start(oponent, player, oponent, player, hand, *args.pieces)] += 1
     status[-1] += status.pop(2)
-    print(status)
+    if args.verbose:
+        print(status)
     return status 
 
 
@@ -74,8 +76,8 @@ def real_game(args):
     print(winner)
     return winner
 
-
-def main():
+  
+def get_parser():
     parser = argparse.ArgumentParser("DomAIno")
 
     subparsers = parser.add_subparsers()
@@ -91,6 +93,8 @@ def main():
     play_parser.add_argument('-n',   '--nine',        dest='pieces',  action='store_const', const=[9,10], default=[], help="Double nine mode")
     play_parser.add_argument('-rep', '--repetitions', dest='rep',     type=int, default=1, help="Numbers of plays to run")
     play_parser.add_argument('-H',   '--hand',        dest='hand',    default='hand_out', help="Game handout strategy")
+    play_parser.add_argument('-v',   '--verbose',     dest='verbose', action='store_true', help="Print the game result at the end")
+
     play_parser.set_defaults(command=play)
 
     match_parser = subparsers.add_parser('match', help="Run a domino match")
@@ -100,6 +104,8 @@ def main():
     match_parser.add_argument('-rep', '--repetitions', dest='rep',      type=int, default=1, help="Numbers of plays to run per oponent")
     match_parser.add_argument('-H',   '--hand',        dest='hand',     default='hand_out', help="Game handout strategy")
     match_parser.add_argument('-o',   '--oponents',    dest='oponents', type=str, nargs='+', required=True, help="Oponents class names")
+    match_parser.add_argument('-v',   '--verbose',     dest='verbose', action='store_true', help="Print the game result at the end")
+    
     match_parser.set_defaults(command=match)
 
     rgame_parser = subparsers.add_parser('real-game', help="Run a domino match between humans and AlphaZeros, with a real world game handout")
@@ -113,8 +119,14 @@ def main():
     rgame_parser.add_argument('-r',    '--rollouts',    dest='rollouts', type=int,  default=50,    help="Numbers of rollouts for AlphaZero")
     rgame_parser.add_argument('-p',    '--path',        dest='path',     default='module/training/checkpoints', help='NN\'s full path')
     rgame_parser.add_argument('-n',    '--nine',        dest='pieces',   action='store_const',  const=[9,10], default=[], help="Double nine mode")
+    
     rgame_parser.set_defaults(command=real_game)
 
+    return parser
+
+
+def main():
+    parser = get_parser()
     args = parser.parse_args()
 
     if not hasattr(args, 'command'):

@@ -1,8 +1,8 @@
 from random import choice, randint
 from ..player import BasePlayer
-from ...sequence import Event, Sequence
+from ...sequence import Sequence
 from .types import *
-from .game import get_discard_pile, fixed_hand
+from .game import fixed_hand
 
 
 def monte_carlo(
@@ -14,12 +14,8 @@ def monte_carlo(
     rollouts: int,
 ) -> Tuple[State, Action]:
     # basic game information
-    discard_pile = get_discard_pile(player.history)
-    score = {c:0 for c in player.players_colors}
-    for e, *data in player.history:
-        if e is Event.SEQUENCE:
-            _, color, size = data
-            score[color] += 1 + (size > 5)
+    discard_pile = player.pile
+    score = player.score
 
     # simulations
     for _ in range(handouts):
@@ -35,11 +31,10 @@ def monte_carlo(
                 player.win_strike,
             )
             # Update the game
-            for (i, j), color in player.board:
-                seq._board[i][j] = color
-                seq.count += bool(color)
-            for log in player.history[1:]:
-                seq.log(log)
+            for (i, j), piece in player.board:
+                seq._board[i][j] = piece
+                seq.count += bool(piece)
+            seq.logs = player.history[:]
             seq.discard_pile = discard_pile[:]
             seq.can_discard = player.can_discard
             seq.current_player = player.position
@@ -61,30 +56,31 @@ def rollout_maker(
         encoder: Encoder,
     ):
         s_comma_a = []
-        v = None
-        end_value = {c:[-1, 1][sequence.color == c] for c in sequence.colors}
+        end_value = {c:-1 for c in sequence.colors}
+        end_value[sequence.color] = 1
         end_value[None] = 0
+        value = None
 
-        while v is None:
+        while True:
             state = encoder(sequence, sequence.discard_pile)
             valids = sequence._valid_moves()
             try:
                 # Check if state is explored
-                _, _ = data[state]
+                _, _, values = data[state]
 
-                index = randint(0, len(valids) - 1)
+                index = randint(0, len(values) - 1)
 
-                s_comma_a.append((state, index))
-
+                s_comma_a.append((state, index, sequence.current_player))
                 if sequence.step(valids[index]):
-                    v = end_value[sequence.winner]
+                    value = lambda x: 0 if sequence.winner is None else [-1, 1][sequence.is_winner(x)]
+                    break
             except KeyError:
-                v = 0
                 size = len(valids)
-                data[state] = [[0] * size, [0] * size]
+                data[state] = [[0] * size, [0] * size, valids]
 
-        for state, index in s_comma_a:
-            N, Q = data[state]
+        for state, index, player in s_comma_a:
+            v = value(player)
+            N, Q, _ = data[state]
             W = (Q[index] * N[index]) + v
             N[index] += 1
             Q[index] = W / N[index]
@@ -99,7 +95,7 @@ def selector_maker(
     def selector(
         state: State,
     ):
-        _, Q = data[state]
+        _, Q, _ = data[state]
         value = max(Q)
         filtered_data = [i for i, x in enumerate(Q) if x == value]
         return (valids[choice(filtered_data)],)
