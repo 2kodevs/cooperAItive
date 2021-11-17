@@ -136,7 +136,7 @@ class Domino:
         """
 
         if not self.check_valid(action):
-            raise ValueError("Invalid move.")
+            raise ValueError(f"Invalid move. {action}")
 
         if action is None:
             self.log(Event.PASS, self.current_player)
