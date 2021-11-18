@@ -118,7 +118,7 @@ class Domino:
         team0 = min(points[0], points[2])
         team1 = min(points[1], points[3])
 
-        self.winner = -1 if team0 == team1 else int(team1 > team0)
+        self.winner = -1 if team0 == team1 else int(team1 < team0)
         self.log(Event.OVER)
         self.log(Event.WIN, self.winner)
         return True

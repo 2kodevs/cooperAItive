@@ -20,7 +20,6 @@ class OneGame:
     """
     def start(self, player0, player1, player2, player3, hand, *pieces_config):
         env = DominoManager()
-        print(player0)
         players = [player0("0"), player1("1"), player2("2"), player3("3")]
         return env.run(players, hand, *pieces_config)
 

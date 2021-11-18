@@ -17,7 +17,6 @@ def prepare_player(data):
 def parse_hand(hand):
     r = r'\(([ \d]*),([ \d]*)\)'
     pieces = re.findall(r, hand)
-    print(pieces)
     assert len(pieces) == 10, "Unable to parse the hand. Less than 10 pieces pattern (h1, h2) detected"
     data = []
     for x, y in pieces:

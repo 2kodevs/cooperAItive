@@ -145,7 +145,7 @@ def selector_maker(
     turn: int,
     root: bool,
     tau_threshold: int,
-    alpha: float = 0.4,
+    alpha: float = 1.0,
     epsilon: float = 0.25,
 ):
     def selector(state):

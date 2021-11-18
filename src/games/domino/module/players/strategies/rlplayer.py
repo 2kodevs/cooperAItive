@@ -123,6 +123,5 @@ class SingletonRLPlayer:
 
     def __call__(self, name):
         if not name in self.instances:
-            print("wtf")
             self.instances[name] = RLPlayer(name)
         return self.instances[name]

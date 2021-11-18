@@ -73,7 +73,7 @@ def real_game(args):
 
     game = get_rule("onegame")()
     winner = game.start(*[get_player(x) for x in players], hand, *args.pieces)
-    print(winner)
+    print(f"The winner is team {winner}")
     return winner
 
   

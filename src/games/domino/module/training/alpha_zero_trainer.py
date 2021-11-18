@@ -10,7 +10,7 @@ import os
 import json
 import torch
 import shutil
-# import ray
+import ray
 
 class AlphaZeroTrainer(Trainer):
     """
@@ -140,6 +140,7 @@ class AlphaZeroTrainer(Trainer):
 
             root = False
 
+            #start = time.time()
             state, action, pi = mc_utils.monte_carlo(
                 cur_player, 
                 encoder, 
@@ -151,6 +152,7 @@ class AlphaZeroTrainer(Trainer):
             _, mask = utils.get_valids_data(domino)
 
             game_over = domino.step(action)
+            #print(str(time.time() - start))
             data.append((state, pi.tolist(), cur_player, mask))
 
         training_data = []
@@ -279,7 +281,7 @@ class AlphaZeroTrainer(Trainer):
                 while len(data) < batch_size:
                     args = [(self.handouts, self.rollouts, self.alpha)]
                     num_games += batch_size // num_gpus
-                    ray.get([self.self_play_fractional(num_gpus).remote(args) for _ in range(int(1 / num_gpus))])
+                    data.extend(ray.get([self.self_play_fractional(num_gpus).remote(args) for _ in range(int(1 / num_gpus))]))
             else:
                 while len(data) < batch_size:
                     data.extend(self.self_play((self.handouts, self.rollouts, self.alpha)))
