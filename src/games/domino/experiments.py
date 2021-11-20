@@ -5,7 +5,7 @@ import argparse
 def experiment_heuristic_vs_mcts():
     parser = get_parser()
 
-    player = ['mc', '100', '10']
+    player = ['mc', '50', '10']
     
     print(
         "Experiment #1 ----------------\n"
@@ -13,11 +13,11 @@ def experiment_heuristic_vs_mcts():
         "    heuristic_vs_mcts:",
         end=" ", flush=True,
     )
-    args = parser.parse_args(['play', '-p0', 'heuristic', '-p1', *player, "-v", '-rep', '100'])
+    args = parser.parse_args(['play', '-p0', 'heuristic', '-p1', *player, "-v", '-rep', '50'])
     x = args.command(args)
 
     print("    mcts_vs_heuristic:", end=" ", flush=True)
-    args = parser.parse_args(['play', '-p1', 'heuristic', '-p0', *player, "-v", '-rep', '100'])
+    args = parser.parse_args(['play', '-p1', 'heuristic', '-p0', *player, "-v", '-rep', '50'])
     y = args.command(args)
 
     player_score = x[1] + y[0]
@@ -34,7 +34,7 @@ def experiment_heuristic_vs_mcts():
 def experiment_heuristic_vs_a0():
     parser = get_parser()
 
-    player = ['a0', '100', '10', 'module/training/checkpoints/experimet_player.ckpt', '0']
+    player = ['a0', '50', '10', 'module/training/checkpoints/experimet_player.ckpt', '0']
     
     print(
         "Experiment #2 ----------------\n"
@@ -42,11 +42,11 @@ def experiment_heuristic_vs_a0():
         "    heuristic_vs_alphazero:",
         end=" ", flush=True,
     )
-    args = parser.parse_args(['play', '-p0', 'heuristic', '-p1', *player, "-v", '-rep', '100'])
+    args = parser.parse_args(['play', '-p0', 'heuristic', '-p1', *player, "-v", '-rep', '50'])
     x = args.command(args)
 
     print("    alphazero_vs_heuristic:", end=" ", flush=True)
-    args = parser.parse_args(['play', '-p1', 'heuristic', '-p0', *player, "-v", '-rep', '100'])
+    args = parser.parse_args(['play', '-p1', 'heuristic', '-p0', *player, "-v", '-rep', '50'])
     y = args.command(args)
 
     player_score = x[1] + y[0]
@@ -63,7 +63,7 @@ def experiment_heuristic_vs_a0():
 def experiment_heuristic_vs_a0coop():
     parser = get_parser()
 
-    player = ['a0', '100', '10', 'module/training/checkpoints/experimet_player.ckpt', "13"]
+    player = ['a0', '50', '10', 'module/training/checkpoints/experimet_player.ckpt', "13"]
     
     print(
         "Experiment #3 ----------------\n"
@@ -71,11 +71,11 @@ def experiment_heuristic_vs_a0coop():
         "    heuristic_vs_alphazero_coop:",
         end=" ", flush=True,
     )
-    args = parser.parse_args(['play', '-p0', 'heuristic', '-p1', *player, "-v", '-rep', '100'])
+    args = parser.parse_args(['play', '-p0', 'heuristic', '-p1', *player, "-v", '-rep', '50'])
     x = args.command(args)
 
     print("    alphazero_coop_vs_heuristic:", end=" ", flush=True)
-    args = parser.parse_args(['play', '-p1', 'heuristic', '-p0', *player, "-v", '-rep', '100'])
+    args = parser.parse_args(['play', '-p1', 'heuristic', '-p0', *player, "-v", '-rep', '50'])
     y = args.command(args)
 
     player_score = x[1] + y[0]
