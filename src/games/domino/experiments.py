@@ -2,10 +2,10 @@ from domino import get_parser
 import argparse
 
 
-def experiment_heuristic_vs_mcts():
+def experiment_heuristic_vs_mcts(args):
     parser = get_parser()
 
-    player = ['mc', '50', '10']
+    player = ['mc', '120', '10']
     
     print(
         "Experiment #1 ----------------\n"
@@ -31,10 +31,10 @@ def experiment_heuristic_vs_mcts():
     return "MCTS", player_score
 
 
-def experiment_heuristic_vs_a0():
+def experiment_heuristic_vs_a0(args):
     parser = get_parser()
 
-    player = ['a0', '50', '10', 'module/training/checkpoints/experimet_player.ckpt', '0']
+    player = ['a0', '120', '10', args.nn, '0']
     
     print(
         "Experiment #2 ----------------\n"
@@ -60,10 +60,10 @@ def experiment_heuristic_vs_a0():
     return "Alpha Zero", player_score
 
 
-def experiment_heuristic_vs_a0coop():
+def experiment_heuristic_vs_a0coop(args):
     parser = get_parser()
 
-    player = ['a0', '50', '10', 'module/training/checkpoints/experimet_player.ckpt', "13"]
+    player = ['a0', '120', '10', args.nn, "5"]
     
     print(
         "Experiment #3 ----------------\n"
@@ -89,7 +89,7 @@ def experiment_heuristic_vs_a0coop():
     return "Alpha Zero Coop", player_score
 
 
-def test_handouts_vs_rollout():
+def test_handouts_vs_rollout(args):
     parser = get_parser()
 
     print(
@@ -122,12 +122,12 @@ def test_handouts_vs_rollout():
 def main(args):
     # Run tests
     for test in args.tests:
-        test()
+        test(args)
 
     # Run experiments
     scores = []
     for exp in args.experiments:
-        scores.append(exp())
+        scores.append(exp(args))
     print(
         "Final scores -----------------\n ",
         "\n  ".join(f'{label}: {score}' for label, score in scores),
@@ -157,6 +157,11 @@ if __name__ == "__main__":
         '-t1', '--test1', dest="tests", 
         action='append_const', const=test_handouts_vs_rollout,
         help="Handouts vs Rollouts test",
+    )
+    parser.add_argument(
+        '-nn', '--network', dest="nn", 
+        default='module/training/checkpoints/experimet_player.ckpt', 
+        type=str, help="Neural Network path",
     )
     parser.set_defaults(experiments=[], tests=[], command=main)
 
