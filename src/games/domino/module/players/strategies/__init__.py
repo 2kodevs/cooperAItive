@@ -17,6 +17,7 @@ from .passer import Passer
 from .alphazero import AlphaZero
 from .monte_carlo import MonteCarlo
 from .human import Human
+from .heuristic import Heuristic
 
 from .utils import alphazero as alphazero_utils, mc as mc_utils, game as game_utils
 from .models import alpha_zero_model as AlphaZeroModel, AlphaZeroNet
@@ -53,6 +54,7 @@ PLAYERS = [
     Human,
     MonteCarlo,
     AlphaZero,
+    Heuristic,
     Shortcut("MC", MonteCarlo),
     Shortcut("A0", AlphaZero),
     Shortcut("best", MergeFactory([
