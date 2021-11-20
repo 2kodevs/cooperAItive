@@ -230,15 +230,12 @@ class Net(nn.Module):
             os.rename(full_path, f'{save_path}{net_name[:-5]}_backup.ckpt')
 
         if save_model:
-            model = self.cpu()
             torch.save({
-                'model': model,
-                'device': self.device,
+                'model': self,
                 'error_log': error_log,
                 'config': config,
                 'epoch': epoch,
             }, full_path)
-            model.to(device=self.device)
         else:
             torch.save({
                 'model_state_dict': self.state_dict(),
@@ -288,13 +285,13 @@ class Net(nn.Module):
 
     @staticmethod
     def load(path):
-        net_checkpoint = torch.load(path)
+        net_checkpoint = torch.load(path, map_location=torch.device('cpu'))
         model = net_checkpoint['model']
-        device = net_checkpoint['device']
+        device = 'cpu'
 
         if torch.cuda.is_available():
             device = "cuda:0"
-        
         model = model.to(device)
+        
         model.device = device
         return model
