@@ -5,7 +5,7 @@ import argparse
 def experiment_heuristic_vs_mcts(args):
     parser = get_parser()
 
-    player = ['mc', '120', '10']
+    player = ['mc', args.h, args.r]
     
     print(
         "Experiment #1 ----------------\n"
@@ -13,12 +13,12 @@ def experiment_heuristic_vs_mcts(args):
         "    heuristic_vs_mcts:",
         end=" ", flush=True,
     )
-    args = parser.parse_args(['play', '-p0', 'heuristic', '-p1', *player, "-v", '-rep', '50'])
-    x = args.command(args)
+    parsed_args = parser.parse_args(['play', '-p0', 'heuristic', '-p1', *player, "-v", '-rep', args.rep])
+    x = parsed_args.command(parsed_args)
 
     print("    mcts_vs_heuristic:", end=" ", flush=True)
-    args = parser.parse_args(['play', '-p1', 'heuristic', '-p0', *player, "-v", '-rep', '50'])
-    y = args.command(args)
+    parsed_args = parser.parse_args(['play', '-p1', 'heuristic', '-p0', *player, "-v", '-rep', args.rep])
+    y = parsed_args.command(parsed_args)
 
     player_score = x[1] + y[0]
     heuristic_score = x[0] + y[1]
@@ -34,7 +34,7 @@ def experiment_heuristic_vs_mcts(args):
 def experiment_heuristic_vs_a0(args):
     parser = get_parser()
 
-    player = ['a0', '120', '10', args.nn, '0']
+    player = ['a0', args.h, args.r, args.nn, '0']
     
     print(
         "Experiment #2 ----------------\n"
@@ -42,12 +42,12 @@ def experiment_heuristic_vs_a0(args):
         "    heuristic_vs_alphazero:",
         end=" ", flush=True,
     )
-    args = parser.parse_args(['play', '-p0', 'heuristic', '-p1', *player, "-v", '-rep', '50'])
-    x = args.command(args)
+    parsed_args = parser.parse_args(['play', '-p0', 'heuristic', '-p1', *player, "-v", '-rep', args.rep])
+    x = parsed_args.command(parsed_args)
 
     print("    alphazero_vs_heuristic:", end=" ", flush=True)
-    args = parser.parse_args(['play', '-p1', 'heuristic', '-p0', *player, "-v", '-rep', '50'])
-    y = args.command(args)
+    parsed_args = parser.parse_args(['play', '-p1', 'heuristic', '-p0', *player, "-v", '-rep', args.rep])
+    y = parsed_args.command(parsed_args)
 
     player_score = x[1] + y[0]
     heuristic_score = x[0] + y[1]
@@ -63,7 +63,7 @@ def experiment_heuristic_vs_a0(args):
 def experiment_heuristic_vs_a0coop(args):
     parser = get_parser()
 
-    player = ['a0', '120', '10', args.nn, "5"]
+    player = ['a0', args.h, args.r, args.nn, "5"]
     
     print(
         "Experiment #3 ----------------\n"
@@ -71,12 +71,12 @@ def experiment_heuristic_vs_a0coop(args):
         "    heuristic_vs_alphazero_coop:",
         end=" ", flush=True,
     )
-    args = parser.parse_args(['play', '-p0', 'heuristic', '-p1', *player, "-v", '-rep', '50'])
-    x = args.command(args)
+    parsed_args = parser.parse_args(['play', '-p0', 'heuristic', '-p1', *player, "-v", '-rep', args.rep])
+    x = parsed_args.command(parsed_args)
 
     print("    alphazero_coop_vs_heuristic:", end=" ", flush=True)
-    args = parser.parse_args(['play', '-p1', 'heuristic', '-p0', *player, "-v", '-rep', '50'])
-    y = args.command(args)
+    parsed_args = parser.parse_args(['play', '-p1', 'heuristic', '-p0', *player, "-v", '-rep', args.rep])
+    y = parsed_args.command(parsed_args)
 
     player_score = x[1] + y[0]
     heuristic_score = x[0] + y[1]
@@ -162,6 +162,18 @@ if __name__ == "__main__":
         '-nn', '--network', dest="nn", 
         default='module/training/checkpoints/experimet_player.ckpt', 
         type=str, help="Neural Network path",
+    )
+    parser.add_argument(
+        '-H', '--handouts', dest="h", 
+        default='100', type=str, help="Number of handouts",
+    )
+    parser.add_argument(
+        '-r', '--rollouts', dest="r", 
+        default='10', type=str, help="Number of rollouts",
+    )
+    parser.add_argument(
+        '-rep', '--repetitions', dest="rep", 
+        default='50', type=str, help="Number of repetitions",
     )
     parser.set_defaults(experiments=[], tests=[], command=main)
 
