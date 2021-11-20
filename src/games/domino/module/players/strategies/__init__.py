@@ -55,7 +55,7 @@ PLAYERS = [
     AlphaZero,
     Shortcut("MC", MonteCarlo),
     Shortcut("A0", AlphaZero),
-    Shortcut("heuristic", MergeFactory([
+    Shortcut("best", MergeFactory([
         SimpleHybrid, DataDropper, Agachao, 
         Repeater, AlwaysDouble, TableCounter, Passer,
     ])),
