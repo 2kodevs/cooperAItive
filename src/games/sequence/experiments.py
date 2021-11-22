@@ -2,10 +2,10 @@ from sequence import get_parser
 import argparse
 
 
-def experiment_heuristic_vs_mcts():
+def experiment_heuristic_vs_mcts(args):
     parser = get_parser()
 
-    player = ['mc', '100', '10']
+    player = ['mc', args.h, args.r]
     
     print(
         "Experiment #1 ----------------\n"
@@ -13,15 +13,15 @@ def experiment_heuristic_vs_mcts():
         "    heuristic_vs_mcts:",
         end=" ", flush=True,
     )
-    args = parser.parse_args(['play', '-p0', 'heuristic', '-p1', *player, "-v", '-rep', '100'])
-    x = args.command(args)
+    parsed_args = parser.parse_args(['play', '-p0', 'heuristic', '-p1', *player, "-v", '-rep', args.rep])
+    x = parsed_args.command(parsed_args)
 
     print("    mcts_vs_heuristic:", end=" ", flush=True)
-    args = parser.parse_args(['play', '-p1', 'heuristic', '-p0', *player, "-v", '-rep', '100'])
-    y = args.command(args)
+    parsed_args = parser.parse_args(['play', '-p1', 'heuristic', '-p0', *player, "-v", '-rep', args.rep])
+    y = parsed_args.command(parsed_args)
 
-    player_score = x['1'] + y['0']
-    heuristic_score = x['0'] + y['1']
+    player_score = x[1] + y[0]
+    heuristic_score = x[0] + y[1]
     print(
         "  Scores:\n"
         f"    Heuristic: {heuristic_score}\n"
@@ -31,10 +31,10 @@ def experiment_heuristic_vs_mcts():
     return "MCTS", player_score
 
 
-def experiment_heuristic_vs_a0():
+def experiment_heuristic_vs_a0(args):
     parser = get_parser()
 
-    player = ['a0', '100', '10', 'module/training/checkpoints/experimet_player.ckpt', '0']
+    player = ['a0', args.h, args.r, args.nn, '0']
     
     print(
         "Experiment #2 ----------------\n"
@@ -42,15 +42,15 @@ def experiment_heuristic_vs_a0():
         "    heuristic_vs_alphazero:",
         end=" ", flush=True,
     )
-    args = parser.parse_args(['play', '-p0', 'heuristic', '-p1', *player, "-v", '-rep', '100'])
-    x = args.command(args)
+    parsed_args = parser.parse_args(['play', '-p0', 'heuristic', '-p1', *player, "-v", '-rep', args.rep])
+    x = parsed_args.command(parsed_args)
 
     print("    alphazero_vs_heuristic:", end=" ", flush=True)
-    args = parser.parse_args(['play', '-p1', 'heuristic', '-p0', *player, "-v", '-rep', '100'])
-    y = args.command(args)
+    parsed_args = parser.parse_args(['play', '-p1', 'heuristic', '-p0', *player, "-v", '-rep', args.rep])
+    y = parsed_args.command(parsed_args)
 
-    player_score = x['1'] + y['0']
-    heuristic_score = x['0'] + y['1']
+    player_score = x[1] + y[0]
+    heuristic_score = x[0] + y[1]
     print(
         "  Scores:\n"
         f"    Heuristic: {heuristic_score}\n"
@@ -60,10 +60,10 @@ def experiment_heuristic_vs_a0():
     return "Alpha Zero", player_score
 
 
-def experiment_heuristic_vs_a0coop():
+def experiment_heuristic_vs_a0coop(args):
     parser = get_parser()
 
-    player = ['a0', '100', '10', 'module/training/checkpoints/experimet_player.ckpt', "13"]
+    player = ['a0', args.h, args.r, args.nn, "5"]
     
     print(
         "Experiment #3 ----------------\n"
@@ -71,15 +71,15 @@ def experiment_heuristic_vs_a0coop():
         "    heuristic_vs_alphazero_coop:",
         end=" ", flush=True,
     )
-    args = parser.parse_args(['play', '-p0', 'heuristic', '-p1', *player, "-v", '-rep', '100'])
-    x = args.command(args)
+    parsed_args = parser.parse_args(['play', '-p0', 'heuristic', '-p1', *player, "-v", '-rep', args.rep])
+    x = parsed_args.command(parsed_args)
 
     print("    alphazero_coop_vs_heuristic:", end=" ", flush=True)
-    args = parser.parse_args(['play', '-p1', 'heuristic', '-p0', *player, "-v", '-rep', '100'])
-    y = args.command(args)
+    parsed_args = parser.parse_args(['play', '-p1', 'heuristic', '-p0', *player, "-v", '-rep', args.rep])
+    y = parsed_args.command(parsed_args)
 
-    player_score = x['1'] + y['0']
-    heuristic_score = x['0'] + y['1']
+    player_score = x[1] + y[0]
+    heuristic_score = x[0] + y[1]
     print(
         "  Scores:\n"
         f"    Heuristic: {heuristic_score}\n"
@@ -89,7 +89,7 @@ def experiment_heuristic_vs_a0coop():
     return "Alpha Zero Coop", player_score
 
 
-def test_handouts_vs_rollout():
+def test_handouts_vs_rollout(args):
     parser = get_parser()
 
     print(
@@ -99,7 +99,7 @@ def test_handouts_vs_rollout():
     total = 1000
     handouts = ["1", "2", "5", "10", "20", "50", "100", "200", "500", "1000"]
 
-    score = ['0'] * 10
+    score = [0] * 10
     for i, h0 in enumerate(handouts):
         r0 = str(total // int(h0))
         for j, h1 in enumerate(handouts):
@@ -108,11 +108,11 @@ def test_handouts_vs_rollout():
             print(f"    {h0}_vs_{h1}: ", end="", flush=True)
             args = parser.parse_args(['play', '-p0', 'mc', h0, r0, '-p1', "mc", h1, r1, "-v", '-rep', '30'])
             X = args.command(args)
-            score[i] += X['0']
-            score[j] += X['1']
+            score[i] += X[0]
+            score[j] += X[1]
 
     tup = list(zip(handouts, score))
-    tup.sort(key=lambda x: x['1'], reverse=True)
+    tup.sort(key=lambda x: x[1], reverse=True)
     print("  Results (handout -> wins):")
     for x, y in tup:
         print(f"    {x} -> {y}")
@@ -122,12 +122,12 @@ def test_handouts_vs_rollout():
 def main(args):
     # Run tests
     for test in args.tests:
-        test()
+        test(args)
 
     # Run experiments
     scores = []
     for exp in args.experiments:
-        scores.append(exp())
+        scores.append(exp(args))
     print(
         "Final scores -----------------\n ",
         "\n  ".join(f'{label}: {score}' for label, score in scores),
@@ -157,6 +157,23 @@ if __name__ == "__main__":
         '-t1', '--test1', dest="tests", 
         action='append_const', const=test_handouts_vs_rollout,
         help="Handouts vs Rollouts test",
+    )
+    parser.add_argument(
+        '-nn', '--network', dest="nn", 
+        default='module/training/checkpoints/experimet_player.ckpt', 
+        type=str, help="Neural Network path",
+    )
+    parser.add_argument(
+        '-H', '--handouts', dest="h", 
+        default='100', type=str, help="Number of handouts",
+    )
+    parser.add_argument(
+        '-r', '--rollouts', dest="r", 
+        default='10', type=str, help="Number of rollouts",
+    )
+    parser.add_argument(
+        '-rep', '--repetitions', dest="rep", 
+        default='50', type=str, help="Number of repetitions",
     )
     parser.set_defaults(experiments=[], tests=[], command=main)
 
