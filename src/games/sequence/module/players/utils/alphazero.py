@@ -65,8 +65,8 @@ def selector_maker(
     turn: int,
     root: bool,
     tau_threshold: int,
-    alpha: float = 1.5,
-    epsilon: float = 0.25,
+    alpha: float = 1.0,
+    epsilon: float = 0.50,
 ) -> Selector:
     def selector(state: State) -> Tuple[Action, List[Any]]:
         # data = {state: [N, P, Q, C]}

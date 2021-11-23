@@ -24,7 +24,7 @@ class AlphaZero(BasePlayer):
 
     def filter(self, valids):
         data = {}
-        selector = selector_maker(data, self.valid_moves(), self.turn, False, 60)
+        selector = selector_maker(data, self.valid_moves(), self.turn, False, 0)
         rollout = rollout_maker(data, self.NN, self.coop, self.cput)
 
         _, action, *_ = monte_carlo(
