@@ -20,8 +20,8 @@ def experiment_heuristic_vs_mcts(args):
     parsed_args = parser.parse_args(['play', '-p1', 'heuristic', '-p0', *player, "-v", '-rep', args.rep])
     y = parsed_args.command(parsed_args)
 
-    player_score = x[1] + y[0]
-    heuristic_score = x[0] + y[1]
+    player_score = x['1'] + y['0']
+    heuristic_score = x['0'] + y['1']
     print(
         "  Scores:\n"
         f"    Heuristic: {heuristic_score}\n"
@@ -49,8 +49,8 @@ def experiment_heuristic_vs_a0(args):
     parsed_args = parser.parse_args(['play', '-p1', 'heuristic', '-p0', *player, "-v", '-rep', args.rep])
     y = parsed_args.command(parsed_args)
 
-    player_score = x[1] + y[0]
-    heuristic_score = x[0] + y[1]
+    player_score = x['1'] + y['0']
+    heuristic_score = x['0'] + y['1']
     print(
         "  Scores:\n"
         f"    Heuristic: {heuristic_score}\n"
@@ -63,7 +63,7 @@ def experiment_heuristic_vs_a0(args):
 def experiment_heuristic_vs_a0coop(args):
     parser = get_parser()
 
-    player = ['a0', args.h, args.r, args.nn, "5"]
+    player = ['a0', args.h, args.r, args.nn, "15"]
     
     print(
         "Experiment #3 ----------------\n"
@@ -78,8 +78,8 @@ def experiment_heuristic_vs_a0coop(args):
     parsed_args = parser.parse_args(['play', '-p1', 'heuristic', '-p0', *player, "-v", '-rep', args.rep])
     y = parsed_args.command(parsed_args)
 
-    player_score = x[1] + y[0]
-    heuristic_score = x[0] + y[1]
+    player_score = x['1'] + y['0']
+    heuristic_score = x['0'] + y['1']
     print(
         "  Scores:\n"
         f"    Heuristic: {heuristic_score}\n"
