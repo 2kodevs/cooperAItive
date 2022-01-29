@@ -1,8 +1,10 @@
+from .game import calc_colab
 from .types import State, Action, Piece, Encoder, List, History, Any, Dict
 from ....domino import Domino
 from math import sqrt
 
 import numpy as np
+
 
 def gauss(num): 
     return (num * (num + 1)) // 2
@@ -65,20 +67,17 @@ def state_to_list(
 def rollout_maker(
     data: Dict,
     NN: Any,
-    Cput: int = 1,
+    Coop: int,
+    Cput: int,
 ): 
     def maker(
         domino: Domino,
         encoder: Encoder,
-        player_id: int,
     ):
         s_comma_a = []
-        v = None
-        end_value = [0, 0, 0]
-        end_value[player_id] = 1
-        end_value[1 - player_id] = -1
-
-        while v is None:
+        value, c = None, None
+    
+        while True:
             current_player = domino.current_player
             pieces = domino.players[current_player].remaining
             history = domino.logs
@@ -86,31 +85,38 @@ def rollout_maker(
             state = encoder(pieces, history, current_player)
             valids, mask = get_valids_data(domino)
             try:
-                N, P, Q = data[state][:, 0], data[state][:, 1], data[state][:, 2]
+                N, P, Q, C = data[state][:, 0], data[state][:, 1], data[state][:, 2], data[state][:, 3]
                 all_N = sqrt(N.sum())
                 U = Cput * P * all_N / (1 + N)
-                values = Q + U
+                values = Q + U + C 
 
                 args_max = np.argwhere(values == np.max(values)).flatten()
                 best_index = np.random.choice(args_max)
 
-                s_comma_a.append((state, best_index))
+                s_comma_a.append((state, best_index, domino.current_player))
 
                 if domino.step(valids[best_index]):
-                    v = end_value[domino.winner]
+                    winner = domino.winner
+                    value = lambda x: 0 if winner == -1 else [-1, 1][winner == (x & 1)]
+                    c = [Coop * calc_colab(domino, player) for player in range(4)]
+                    break
             except KeyError:
-                [P], [v] = NN.predict([state], [mask])
+                [P], [v], [c] = NN.predict([state], [mask])
                 v = v.cpu().detach().numpy()
+                value = lambda x: v if (x & 1) == (domino.current_player & 1) else -v
+                c = c.cpu().detach().numpy()
                 size = len(P)
-                npq = np.zeros((size, 3), dtype=object)
+                npq = np.zeros((size, 4), dtype=object)
                 npq[:, 1] = P.cpu().detach().numpy()
                 data[state] = npq
+                break
 
-        for state, index in s_comma_a:
-            n, q = data[state][index, 0], data[state][index, 2]
-            W = (q * n) + v
+        for state, index, player in s_comma_a:
+            v = value(player)
+            N, Q, C = data[state][index, 0], data[state][index, 2], data[state][index, 3]
             data[state][index, 0] += 1
-            data[state][index, 2] = (n*q + v) / (n + 1)
+            data[state][index, 2] = (N*Q + v) / (N + 1)
+            data[state][index, 3] = (N*C + c[player]) / (N + 1)
 
     return maker
     
@@ -139,11 +145,11 @@ def selector_maker(
     turn: int,
     root: bool,
     tau_threshold: int,
-    alpha: float = 0.4,
-    epsilon: float = 0.25,
+    alpha: float = 1.0,
+    epsilon: float = 0.50,
 ):
     def selector(state):
-        # data = {state: [N, P, Q]}
+        # data = {state: [N, P, Q, C]}
         N = data[state][:, 0]
 
         if turn <= tau_threshold:
@@ -171,9 +177,18 @@ def selector_maker(
         
     return selector
 
+#//TODO: Should be removed? (e1Ru1o)
+def remaining_mask(remaining, max_number):
+    data = [(piece_bit(*p, max_number), p) for p in remaining]
+    data.sort()
+    mask = sum(x for x, _ in data)
+    ordered_rem = [x for _, x in data]
+    return ordered_rem, mask
+
 
 __all__ = [
     "encoder_generator", 
     "state_to_list", 
     "get_valids_data",
+    "remaining_mask",
 ]

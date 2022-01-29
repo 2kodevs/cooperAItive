@@ -1,0 +1,2 @@
+# Sequece
+Sequence Game Implementation

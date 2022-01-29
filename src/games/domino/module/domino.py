@@ -6,15 +6,15 @@ class Event(Enum):
     NEW_GAME = 0
 
     # Player don't have any valid piece
-    # params: (position)
+    # params: (player)
     PASS = 1
 
     # Player makes a move
-    # params: (position, piece, head)
+    # params: (player, piece, head)
     MOVE = 2
 
     # Last piece of a player is put
-    # params: (position)
+    # params: (player)
     FINAL = 3
 
     # None player has a valid piece
@@ -118,7 +118,7 @@ class Domino:
         team0 = min(points[0], points[2])
         team1 = min(points[1], points[3])
 
-        self.winner = -1 if team0 == team1 else int(team1 > team0)
+        self.winner = -1 if team0 == team1 else int(team1 < team0)
         self.log(Event.OVER)
         self.log(Event.WIN, self.winner)
         return True
@@ -136,7 +136,7 @@ class Domino:
         """
 
         if not self.check_valid(action):
-            raise ValueError("Invalid move.")
+            raise ValueError(f"Invalid move. {action}")
 
         if action is None:
             self.log(Event.PASS, self.current_player)

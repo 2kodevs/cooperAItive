@@ -19,11 +19,12 @@ def monte_carlo(
     # basic game information
     pieces, missing = game_data_collector(player.pieces, player.me, player.history)
     remaining = remaining_pieces(pieces, player.max_number)
-
+    
     # simulations
     for _ in range(handouts):
         fixed_hands = game_hand_builder(pieces, missing, remaining, player.pieces_per_player)
         hand = lambda x, y: [PlayerView(h) for h in fixed_hands]
+        
         for _ in range(rollouts):
             # New Domino Game
             domino = Domino()
@@ -38,7 +39,7 @@ def monte_carlo(
                     domino.step(None)
 
             # Run the rollout
-            rollout(domino, encoder, player.team)
+            rollout(domino, encoder)
 
     # Select the player action
     state = encoder(player.pieces, player.history, player.me)
@@ -51,18 +52,14 @@ def rollout_maker(
     def maker(
         domino: Domino,
         encoder: Encoder,
-        playerId: int,
     ):
         s_comma_a = []
-        v = None
-        end_value = [0, 0, 0]
-        end_value[playerId] = 1
-        end_value[1 - playerId] = -1
 
-        while v is None:
+        while True:
             current_player = domino.current_player
             pieces = domino.players[current_player].remaining
             history = domino.logs
+            value = None
 
             state = encoder(pieces, history, current_player)
             valids, _ = get_valids_data(domino)
@@ -72,16 +69,18 @@ def rollout_maker(
 
                 index = randint(0, len(valids) - 1)
 
-                s_comma_a.append((state, index))
+                s_comma_a.append((state, index, domino.current_player))
 
                 if domino.step(valids[index]):
-                    v = end_value[domino.winner]
+                    winner = domino.winner
+                    value = lambda x: 0 if winner == -1 else [-1, 1][winner == (x & 1)]
+                    break
             except KeyError:
-                v = 0
                 size = len(valids)
                 data[state] = [[0] * size, [0] * size]
-
-        for state, index in s_comma_a:
+        
+        for state, index, player in s_comma_a:
+            v = value(player)
             N, Q = data[state]
             W = (Q[index] * N[index]) + v
             N[index] += 1

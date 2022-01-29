@@ -1,4 +1,7 @@
 import random
+from collections import defaultdict
+
+from .types import Domino, Event
 
 
 class EdmondsKarp:
@@ -135,4 +138,72 @@ def game_hand_builder(pieces, missing, remaining, number_of_pieces=7):
     return pieces
 
 
-__all__ = ["game_data_collector", "game_hand_builder", "remaining_pieces"]
+def calc_colab(domino: Domino, player):
+    partner = player ^ 2
+    prev = (partner + 3) % 4
+
+    f = 0
+    pegue = 0
+    tranque = 0
+    p = domino.winner == (player & 1)
+    points = sum([x + y for x, y in domino.players[player].remaining])
+    all_pieces = sum([x + y for x, y in domino.players[player].pieces])
+    passs = 0
+    rep = 0
+    partner_pieces = domino.players[partner].pieces[:]
+    partner_moves, prev_moves = 0, 0
+
+    heads = None
+    def valid(piece, h):
+        return heads[h] in piece
+
+    prev_data = defaultdict(lambda: 0)
+    if domino.logs[0][0] is Event.NEW_GAME:
+        domino.logs.pop(0)
+    for (e, *details) in domino.logs:
+        if e is Event.PASS:
+            passs += details[0] == partner
+        elif e is Event.MOVE:
+            playerId, piece, head = details
+            if playerId == prev:
+                prev_moves += 1
+                if heads is None:
+                    prev_data[piece[0]] = 1
+                    prev_data[piece[1]] = 1
+                else:
+                    prev_data[piece[piece[0] == heads[head]]] += 1
+            elif playerId == partner:
+                partner_moves += 1
+                if heads is None:
+                    f = 1
+                else:
+                    f += any([valid(p, 0) for p in partner_pieces]) + any([valid(p, 1) for p in partner_pieces])
+                    partner_pieces.remove(piece)
+            if heads is None:
+                heads = list(piece)
+            else:
+                heads[head] = piece[piece[0] == heads[head]]
+        elif e is Event.OVER:
+            tranque = 1
+        elif e is Event.FINAL:
+            pegue = details[0] == partner
+ 
+    partner_turns = partner_moves + passs
+    f /= 2 * max(partner_turns, 1)
+    passs /= max(partner_turns / 2, 1)
+    rep = sum(prev_data.values()) - len(prev_data)
+    rep /= max(prev_moves / 2, 1)
+    end_value = [0, 0, 0]
+    end_value[player & 1] = 1 
+    end_value[1 - (player & 1)] = -1 
+    v = end_value[domino.winner]
+
+    return (f + pegue + tranque*p*points/all_pieces - (passs + rep) + v) / 3
+
+
+__all__ = [
+    "game_data_collector", 
+    "game_hand_builder", 
+    "remaining_pieces",
+    "calc_colab",
+]

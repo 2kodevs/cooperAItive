@@ -134,3 +134,6 @@ test_model.py
 training_data_*.json
 .vscode/launch.json
 *.tfevents.*
+
+# Project files
+src/games/domino/simulations/
