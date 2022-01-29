@@ -64,7 +64,7 @@ class FirstToGain100:
     """
         First to team that gain 100 points. Last winner start next match
     """
-    def __init__(self, random_start=True):
+    def __init__(self, random_start=False):
         self.random_start = random_start
 
     def update_score(self, **kwargs):

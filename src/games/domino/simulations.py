@@ -1,10 +1,10 @@
 from domino import get_parser
-from module import PLAYERS, RULES
+from module import PLAYERS, RULES, get_player
 import json
 import os
 
 
-def run(player0, player1, b=None, rule='onegame', nine=True, hand='hand_out', rep=2000):
+def run(player0, player1, b=None, rule='FirstToGain100', nine=True, hand='hand_out', rep=2000):
     parser = get_parser()
 
     extra = []
@@ -24,7 +24,7 @@ def run(player0, player1, b=None, rule='onegame', nine=True, hand='hand_out', re
         json.dump(result, fd)
 
 
-skip_list = ['human', 'supportive', 'rlplayer', 'montecarlo', 'alphazero', 'mc', 'a0', 'heuristic']
+skip_list = ['human', 'supportive', 'rlplayer', 'montecarlo', 'alphazero', 'mc', 'a0', 'simplehybrid', 'best', 'heuristic']
     
 
 if __name__ == "__main__":

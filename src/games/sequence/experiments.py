@@ -1,5 +1,10 @@
 from sequence import get_parser
-import argparse
+from utils import prepare_player as get_player
+import argparse, json, time
+from module import get_hand, SequenceManager, game_utils
+
+
+hand_out = get_hand("handout")
 
 
 def experiment_heuristic_vs_mcts(args):
@@ -119,6 +124,31 @@ def test_handouts_vs_rollout(args):
     print("------------------------------")
 
 
+def test_colab(args):
+    heuristic = get_player(["heuristic"])
+    A0 = get_player(["a0", args.h, args.r, args.nn, 15])
+
+    data = []
+    print("sefolmo")
+    now = time.time()
+    for _ in range(int(args.rep)):
+        manager = SequenceManager()
+        players = [heuristic, A0, heuristic, A0]
+        result = manager.run(hand_out, players, "0101", 7, 2)
+        data.append(('h_vs_a0', result, *[game_utils.calc_colab(manager.seq, i) for i in range(4)]))
+    print("round tu fait")
+    print(f"duration: ${time.time() - now}")
+    for _ in range(int(args.rep)):
+        manager = SequenceManager()
+        players = [A0, heuristic, A0, heuristic]
+        result = manager.run(hand_out, players, "0101", 7, 2)
+        data.append(('a0_vs_h', result, *[game_utils.calc_colab(manager.seq, i) for i in range(4)])) 
+    print(data)
+
+    with open('last_exp.json', 'w') as fd:
+        json.dump(data, fd, indent=4)
+
+
 def main(args):
     # Run tests
     for test in args.tests:
@@ -157,6 +187,11 @@ if __name__ == "__main__":
         '-t1', '--test1', dest="tests", 
         action='append_const', const=test_handouts_vs_rollout,
         help="Handouts vs Rollouts test",
+    )
+    parser.add_argument(
+        '-t2', '--test2', dest="tests", 
+        action='append_const', const=test_colab,
+        help="Colab calculation",
     )
     parser.add_argument(
         '-nn', '--network', dest="nn", 
