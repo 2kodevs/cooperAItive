@@ -68,7 +68,7 @@ class FirstToGain100:
         self.random_start = random_start
 
     def update_score(self, **kwargs):
-        return sum([player.score() for player in kwargs['players']])
+        return sum([kwargs['domino'].score(player) for player in kwargs['players']])
 
     def start(self, player0, player1, player2, player3, hand, *pieces_config):
         env = DominoManager()
@@ -90,7 +90,7 @@ class FirstToGain100:
             if result != -1:
                 loser = result ^ 1
                 points[result ^ cur_start] += self.update_score(
-                    players=[players[loser], players[loser + 2]],
+                    players=[loser, loser + 2],
                     domino=env.domino,
                 )
 

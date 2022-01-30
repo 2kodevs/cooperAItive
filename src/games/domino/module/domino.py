@@ -164,6 +164,9 @@ class Domino:
 
         return self._is_over()
 
+    def score(self, idx):
+        return self.players[idx].points()
+
 class DominoManager:
     def cur_player(self):
         return self.players[self.domino.current_player]
