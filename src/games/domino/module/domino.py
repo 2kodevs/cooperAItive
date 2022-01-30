@@ -1,7 +1,14 @@
 from enum import Enum
+import signal
 
 class InvalidMove(Exception):
     pass
+
+class StepTimeout(Exception):
+    pass
+
+def handler(signum, frame):
+    raise StepTimeout("Step execution takes too long")
 
 class Event(Enum):
     # Report beginning
@@ -167,6 +174,9 @@ class Domino:
         self.log(Event.WIN, self.winner)
 
 class DominoManager:
+    def __init__(self, timeout=60) -> None:
+        self.timeout = timeout
+
     def cur_player(self):
         return self.players[self.domino.current_player]
 
@@ -189,10 +199,18 @@ class DominoManager:
         self.feed_logs()
 
     def step(self, fixed_action=False, action=None):
+        done = True
         heads = self.domino.heads
-        if not fixed_action:
-            action = self.cur_player().step(heads[:])
-        done = self.domino.step(action)
+        default_handler = signal.signal(signal.SIGALRM, handler)
+        try:
+            if not fixed_action:
+                signal.alarm(self.timeout)
+                action = self.cur_player().step(heads[:])
+                signal.alarm(0)
+            done = self.domino.step(action)
+        except (StepTimeout, InvalidMove):
+            self.domino.game_over((self.domino.current_player + 1) % 4)
+        signal.signal(signal.SIGALRM, default_handler)
         self.feed_logs()
         return done
 
