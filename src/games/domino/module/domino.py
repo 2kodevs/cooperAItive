@@ -57,10 +57,6 @@ class Domino:
     def get_pieces(self):
         return [player.pieces for player in self.players]
 
-    def winner(self):
-        assert self.logs[-1][0] == Event.WIN
-        return self.logs[-1][1]
-
     def reset(self, hand, max_number, pieces_per_player):
         self.max_number = max_number
         self.pieces_per_player = pieces_per_player
