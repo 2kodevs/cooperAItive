@@ -103,9 +103,7 @@ class Domino:
         for i, player in enumerate(self.players):
             if player.total() == 0:
 
-                self.winner = i % 2
-                self.log(Event.FINAL, i)
-                self.log(Event.WIN, self.winner)
+                self.game_over(i)
                 return True
 
         # At least one player can make a move
@@ -162,6 +160,11 @@ class Domino:
 
     def score(self, idx):
         return self.players[idx].points()
+
+    def game_over(self, i):
+        self.winner = i % 2
+        self.log(Event.FINAL, i)
+        self.log(Event.WIN, self.winner)
 
 class DominoManager:
     def cur_player(self):
