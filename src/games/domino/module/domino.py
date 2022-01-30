@@ -1,15 +1,6 @@
 from enum import Enum
 import signal
 
-class InvalidMove(Exception):
-    pass
-
-class StepTimeout(Exception):
-    pass
-
-def handler(signum, frame):
-    raise StepTimeout("Step execution takes too long")
-
 class Event(Enum):
     # Report beginning
     # params: ()
@@ -34,6 +25,36 @@ class Event(Enum):
     # Report winner
     # params: (team) team=0(First team) team=1(Second team) team=-1(Tie)
     WIN = 5
+
+    # Player attempted an invalid move
+    # params: (piece, head, player)
+    INVALID = 6
+
+    # Player step function takes too long
+    # params: (player)
+    TIMEOUT = 7
+
+class InvalidMove(Exception):
+    def __init__(self, message, move, player):
+        super().__init__(message)
+        self.move = move
+        self.player = player
+
+    def get_log(self):
+        return (Event.INVALID, *self.move, self.player)
+
+class StepTimeout(Exception):
+    def __init__(self, message, player):
+        super().__init__(message)
+        self.player = player
+
+    def get_log(self):
+        return (Event.TIMEOUT, self.player)
+
+def handler(player):
+    def wrapper(signum, frame):
+        raise StepTimeout("Step execution takes too long", player)
+    return wrapper
 
 class Domino:
     """
@@ -140,7 +161,7 @@ class Domino:
         """
 
         if not self.check_valid(action):
-            raise InvalidMove(f"Invalid move. {action}")
+            raise InvalidMove(f"Invalid move. {action}", action, self.current_player)
 
         if action is None:
             self.log(Event.PASS, self.current_player)
@@ -201,14 +222,18 @@ class DominoManager:
     def step(self, fixed_action=False, action=None):
         done = True
         heads = self.domino.heads
-        default_handler = signal.signal(signal.SIGALRM, handler)
+        default_handler = signal.signal(
+            signal.SIGALRM, 
+            handler(self.domino.current_player)
+        )
         try:
             if not fixed_action:
                 signal.alarm(self.timeout)
                 action = self.cur_player().step(heads[:])
                 signal.alarm(0)
             done = self.domino.step(action)
-        except (StepTimeout, InvalidMove):
+        except (StepTimeout, InvalidMove) as e:
+            self.domino.log(e.get_log())
             self.domino.game_over((self.domino.current_player + 1) % 4)
         signal.signal(signal.SIGALRM, default_handler)
         self.feed_logs()
