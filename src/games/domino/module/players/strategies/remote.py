@@ -7,7 +7,7 @@ class Remote(BasePlayer):
         self.endpoint = endpoint
 
     def step(self, heads):
-        move = requests.post(f'{self.endpoint}/step', json=heads).json()['move']
+        move = requests.post(f'{self.endpoint}/step', json=heads).json()
         if move is None: return None
         return tuple(move[0]), move[1]
 
