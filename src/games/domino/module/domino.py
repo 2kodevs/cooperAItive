@@ -1,4 +1,5 @@
 from enum import Enum
+import signal
 
 class Event(Enum):
     # Report beginning
@@ -24,6 +25,36 @@ class Event(Enum):
     # Report winner
     # params: (team) team=0(First team) team=1(Second team) team=-1(Tie)
     WIN = 5
+
+    # Player attempted an invalid move
+    # params: (piece, head, player)
+    INVALID = 6
+
+    # Player step function takes too long
+    # params: (player)
+    TIMEOUT = 7
+
+class InvalidMove(Exception):
+    def __init__(self, message, move, player):
+        super().__init__(message)
+        self.move = move
+        self.player = player
+
+    def get_log(self):
+        return (Event.INVALID, *self.move, self.player)
+
+class StepTimeout(Exception):
+    def __init__(self, message, player):
+        super().__init__(message)
+        self.player = player
+
+    def get_log(self):
+        return (Event.TIMEOUT, self.player)
+
+def handler(player):
+    def wrapper(signum, frame):
+        raise StepTimeout("Step execution takes too long", player)
+    return wrapper
 
 class Domino:
     """
@@ -53,10 +84,6 @@ class Domino:
 
     def get_pieces(self):
         return [player.pieces for player in self.players]
-
-    def winner(self):
-        assert self.logs[-1][0] == Event.WIN
-        return self.logs[-1][1]
 
     def reset(self, hand, max_number, pieces_per_player):
         self.max_number = max_number
@@ -104,9 +131,7 @@ class Domino:
         for i, player in enumerate(self.players):
             if player.total() == 0:
 
-                self.winner = i % 2
-                self.log(Event.FINAL, i)
-                self.log(Event.WIN, self.winner)
+                self.game_over(i)
                 return True
 
         # At least one player can make a move
@@ -136,7 +161,7 @@ class Domino:
         """
 
         if not self.check_valid(action):
-            raise ValueError(f"Invalid move. {action}")
+            raise InvalidMove(f"Invalid move. {action}", action, self.current_player)
 
         if action is None:
             self.log(Event.PASS, self.current_player)
@@ -161,7 +186,18 @@ class Domino:
 
         return self._is_over()
 
+    def score(self, idx):
+        return self.players[idx].points()
+
+    def game_over(self, i):
+        self.winner = i % 2
+        self.log(Event.FINAL, i)
+        self.log(Event.WIN, self.winner)
+
 class DominoManager:
+    def __init__(self, timeout=60) -> None:
+        self.timeout = timeout
+
     def cur_player(self):
         return self.players[self.domino.current_player]
 
@@ -184,10 +220,22 @@ class DominoManager:
         self.feed_logs()
 
     def step(self, fixed_action=False, action=None):
+        done = True
         heads = self.domino.heads
-        if not fixed_action:
-            action = self.cur_player().step(heads[:])
-        done = self.domino.step(action)
+        default_handler = signal.signal(
+            signal.SIGALRM, 
+            handler(self.domino.current_player)
+        )
+        try:
+            if not fixed_action:
+                signal.alarm(self.timeout)
+                action = self.cur_player().step(heads[:])
+                signal.alarm(0)
+            done = self.domino.step(action)
+        except (StepTimeout, InvalidMove) as e:
+            self.domino.log(e.get_log())
+            self.domino.game_over((self.domino.current_player + 1) % 4)
+        signal.signal(signal.SIGALRM, default_handler)
         self.feed_logs()
         return done
 
