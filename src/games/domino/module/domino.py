@@ -1,5 +1,8 @@
 from enum import Enum
 
+class InvalidMove(Exception):
+    pass
+
 class Event(Enum):
     # Report beginning
     # params: ()
@@ -136,7 +139,7 @@ class Domino:
         """
 
         if not self.check_valid(action):
-            raise ValueError(f"Invalid move. {action}")
+            raise InvalidMove(f"Invalid move. {action}")
 
         if action is None:
             self.log(Event.PASS, self.current_player)
