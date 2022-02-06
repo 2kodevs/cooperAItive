@@ -9,6 +9,9 @@ class BasePlayer:
         self.history = []
         self.heads = None
 
+    def start(self):
+        return True
+        
     def step(self, heads):
         should_pass = True
 
