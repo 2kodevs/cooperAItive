@@ -228,7 +228,7 @@ class DominoManager:
         )
         try:
             if not fixed_action:
-                signal.alarm(self.timeout)
+                signal.alarm(int(self.timeout * 1.1))
                 action = self.cur_player().step(heads[:])
                 signal.alarm(0)
             done = self.domino.step(action)
