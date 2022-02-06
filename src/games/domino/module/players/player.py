@@ -53,12 +53,12 @@ class BasePlayer:
                     valids.append((piece, head))
         return valids
         
-    def reset(self, position, pieces, max_number, timeout):
+    def reset(self, position, pieces, max_number, *extra):
         self.position = position
         self.pieces = pieces
         self.pieces_per_player = len(pieces)
         self.max_number = max_number
-        self.timeout = timeout
+        self.extra_args = extra
 
         self.history.clear()
 

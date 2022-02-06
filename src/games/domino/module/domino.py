@@ -231,7 +231,7 @@ class DominoManager:
                 self.monitored_call(player.log, data)
             self.logs_transmitted += 1
 
-    def init(self, players, hand, max_number=6, pieces_per_player=7):
+    def init(self, players, hand, max_number=6, pieces_per_player=7, scores=[0, 0]):
         self.logs_transmitted = 0
         self.players = players
         self.domino = Domino()
@@ -241,7 +241,11 @@ class DominoManager:
         for i, player in enumerate(players):
             self.monitored_call(
                 player.reset,
-                i, self.domino.players[i].pieces[:], max_number, self.timeout
+                i, 
+                self.domino.players[i].pieces[:], 
+                max_number, 
+                self.timeout,
+                scores[:],
             )
         self.feed_logs()
 

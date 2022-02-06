@@ -85,7 +85,7 @@ class FirstToGain100:
         points = [0, 0]
 
         while max(points) < 100:
-            result = env.run(players, hand, *pieces_config)
+            result = env.run(players, hand, *pieces_config, points[::[1, -1][cur_start]])
 
             if result != -1:
                 loser = result ^ 1
