@@ -241,7 +241,7 @@ class DominoManager:
         for i, player in enumerate(players):
             self.monitored_call(
                 player.reset,
-                i, self.domino.players[i].pieces[:], max_number,
+                i, self.domino.players[i].pieces[:], max_number, self.timeout
             )
         self.feed_logs()
 

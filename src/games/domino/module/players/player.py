@@ -11,7 +11,7 @@ class BasePlayer:
 
     def start(self):
         return True
-        
+
     def step(self, heads):
         should_pass = True
 
@@ -53,11 +53,12 @@ class BasePlayer:
                     valids.append((piece, head))
         return valids
         
-    def reset(self, position, pieces, max_number):
+    def reset(self, position, pieces, max_number, timeout):
         self.position = position
         self.pieces = pieces
         self.pieces_per_player = len(pieces)
         self.max_number = max_number
+        self.timeout = timeout
 
         self.history.clear()
 

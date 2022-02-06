@@ -1,3 +1,4 @@
+from socket import timeout
 from ..player import BasePlayer
 
 class Merge(BasePlayer):
@@ -10,8 +11,8 @@ class Merge(BasePlayer):
         for player in self.players:
             player.log(data)
 
-    def reset(self, position, pieces, max_number):
-        super().reset(position, pieces, max_number)
+    def reset(self, position, pieces, max_number, tiemout):
+        super().reset(position, pieces, max_number, timeout)
         for player in self.players:
             player.reset(position, pieces, max_number)
 

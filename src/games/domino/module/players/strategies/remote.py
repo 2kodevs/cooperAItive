@@ -14,11 +14,12 @@ class Remote(BasePlayer):
         if move is None: return None
         return tuple(move[0]), move[1]
 
-    def reset(self, pos, pieces, max_number):
+    def reset(self, pos, pieces, max_number, timeout):
         requests.post(f'{self.endpoint}/reset', json={
             "position": pos,
             "pieces": pieces,
-            "max_number": max_number
+            "max_number": max_number,
+            "timeout": timeout,
         })
 
     def log(self, log):
