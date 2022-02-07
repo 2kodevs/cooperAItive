@@ -7,6 +7,9 @@ class BaseRule:
         on particular rules to determine the winner. This is a
         wrapper to implement and play with different rules.
     """
+    def __init__(self, timeout):
+        self.timeout = timeout
+
     def start(self, player0, player1, hand, *pieces_config):
         """
             Return id of winner team (-1 for tie)
@@ -14,25 +17,26 @@ class BaseRule:
         raise NotImplementedError()
 
 
-class OneGame:
+class OneGame(BaseRule):
     """
         Play one game
     """
     def start(self, player0, player1, player2, player3, hand, *pieces_config):
-        env = DominoManager()
+        env = DominoManager(timeout=self.timeout)
         players = [player0("0"), player1("1"), player2("2"), player3("3")]
         return env.run(players, hand, *pieces_config)
 
 
-class TwoOfThree:
+class TwoOfThree(BaseRule):
     """
         First to win two games. Last winner start next match
     """
-    def __init__(self, random_start=True):
+    def __init__(self, random_start=True, **kwargs):
+        super().__init__(**kwargs)
         self.random_start = random_start
 
     def start(self, player0, player1, player2, player3, hand, *pieces_config):
-        env = DominoManager()
+        env = DominoManager(timeout=self.timeout)
         players = [player0("0"), player1("1"), player2("2"), player3("3")]
 
         cur_start = 0
@@ -60,18 +64,19 @@ class TwoOfThree:
         return 0 if wins[0] > wins[1] else 1
 
 
-class FirstToGain100:
+class FirstToGain100(BaseRule):
     """
         First to team that gain 100 points. Last winner start next match
     """
-    def __init__(self, random_start=True):
+    def __init__(self, random_start=True, **kwargs):
+        super().__init__(**kwargs)
         self.random_start = random_start
 
     def update_score(self, **kwargs):
         return sum([kwargs['domino'].score(player) for player in kwargs['players']])
 
     def start(self, player0, player1, player2, player3, hand, *pieces_config):
-        env = DominoManager()
+        env = DominoManager(timeout=self.timeout)
         players = [player0("0"), player1("1"), player2("2"), player3("3")]
 
         cur_start = 0
@@ -108,8 +113,8 @@ class FirstDoble(FirstToGain100):
         First to team that gain 100 points counting the first round doble. 
         Last winner start next match
     """
-    def __init__(self, *args):
-        super().__init__(*args)
+    def __init__(self, **args):
+        super().__init__(**args)
         self.first_round = True
 
     def update_score(self, **kwargs):
@@ -123,8 +128,8 @@ class CapicuaDoble(FirstToGain100):
         First to team that gain 100 points counting the capicua doble. 
         Last winner start next match
     """
-    def __init__(self, *args):
-        super().__init__(*args)
+    def __init__(self, **args):
+        super().__init__(**args)
 
     def update_score(self, **kwargs):
         score = super().update_score(**kwargs)
