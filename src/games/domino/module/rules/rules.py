@@ -1,3 +1,4 @@
+import json
 import random
 from ..domino import DominoManager, Event
 
@@ -7,8 +8,22 @@ class BaseRule:
         on particular rules to determine the winner. This is a
         wrapper to implement and play with different rules.
     """
-    def __init__(self, timeout):
+    def __init__(self, timeout, output):
         self.timeout = timeout
+        self.output = output
+        self.data = {}
+        self.cur = 0
+
+    def store(self, env):
+        self.data[self.cur] = [
+            (e.name, *args)
+            for e, *args in env.domino.logs
+        ]
+        self.cur += 1
+
+    def save(self):
+        with open(self.output, 'w') as fd:
+            json.dump(self.data, fd)
 
     def start(self, player0, player1, hand, *pieces_config):
         """
@@ -24,7 +39,10 @@ class OneGame(BaseRule):
     def start(self, player0, player1, player2, player3, hand, *pieces_config):
         env = DominoManager(timeout=self.timeout)
         players = [player0("0"), player1("1"), player2("2"), player3("3")]
-        return env.run(players, 0, hand, *pieces_config)
+        result = env.run(players, 0, hand, *pieces_config)
+        self.store(env)
+        self.save()
+        return result
 
 
 class TwoOfThree(BaseRule):
@@ -49,6 +67,7 @@ class TwoOfThree(BaseRule):
 
         while max(wins) < 2:
             result = env.run(players, cur_start, hand, *pieces_config)
+            self.store(env)
 
             if result != -1:
                 wins[result] += 1
@@ -57,6 +76,7 @@ class TwoOfThree(BaseRule):
                 # Swap players
                 cur_start ^= 1
 
+        self.save()
         return 0 if wins[0] > wins[1] else 1
 
 
@@ -84,6 +104,7 @@ class FirstToGain100(BaseRule):
 
         while max(points) < 100:
             result = env.run(players, cur_start, hand, *pieces_config, points[:])
+            self.store(env)
 
             if result != -1:
                 loser = result ^ 1
@@ -96,6 +117,7 @@ class FirstToGain100(BaseRule):
                 # Swap players
                 cur_start ^= 1
 
+        self.save()
         return 0 if points[0] > points[1] else 1
 
 
