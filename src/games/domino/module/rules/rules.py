@@ -24,7 +24,7 @@ class OneGame(BaseRule):
     def start(self, player0, player1, player2, player3, hand, *pieces_config):
         env = DominoManager(timeout=self.timeout)
         players = [player0("0"), player1("1"), player2("2"), player3("3")]
-        return env.run(players, hand, *pieces_config)
+        return env.run(players, 0, hand, *pieces_config)
 
 
 class TwoOfThree(BaseRule):
@@ -44,22 +44,18 @@ class TwoOfThree(BaseRule):
         if self.random_start:
             if random.choice([False, True]):
                 cur_start ^= 1
-                players[0], players[1] = players[1], players[0]
-                players[2], players[3] = players[3], players[2]
 
         wins = [0, 0]
 
         while max(wins) < 2:
-            result = env.run(players, hand, *pieces_config)
+            result = env.run(players, cur_start, hand, *pieces_config)
 
             if result != -1:
-                wins[result ^ cur_start] += 1
+                wins[result] += 1
 
             if result == -1 or result != cur_start:
                 # Swap players
                 cur_start ^= 1
-                players[0], players[1] = players[1], players[0]
-                players[2], players[3] = players[3], players[2]
 
         return 0 if wins[0] > wins[1] else 1
 
@@ -81,20 +77,17 @@ class FirstToGain100(BaseRule):
 
         cur_start = 0
 
-        if self.random_start:
-            if random.choice([False, True]):
-                cur_start ^= 1
-                players[0], players[1] = players[1], players[0]
-                players[2], players[3] = players[3], players[2]
+        if self.random_start and random.choice([False, True]):
+            cur_start ^= 1
 
         points = [0, 0]
 
         while max(points) < 100:
-            result = env.run(players, hand, *pieces_config, points[::[1, -1][cur_start]])
+            result = env.run(players, cur_start, hand, *pieces_config, points[:])
 
             if result != -1:
                 loser = result ^ 1
-                points[result ^ cur_start] += self.update_score(
+                points[result] += self.update_score(
                     players=[loser, loser + 2],
                     domino=env.domino,
                 )
@@ -102,8 +95,6 @@ class FirstToGain100(BaseRule):
             if result == -1 or result != cur_start:
                 # Swap players
                 cur_start ^= 1
-                players[0], players[1] = players[1], players[0]
-                players[2], players[3] = players[3], players[2]
 
         return 0 if points[0] > points[1] else 1
 

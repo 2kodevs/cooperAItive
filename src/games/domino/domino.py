@@ -95,6 +95,7 @@ def get_parser():
     play_parser.add_argument('-t',   '--timeout',     dest='time',    type=int, default=60, help="Timeout for players interaction")
     play_parser.add_argument('-H',   '--hand',        dest='hand',    default='hand_out', help="Game handout strategy")
     play_parser.add_argument('-v',   '--verbose',     dest='verbose', action='store_true', help="Print the game result at the end")
+    play_parser.add_argument('-o',   '--output',      dest='output',  help="Folder to store the game outputs")
 
     play_parser.set_defaults(command=play)
 

@@ -199,9 +199,8 @@ class Domino:
         self.log(Event.WIN, self.winner)
 
 class DominoManager:
-    def __init__(self, timeout=60, randomize=True) -> None:
+    def __init__(self, timeout=60) -> None:
         self.timeout = timeout
-        self.randomize = randomize
 
     def monitored_call(self, func, *args):
         default_handler = signal.signal(
@@ -231,7 +230,7 @@ class DominoManager:
                 self.monitored_call(player.log, data)
             self.logs_transmitted += 1
 
-    def init(self, players, hand, max_number=6, pieces_per_player=7, scores=[0, 0]):
+    def init(self, players, team, hand, max_number=6, pieces_per_player=7, scores=[0, 0]):
         self.logs_transmitted = 0
         self.players = players
         self.domino = Domino()
@@ -249,21 +248,18 @@ class DominoManager:
             )
         self.feed_logs()
 
-        if self.randomize:
-            self.randomize = False
-            team = choice([0, 1])
-            # Set team that should start 
-            # DEV: Needed to handle connection errors properly
-            self.domino.current_player = team
-            ids = [0, 1, 2, 3, choice([team, team + 2])]
-            weights = [0, 0, 0, 0, 0.0001]
-            start = self.monitored_call(self.players[team].start)
-            weights[team] = start * 100
-            start = self.monitored_call(self.players[team + 2].start)
-            weights[team + 2] = start * 100
-            # Set team that should start
-            # DEV: There is a tiny probability of a random player being selected 
-            [self.domino.current_player] = choices(ids, weights)
+        # Set team that should start 
+        # DEV: Needed to handle connection errors properly
+        self.domino.current_player = team
+        ids = [0, 1, 2, 3, choice([team, team + 2])]
+        weights = [0, 0, 0, 0, 0.0001]
+        start = self.monitored_call(self.players[team].start)
+        weights[team] = start * 100
+        start = self.monitored_call(self.players[team + 2].start)
+        weights[team + 2] = start * 100
+        # Set team that should start
+        # DEV: There is a tiny probability of a random player being selected 
+        [self.domino.current_player] = choices(ids, weights)
 
     def step(self, fixed_action=False, action=None):
         done = True
