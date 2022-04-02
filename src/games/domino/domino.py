@@ -32,7 +32,7 @@ def play(args):
 
     status = {-1:0, 0:0, 1:0}
     for _ in range(args.rep):
-        game = rule()
+        game = rule(timeout=args.time, output=args.output)
         status[game.start(player0, player1, player2, player3, hand, *args.pieces)] += 1
     if args.verbose:
         print(status)
@@ -90,21 +90,25 @@ def get_parser():
     play_parser.add_argument('-p2',  '--player2',     dest='player2', nargs='+', default=None, help="Player2 class name & arguments if needed")
     play_parser.add_argument('-p3',  '--player3',     dest='player3', nargs='+', default=None, help="Player3 class name & arguments if needed")
     play_parser.add_argument('-r',   '--rule',        dest='rule',    default='onegame', help="Game rule to use in each play")
-    play_parser.add_argument('-n',   '--nine',        dest='pieces',  action='store_const', const=[9,10], default=[], help="Double nine mode")
+    play_parser.add_argument('-n',   '--nine',        dest='pieces',  action='store_const', const=[9, 10], default=[6, 7], help="Double nine mode")
     play_parser.add_argument('-rep', '--repetitions', dest='rep',     type=int, default=1, help="Numbers of plays to run")
+    play_parser.add_argument('-t',   '--timeout',     dest='time',    type=int, default=60, help="Timeout for players interaction")
     play_parser.add_argument('-H',   '--hand',        dest='hand',    default='hand_out', help="Game handout strategy")
     play_parser.add_argument('-v',   '--verbose',     dest='verbose', action='store_true', help="Print the game result at the end")
+    play_parser.add_argument('-out', '--output',      dest='output',  help="File to store the game outputs", default='logs.log')
 
     play_parser.set_defaults(command=play)
 
     match_parser = subparsers.add_parser('match', help="Run a domino match")
     match_parser.add_argument('-p',    '--player',     dest='player',   nargs='+', default=['random'], help="Player class name & arguments if needed")
     match_parser.add_argument('-r',   '--rule',        dest='rule',     default='onegame', help="Game rule to use in each play")
-    match_parser.add_argument('-n',   '--nine',        dest='pieces',   action='store_const', const=[9,10], default=[], help="Double nine mode")
+    match_parser.add_argument('-n',   '--nine',        dest='pieces',   action='store_const', const=[9, 10], default=[6, 7], help="Double nine mode")
     match_parser.add_argument('-rep', '--repetitions', dest='rep',      type=int, default=1, help="Numbers of plays to run per oponent")
     match_parser.add_argument('-H',   '--hand',        dest='hand',     default='hand_out', help="Game handout strategy")
     match_parser.add_argument('-o',   '--oponents',    dest='oponents', type=str, nargs='+', required=True, help="Oponents class names")
-    match_parser.add_argument('-v',   '--verbose',     dest='verbose', action='store_true', help="Print the game result at the end")
+    match_parser.add_argument('-t',   '--timeout',     dest='time',     type=int, default=60, help="Timeout for players interaction")
+    match_parser.add_argument('-out', '--output',      dest='output',  help="File to store the game outputs", default='logs.log')
+    match_parser.add_argument('-v',   '--verbose',     dest='verbose',  action='store_true', help="Print the game result at the end")
     
     match_parser.set_defaults(command=match)
 
@@ -118,7 +122,9 @@ def get_parser():
     rgame_parser.add_argument('-H',    '--handouts',    dest='handouts', type=int,  default=10,    help="Numbers of handouts for AlphaZero")
     rgame_parser.add_argument('-r',    '--rollouts',    dest='rollouts', type=int,  default=50,    help="Numbers of rollouts for AlphaZero")
     rgame_parser.add_argument('-p',    '--path',        dest='path',     default='module/training/checkpoints', help='NN\'s full path')
-    rgame_parser.add_argument('-n',    '--nine',        dest='pieces',   action='store_const',  const=[9,10], default=[], help="Double nine mode")
+    rgame_parser.add_argument('-t',    '--timeout',     dest='time',     type=int, default=60, help="Timeout for players interaction")
+    rgame_parser.add_argument('-out',  '--output',      dest='output',  help="File to store the game outputs", default='logs.log')
+    rgame_parser.add_argument('-n',    '--nine',        dest='pieces',   action='store_const',  const=[9, 10], default=[6, 7], help="Double nine mode")
     
     rgame_parser.set_defaults(command=real_game)
 

@@ -1,4 +1,5 @@
 from enum import Enum
+from random import choice, choices
 import signal
 
 class Event(Enum):
@@ -51,9 +52,12 @@ class StepTimeout(Exception):
     def get_log(self):
         return (Event.TIMEOUT, self.player)
 
+class UnusualGameOver(Exception):
+    pass
+
 def handler(player):
     def wrapper(signum, frame):
-        raise StepTimeout("Step execution takes too long", player)
+        raise StepTimeout("Player interaction takes too long", player)
     return wrapper
 
 class Domino:
@@ -198,6 +202,24 @@ class DominoManager:
     def __init__(self, timeout=60) -> None:
         self.timeout = timeout
 
+    def monitored_call(self, func, *args):
+        default_handler = signal.signal(
+            signal.SIGALRM, 
+            handler(self.domino.current_player)
+        )
+        ok = True
+        try:
+            signal.alarm(int(self.timeout * 1.1))
+            value = func(*args)
+            signal.alarm(0)
+        except (StepTimeout, InvalidMove) as e:
+            self.domino.log(e.get_log())
+            self.domino.game_over((self.domino.current_player + 1) % 4)
+            ok = False
+        signal.signal(signal.SIGALRM, default_handler)
+        if ok: return value
+        raise UnusualGameOver()
+
     def cur_player(self):
         return self.players[self.domino.current_player]
 
@@ -205,10 +227,10 @@ class DominoManager:
         while self.logs_transmitted < len(self.domino.logs):
             data = self.domino.logs[self.logs_transmitted]
             for player in self.players:
-                player.log(data)
+                self.monitored_call(player.log, data)
             self.logs_transmitted += 1
 
-    def init(self, players, hand, max_number=6, pieces_per_player=7):
+    def init(self, players, team, hand, max_number=6, pieces_per_player=7, scores=[0, 0]):
         self.logs_transmitted = 0
         self.players = players
         self.domino = Domino()
@@ -216,34 +238,46 @@ class DominoManager:
         self.domino.reset(hand, max_number, pieces_per_player)
 
         for i, player in enumerate(players):
-            player.reset(i, self.domino.players[i].pieces[:], max_number)
+            self.monitored_call(
+                player.reset,
+                i, 
+                self.domino.players[i].pieces[:], 
+                max_number, 
+                self.timeout,
+                scores[:],
+            )
         self.feed_logs()
+
+        # Set team that should start 
+        # DEV: Needed to handle connection errors properly
+        self.domino.current_player = team
+        ids = [0, 1, 2, 3, choice([team, team + 2])]
+        weights = [0, 0, 0, 0, 0.0001]
+        start = self.monitored_call(self.players[team].start)
+        weights[team] = start * 100
+        start = self.monitored_call(self.players[team + 2].start)
+        weights[team + 2] = start * 100
+        # Set team that should start
+        # DEV: There is a tiny probability of a random player being selected 
+        [self.domino.current_player] = choices(ids, weights)
 
     def step(self, fixed_action=False, action=None):
         done = True
         heads = self.domino.heads
-        default_handler = signal.signal(
-            signal.SIGALRM, 
-            handler(self.domino.current_player)
-        )
-        try:
-            if not fixed_action:
-                signal.alarm(self.timeout)
-                action = self.cur_player().step(heads[:])
-                signal.alarm(0)
-            done = self.domino.step(action)
-        except (StepTimeout, InvalidMove) as e:
-            self.domino.log(e.get_log())
-            self.domino.game_over((self.domino.current_player + 1) % 4)
-        signal.signal(signal.SIGALRM, default_handler)
+        if not fixed_action:
+            action = self.monitored_call(
+                self.cur_player().step,
+                heads[:],
+            )
+        done = self.domino.step(action)
         self.feed_logs()
         return done
 
-    def run(self, players, hand, *pieces_config):
-        self.init(players, hand, *pieces_config)
-
-        while not self.step(): pass
-
+    def run(self, players, *init_args):
+        try:
+            self.init(players, *init_args)
+            while not self.step(): pass
+        except UnusualGameOver: pass
         return self.domino.winner
 
 __all__ = ["Domino", "DominoManager", "Event"]
