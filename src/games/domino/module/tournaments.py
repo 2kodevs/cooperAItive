@@ -1,4 +1,4 @@
-from .players import MonteCarlo, AlphaZero, get_hand
+from .players import MonteCarlo, get_hand
 from .domino import DominoManager
 
 
@@ -21,14 +21,4 @@ def runner(data, rep, output, game_config, hand='hand_out'):
         )
         d[winner] += 1
 
-
-def alphazero_vs_monte_carlo(alphaArgs, mcArgs, rep, game_config):
-    output = {}
-    data0 = (AlphaZero, *alphaArgs)
-    data1 = (MonteCarlo, *mcArgs)
-    runner([data0, data1], rep, output, game_config)
-    runner([data1, data0], rep, output, game_config)
-    print(output)
-
-
-__all__ = ["alphazero_vs_monte_carlo"]
+__all__ = []

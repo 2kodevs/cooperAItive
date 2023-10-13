@@ -7,12 +7,14 @@ class Remote(BasePlayer):
         self.endpoint = endpoint
 
     def start(self):
-        return requests.post(f'{self.endpoint}/start').json()
+        return requests.get(f'{self.endpoint}/start').json()
 
     def step(self, heads):
-        move = requests.post(f'{self.endpoint}/step', json=heads).json()
+        move = requests.post(f'{self.endpoint}/step', json={
+            "heads": heads
+        }).json()
         if move is None: return None
-        return tuple(move[0]), move[1]
+        return tuple(move["piece"]), move["head"]
 
     def reset(self, pos, pieces, max_number, timeout, score):
         requests.post(f'{self.endpoint}/reset', json={
@@ -25,4 +27,7 @@ class Remote(BasePlayer):
 
     def log(self, log):
         event, *args = log
-        requests.post(f'{self.endpoint}/log', json=[event.value, *args])
+        requests.post(f'{self.endpoint}/log', json={
+            "event": event.name, 
+            "args": args
+        })
