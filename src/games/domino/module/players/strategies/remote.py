@@ -17,12 +17,12 @@ class Remote(BasePlayer):
                 pass # always retry
 
     def start(self):
-        return bool(self.call(requests.get, 'start').json())
+        return bool(self.call(requests.get, 'start').json()['start'])
 
     def step(self, heads):
         move = self.call(requests.post, 'step', heads).json()
-        if move is None: return None
-        return tuple(move[0]), move[1]
+        if move['piece'] is None: return None
+        return tuple(move['piece']), move['head']
 
     def reset(self, pos, pieces, max_number, timeout, score):
         self.call(requests.post, 'reset', json={
