@@ -1,23 +1,31 @@
 from ..player import BasePlayer
 import requests
 
+from urllib.parse import urljoin
+
 class Remote(BasePlayer):
-    def __init__(self, name, endpoint):
+    def __init__(self, name, server):
         super().__init__(f"Remote::{name}")
-        self.endpoint = endpoint
+        self.server = server
+
+    def call(self, method, endpoint, json={}):
+        url = urljoin(self.server, endpoint)
+        while True:
+            try:
+                return method(url, json=json)
+            except requests.exceptions.ConnectionError:
+                pass # always retry
 
     def start(self):
-        return requests.get(f'{self.endpoint}/start').json()
+        return self.call(requests.get, 'start').json()
 
     def step(self, heads):
-        move = requests.post(f'{self.endpoint}/step', json={
-            "heads": heads
-        }).json()
+        move = self.call(requests.post, 'step', heads).json()
         if move is None: return None
-        return tuple(move["piece"]), move["head"]
+        return tuple(move[0]), move[1]
 
     def reset(self, pos, pieces, max_number, timeout, score):
-        requests.post(f'{self.endpoint}/reset', json={
+        self.call(requests.post, 'reset', json={
             "position": pos,
             "pieces": pieces,
             "max_number": max_number,
@@ -27,7 +35,4 @@ class Remote(BasePlayer):
 
     def log(self, log):
         event, *args = log
-        requests.post(f'{self.endpoint}/log', json={
-            "event": event.name, 
-            "args": args
-        })
+        self.call(requests.post, 'log', json=[event.name, *args])
