@@ -17,7 +17,7 @@ class Remote(BasePlayer):
                 pass # always retry
 
     def start(self):
-        return self.call(requests.get, 'start').json()
+        return bool(self.call(requests.get, 'start').json())
 
     def step(self, heads):
         move = self.call(requests.post, 'step', heads).json()
